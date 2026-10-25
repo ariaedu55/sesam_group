@@ -1,0 +1,178 @@
+/* Quittances et reçus : page A4 lisible à l'écran, propre à l'impression. */
+:root {
+    color-scheme: light;
+}
+
+body.doc {
+    margin: 0;
+    padding: 16px;
+    background: #eef2f8;
+    color: #0c1730;
+    font: 14px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+.doc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 0 auto 14px;
+    max-width: 780px;
+}
+
+.doc-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 6px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: #0a6cf0;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.doc-btn.is-ghost {
+    background: #fff;
+    color: #0a6cf0;
+    border: 1px solid rgba(12, 23, 48, 0.12);
+}
+
+.doc-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 36px 40px;
+    background: #fff;
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    border-radius: 6px;
+}
+
+.doc-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 2px solid #0c1730;
+}
+
+.doc-head p {
+    margin: 0;
+}
+
+.doc-brand {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.doc-ref {
+    text-align: right;
+}
+
+.doc-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.doc-block {
+    margin: 20px 0;
+}
+
+.doc-block p {
+    margin: 4px 0;
+}
+
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+}
+
+.doc-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid rgba(12, 23, 48, 0.1);
+}
+
+.doc-table td:last-child {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.doc-table .is-total td {
+    font-weight: 700;
+    background: #f4f7fc;
+}
+
+.doc-table .is-due td {
+    font-weight: 700;
+    color: #a1260f;
+}
+
+.doc-table .is-ok td {
+    font-weight: 700;
+    color: #0b6b44;
+}
+
+.doc-statement {
+    margin: 18px 0 28px;
+}
+
+.doc-foot {
+    display: grid;
+    gap: 8px;
+}
+
+.doc-sign {
+    justify-self: end;
+    min-width: 220px;
+    text-align: center;
+}
+
+.doc-sign p {
+    margin: 0;
+}
+
+.doc-sign-name {
+    margin-top: 42px !important;
+    padding-top: 6px;
+    border-top: 1px solid rgba(12, 23, 48, 0.3);
+    font-weight: 700;
+}
+
+.doc-note {
+    margin: 0;
+    color: #5d6675;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+    .doc-page {
+        padding: 20px 16px;
+    }
+
+    .doc-ref {
+        text-align: left;
+    }
+}
+
+@media print {
+    body.doc {
+        padding: 0;
+        background: #fff;
+    }
+
+    .doc-actions {
+        display: none;
+    }
+
+    .doc-page {
+        border: 0;
+        padding: 0;
+        max-width: none;
+    }
+}

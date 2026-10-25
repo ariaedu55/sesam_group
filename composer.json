@@ -1,0 +1,29 @@
+{
+    "name": "sesam/app",
+    "description": "SESAM Digital et SESAM SaaS",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sesam\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Sesam\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "@php -d xdebug.mode=off vendor/bin/phpunit",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "php -S localhost:8080 -t public public/index.php"
+        ]
+    }
+}

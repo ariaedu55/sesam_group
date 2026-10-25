@@ -1,0 +1,233 @@
+/* Notifications : cloche, bandeau d'activation, alerte en direct et liste. Couleurs pleines, bordures neutres. */
+.tenant-bell {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 50%;
+    color: #071a3d;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.tenant-bell:hover {
+    background: #e8f1ff;
+}
+
+.tenant-bell svg {
+    width: 20px;
+    height: 20px;
+}
+
+.tenant-bell-count {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #c62f34;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+}
+
+.tenant-bell-count[hidden] {
+    display: none;
+}
+
+/* Bandeau « Recevoir les alertes sur cet appareil ? » */
+.push-prompt {
+    position: fixed;
+    z-index: 60;
+    right: 16px;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 440px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    box-shadow: 0 18px 40px rgba(7, 26, 61, 0.18);
+}
+
+.push-prompt[hidden] {
+    display: none;
+}
+
+.push-prompt-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #0a6cf0;
+    color: #fff;
+}
+
+.push-prompt-text {
+    display: grid;
+    gap: 2px;
+    font-size: 0.88rem;
+}
+
+.push-prompt-text small {
+    color: var(--muted, #5d6675);
+}
+
+.push-prompt-actions {
+    display: grid;
+    gap: 6px;
+}
+
+/* Notification reçue pendant que l'application est ouverte */
+.push-toast {
+    position: fixed;
+    z-index: 70;
+    top: 16px;
+    right: 16px;
+    display: grid;
+    gap: 2px;
+    max-width: 360px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #071a3d;
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 18px 40px rgba(7, 26, 61, 0.25);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.push-toast span {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.88rem;
+}
+
+.push-toast.is-success { background: #0b6b44; }
+.push-toast.is-warning { background: #8a5300; }
+.push-toast.is-danger { background: #a1260f; }
+
+.push-toast.is-gone {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.push-status {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #e8f1ff;
+    font-weight: 600;
+}
+
+.push-status[data-tone="success"] { background: #ddf5e8; color: #0b6b44; }
+.push-status[data-tone="warning"] { background: #fff2d6; color: #7a4a00; }
+
+/* Liste des notifications */
+.notif-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--surface, #fff);
+    border: 1px solid rgba(12, 23, 48, 0.08);
+}
+
+.notif-item.is-unread {
+    background: #f2f7ff;
+}
+
+.notif-dot {
+    flex: 0 0 10px;
+    height: 10px;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.notif-item.is-unread .notif-dot { background: #0a6cf0; }
+.notif-item.is-unread.is-danger .notif-dot { background: #c62f34; }
+.notif-item.is-unread.is-warning .notif-dot { background: #d98a00; }
+.notif-item.is-unread.is-success .notif-dot { background: #0f9d6b; }
+
+.notif-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-body h2 {
+    margin: 2px 0;
+    font-size: 0.98rem;
+}
+
+.notif-body p {
+    margin: 0;
+}
+
+.notif-meta {
+    font-size: 0.76rem;
+    color: var(--muted, #5d6675);
+}
+
+.notif-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.notif-prefs td {
+    text-align: center;
+}
+
+.notif-prefs input {
+    width: 20px;
+    height: 20px;
+    accent-color: #0a6cf0;
+}
+
+@media (max-width: 640px) {
+    .push-prompt {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+    }
+
+    .push-toast {
+        left: 12px;
+        right: 12px;
+        max-width: none;
+    }
+
+    .notif-item {
+        flex-wrap: wrap;
+    }
+
+    .notif-actions {
+        width: 100%;
+        justify-content: flex-start;
+        padding-left: 22px;
+    }
+
+    .tenant-bell {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+}

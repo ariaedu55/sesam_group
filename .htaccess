@@ -1,0 +1,9 @@
+Options -Indexes
+RewriteEngine On
+
+RewriteRule ^(?:\.env(?:\..*)?$|composer\.(?:json|lock)$|[^/]+\.json$|app(?:/|$)|config(?:/|$)|database(?:/|$)|storage(?:/|$)|tests(?:/|$)|docs(?:/|$)|vendor(?:/|$)|bin(?:/|$)|_archive(?:/|$)|.cursor(?:/|$)) - [F,L]
+
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+RewriteRule ^ public/index.php [L]

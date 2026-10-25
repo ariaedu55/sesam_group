@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         failOnWarning="true">
+    <testsuites>
+        <testsuite name="foundation">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <!-- Les tests ne doivent jamais envoyer de vraie notification push. -->
+        <env name="PUSH_DRIVER_OVERRIDE" value="log" force="true"/>
+        <!-- Ni aucun vrai e-mail : ils sont écrits dans storage/logs/mail.log. -->
+        <env name="MAIL_DRIVER_OVERRIDE" value="log" force="true"/>
+        <!-- Pas d'appels NabooPay live pendant PHPUnit (bac à sable uniquement). -->
+        <env name="NABOOPAY_LIVE" value="0" force="true"/>
+        <env name="NABOOPAY_API_KEY" value="" force="true"/>
+    </php>
+</phpunit>

@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="960" height="720" role="img" aria-labelledby="t d">
+  <title id="t">Sesam Boutique</title>
+  <desc id="d">Un téléphone affiche une boutique en ligne avec quatre produits, un panier et le bouton Commander sur WhatsApp. Une bulle de discussion montre la commande reçue.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9f8f1"/>
+      <stop offset="0.55" stop-color="#eef4ff"/>
+      <stop offset="1" stop-color="#fdf1e4"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f9d6b"/>
+      <stop offset="1" stop-color="#0b5f8a"/>
+    </linearGradient>
+    <linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb35c"/><stop offset="1" stop-color="#e8553e"/></linearGradient>
+    <linearGradient id="pb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d58e"/><stop offset="1" stop-color="#c9933a"/></linearGradient>
+    <linearGradient id="pc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdb7f5"/><stop offset="1" stop-color="#8b3fd1"/></linearGradient>
+    <linearGradient id="pd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd7ff"/><stop offset="1" stop-color="#1f6feb"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0b2a3a" flood-opacity="0.18"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0b2a3a" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <rect width="960" height="720" fill="url(#bg)"/>
+  <circle cx="140" cy="130" r="120" fill="#0f9d6b" opacity="0.08"/>
+  <circle cx="860" cy="610" r="150" fill="#1f6feb" opacity="0.07"/>
+  <circle cx="820" cy="120" r="60" fill="#e8553e" opacity="0.08"/>
+
+  <!-- Téléphone -->
+  <g filter="url(#shadow)">
+    <rect x="330" y="50" width="300" height="620" rx="44" fill="#111827"/>
+    <rect x="344" y="64" width="272" height="592" rx="34" fill="#f6f7f9"/>
+  </g>
+  <rect x="440" y="76" width="80" height="16" rx="8" fill="#111827"/>
+
+  <!-- En-tête boutique -->
+  <rect x="344" y="100" width="272" height="56" fill="#ffffff"/>
+  <rect x="360" y="110" width="36" height="36" rx="10" fill="#e3f6ee"/>
+  <text x="378" y="134" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="800" fill="#0f9d6b">AC</text>
+  <text x="406" y="134" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#141a24">Awa Couture</text>
+  <circle cx="588" cy="128" r="17" fill="#e3f6ee"/>
+  <path d="M580 123h16l-1.6 12a2 2 0 0 1-2 1.8h-8.8a2 2 0 0 1-2-1.8z" fill="none" stroke="#0f9d6b" stroke-width="2"/>
+  <circle cx="600" cy="114" r="8" fill="#0f9d6b"/>
+  <text x="600" y="118" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="10" font-weight="700" fill="#fff">2</text>
+
+  <!-- Bandeau -->
+  <rect x="358" y="166" width="244" height="84" rx="18" fill="url(#hero)"/>
+  <text x="374" y="198" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="800" fill="#ffffff">Nouvelle collection</text>
+  <text x="374" y="222" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#e3f6ee">Livraison à Dakar en 24 h</text>
+  <rect x="374" y="230" width="62" height="10" rx="5" fill="#ffffff" opacity="0.35"/>
+
+  <!-- Catégories -->
+  <rect x="358" y="262" width="52" height="24" rx="12" fill="#0f9d6b"/>
+  <text x="384" y="278" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="600" fill="#fff">Tout</text>
+  <rect x="416" y="262" width="62" height="24" rx="12" fill="#fff" stroke="#e3e6ec"/>
+  <text x="447" y="278" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#141a24">Robes</text>
+  <rect x="484" y="262" width="58" height="24" rx="12" fill="#fff" stroke="#e3e6ec"/>
+  <text x="513" y="278" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#141a24">Sacs</text>
+  <rect x="548" y="262" width="54" height="24" rx="12" fill="#fff" stroke="#e3e6ec"/>
+  <text x="575" y="278" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" fill="#141a24">Bijoux</text>
+
+  <!-- Produits -->
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <rect x="358" y="298" width="118" height="148" rx="14" fill="#fff" stroke="#0f9d6b" stroke-width="2"/>
+    <rect x="366" y="306" width="102" height="78" rx="10" fill="url(#pa)"/>
+    <path d="M405 322h24l6 12-8 4v34h-20v-34l-8-4z" fill="#fff" opacity="0.9"/>
+    <text x="368" y="404" font-size="12" font-weight="700" fill="#141a24">Robe wax</text>
+    <text x="368" y="422" font-size="12" font-weight="800" fill="#0f9d6b">25 000 FCFA</text>
+    <rect x="368" y="430" width="98" height="10" rx="5" fill="#e3f6ee"/>
+
+    <rect x="484" y="298" width="118" height="148" rx="14" fill="#fff" stroke="#0f9d6b" stroke-width="2"/>
+    <rect x="492" y="306" width="102" height="78" rx="10" fill="url(#pb)"/>
+    <path d="M523 340h40l-4 34h-32z" fill="#fff" opacity="0.9"/>
+    <path d="M532 340c0-14 22-14 22 0" fill="none" stroke="#fff" stroke-width="4"/>
+    <text x="494" y="404" font-size="12" font-weight="700" fill="#141a24">Sac en raphia</text>
+    <text x="494" y="422" font-size="12" font-weight="800" fill="#0f9d6b">12 000 FCFA</text>
+    <rect x="494" y="430" width="98" height="10" rx="5" fill="#e3f6ee"/>
+
+    <rect x="358" y="454" width="118" height="110" rx="14" fill="#fff" stroke="#e3e6ec"/>
+    <rect x="366" y="462" width="102" height="54" rx="10" fill="url(#pc)"/>
+    <circle cx="417" cy="489" r="14" fill="none" stroke="#fff" stroke-width="4"/>
+    <circle cx="417" cy="473" r="4" fill="#fff"/>
+    <text x="368" y="534" font-size="12" font-weight="700" fill="#141a24">Bijoux dorés</text>
+    <text x="368" y="552" font-size="12" font-weight="800" fill="#0f9d6b">7 500 FCFA</text>
+
+    <rect x="484" y="454" width="118" height="110" rx="14" fill="#fff" stroke="#e3e6ec"/>
+    <rect x="492" y="462" width="102" height="54" rx="10" fill="url(#pd)"/>
+    <path d="M512 478c20-8 42 8 62 0v24c-20 8-42-8-62 0z" fill="#fff" opacity="0.9"/>
+    <text x="494" y="534" font-size="12" font-weight="700" fill="#141a24">Foulard soie</text>
+    <text x="494" y="552" font-size="12" font-weight="800" fill="#0f9d6b">9 000 FCFA</text>
+  </g>
+
+  <!-- Bouton WhatsApp -->
+  <rect x="358" y="580" width="244" height="54" rx="14" fill="#1fa855"/>
+  <circle cx="392" cy="607" r="13" fill="none" stroke="#fff" stroke-width="2.6"/>
+  <path d="M383 618l2.5-6" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+  <text x="414" y="612" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="800" fill="#fff">Commander sur WhatsApp</text>
+
+  <!-- Bulle de commande -->
+  <g filter="url(#soft)">
+    <rect x="652" y="190" width="262" height="176" rx="22" fill="#dcf8c6"/>
+    <path d="M652 330l-22 26 34-12z" fill="#dcf8c6"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif" fill="#1d2a1f">
+    <text x="674" y="224" font-size="14" font-weight="800">Nouvelle commande</text>
+    <text x="674" y="252" font-size="13">1 × Robe wax</text>
+    <text x="674" y="274" font-size="13">1 × Sac en raphia</text>
+    <text x="674" y="304" font-size="14" font-weight="800">Total : 37 000 FCFA</text>
+    <text x="674" y="332" font-size="12" fill="#3f5a44">Commande n° BTQ-1018 · Fatou</text>
+    <text x="886" y="352" font-size="11" text-anchor="end" fill="#3f5a44">10:42 ✓✓</text>
+  </g>
+
+  <!-- Carte stock -->
+  <g filter="url(#soft)">
+    <rect x="58" y="214" width="236" height="118" rx="22" fill="#ffffff"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <rect x="80" y="236" width="44" height="44" rx="14" fill="#fdf2dc"/>
+    <path d="M90 250l12-6 12 6v14l-12 6-12-6z M90 250l12 6 12-6 M102 256v14" fill="none" stroke="#b86f00" stroke-width="2.4" stroke-linejoin="round"/>
+    <text x="136" y="254" font-size="14" font-weight="800" fill="#141a24">Stock à jour</text>
+    <text x="136" y="274" font-size="12" fill="#5d6675">Robe wax : 11 restantes</text>
+    <rect x="80" y="296" width="192" height="12" rx="6" fill="#eef1f5"/>
+    <rect x="80" y="296" width="132" height="12" rx="6" fill="#0f9d6b"/>
+  </g>
+
+  <!-- Carte clients -->
+  <g filter="url(#soft)">
+    <rect x="72" y="400" width="222" height="110" rx="22" fill="#ffffff"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <circle cx="112" cy="440" r="18" fill="#e4eeff"/>
+    <text x="112" y="445" text-anchor="middle" font-size="13" font-weight="800" fill="#1f6feb">F</text>
+    <text x="140" y="438" font-size="14" font-weight="800" fill="#141a24">Fatou D.</text>
+    <text x="140" y="456" font-size="12" fill="#5d6675">3 commandes · fidèle</text>
+    <rect x="94" y="476" width="84" height="20" rx="10" fill="#ddf5e8"/>
+    <text x="136" y="490" text-anchor="middle" font-size="11" font-weight="700" fill="#0b6b44">Confirmée</text>
+    <rect x="186" y="476" width="70" height="20" rx="10" fill="#e4eeff"/>
+    <text x="221" y="490" text-anchor="middle" font-size="11" font-weight="700" fill="#1b4fa8">Payée</text>
+  </g>
+
+  <!-- Lien partagé -->
+  <g filter="url(#soft)">
+    <rect x="664" y="430" width="240" height="64" rx="32" fill="#ffffff"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <circle cx="698" cy="462" r="18" fill="#e3f6ee"/>
+    <path d="M692 466a5 5 0 0 0 7 0l4-4a5 5 0 0 0-7-7l-1 1 M704 458a5 5 0 0 0-7 0l-4 4a5 5 0 0 0 7 7l1-1" fill="none" stroke="#0f9d6b" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="726" y="458" font-size="12" fill="#5d6675">Votre lien</text>
+    <text x="726" y="476" font-size="13" font-weight="800" fill="#141a24">sesam…/t/awa-couture</text>
+  </g>
+</svg>

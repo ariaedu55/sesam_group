@@ -1,0 +1,14 @@
+/.env
+/vendor/
+/.phpunit.cache/
+/storage/logs/*.log
+/storage/uploads/**
+!/storage/uploads/.gitkeep
+/database/backups/*
+/storage/firebase/*.json
+/storage/cache/*
+/storage/certs/*.pem
+/storage/tmp_*
+/.cursor/
+/.idea/
+*.tgz

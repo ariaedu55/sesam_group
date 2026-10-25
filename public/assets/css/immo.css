@@ -1,0 +1,472 @@
+/* Espace Sesam Immo : loyers, alertes, biens, locataires, interventions. Couleurs pleines, bordures neutres. */
+.immo .btq-tabs a[aria-current="page"] {
+    background: #0a6cf0;
+}
+
+.immo-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: 4px;
+    border-radius: 999px;
+    background: rgba(12, 23, 48, 0.08);
+    font-size: 0.74rem;
+    font-weight: 700;
+    opacity: 1 !important;
+}
+
+.btq-tabs a[aria-current="page"] .immo-count {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.immo-count.is-danger {
+    background: #c62f34;
+    color: #fff;
+}
+
+.immo-meter {
+    display: block;
+    height: 6px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: #e7eefb;
+    overflow: hidden;
+}
+
+.immo-meter i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: #0f9d6b;
+}
+
+.immo-meter.is-large {
+    height: 10px;
+}
+
+.immo-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.immo-month {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.immo-month strong {
+    min-width: 130px;
+    text-align: center;
+}
+
+.immo-search {
+    flex: 1 1 220px;
+    max-width: 360px;
+}
+
+.immo-search .input {
+    width: 100%;
+}
+
+.btq-kpis.immo-totals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Liste des loyers */
+.immo-dues {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.immo-dues a {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--surface, #fff);
+    border: 1px solid rgba(12, 23, 48, 0.08);
+    color: inherit;
+    text-decoration: none;
+}
+
+.immo-dues a:hover {
+    background: #f6f9ff;
+}
+
+.immo-due-who,
+.immo-due-money {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.immo-due-who small,
+.immo-due-money small {
+    color: var(--muted, #5d6675);
+}
+
+.immo-due-money {
+    flex: 0 0 auto;
+    justify-items: end;
+    min-width: 130px;
+    text-align: right;
+}
+
+.immo-due-money .immo-meter {
+    width: 100%;
+}
+
+/* Alertes « À traiter » */
+.immo-alerts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.immo-alerts a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--surface-2, #f6f7f9);
+    color: inherit;
+    text-decoration: none;
+}
+
+.immo-alerts a > span:nth-child(2) {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+}
+
+.immo-alerts small {
+    color: var(--muted, #5d6675);
+}
+
+.immo-alert-dot {
+    flex: 0 0 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #8a93a3;
+}
+
+.immo-alerts .is-danger .immo-alert-dot { background: #c62f34; }
+.immo-alerts .is-warning .immo-alert-dot { background: #d98a00; }
+.immo-alerts .is-info .immo-alert-dot { background: #0a6cf0; }
+.immo-alerts .is-danger a { background: #fdeceb; }
+
+.immo-alert-go {
+    font-size: 1.3rem;
+    color: var(--muted, #5d6675);
+}
+
+/* Histogramme attendu / encaissé */
+.immo-bars {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: end;
+    gap: 10px;
+    height: 150px;
+}
+
+.immo-bar {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    justify-items: center;
+    height: 100%;
+    gap: 4px;
+}
+
+.immo-bar-track {
+    grid-row: 1;
+    align-self: end;
+    display: flex;
+    align-items: flex-end;
+    width: min(100%, 34px);
+    min-height: 3px;
+    border-radius: 8px 8px 3px 3px;
+    background: #dcecff;
+    overflow: hidden;
+}
+
+.immo-bar-track i {
+    display: block;
+    width: 100%;
+    background: #0f9d6b;
+}
+
+.immo-bar small {
+    grid-row: 2;
+    font-size: 0.74rem;
+    color: var(--muted, #5d6675);
+}
+
+.immo-legend {
+    display: flex;
+    gap: 16px;
+    margin: 10px 0 0;
+    font-size: 0.82rem;
+}
+
+.immo-legend span::before {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 6px;
+    border-radius: 3px;
+}
+
+.immo-legend .is-paid::before { background: #0f9d6b; }
+.immo-legend .is-expected::before { background: #dcecff; }
+
+/* Fiche d'un loyer */
+.immo-big-status {
+    padding: 6px 12px;
+    font-size: 0.86rem;
+}
+
+.immo-summary dl {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0 0 10px;
+}
+
+.immo-summary dt {
+    font-size: 0.8rem;
+    color: var(--muted, #5d6675);
+}
+
+.immo-summary dd {
+    margin: 2px 0 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.immo-summary .is-alert dd { color: #a1260f; }
+.immo-summary .is-ok dd { color: #0b6b44; }
+
+.immo-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.immo-inline .field {
+    margin: 0;
+}
+
+.immo-note {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fff8e6;
+}
+
+/* Personnes */
+.immo-avatar {
+    display: grid;
+    place-items: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #dcecff;
+    color: #0a4fb3;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.immo-avatar.is-large {
+    flex-basis: 54px;
+    width: 54px;
+    height: 54px;
+    font-size: 1rem;
+}
+
+.immo-headline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btq-list.immo-people li > a {
+    justify-content: flex-start;
+}
+
+.immo-person {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+}
+
+.immo-people .btq-list-end {
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+}
+
+/* Biens */
+.immo-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.immo-property {
+    display: grid;
+    gap: 4px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.immo-property:hover {
+    background: #f6f9ff;
+}
+
+.immo-property small {
+    color: var(--muted, #5d6675);
+}
+
+.immo-property-kind {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #0a6cf0;
+}
+
+.immo-occupancy {
+    display: grid;
+    gap: 2px;
+    margin-top: 6px;
+}
+
+.immo-property-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.immo-unit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.immo-add {
+    margin-top: 14px;
+}
+
+.immo-add summary,
+.immo-danger-summary {
+    padding: 6px 0;
+    font-weight: 700;
+    color: #0a6cf0;
+    cursor: pointer;
+}
+
+.immo-danger-summary {
+    color: #a1260f;
+}
+
+/* Interventions */
+.immo-tasks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.immo-tasks li {
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--surface-2, #f6f7f9);
+}
+
+.immo-tasks p {
+    margin: 0;
+}
+
+.immo-task-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.immo-task-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.immo-task-form .input {
+    flex: 1 1 130px;
+    min-height: 34px;
+}
+
+.immo-rules {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.immo-rules p {
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .immo-summary dl {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .immo-dues a {
+        flex-direction: column;
+    }
+
+    .immo-due-money {
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        column-gap: 8px;
+        justify-items: start;
+        text-align: left;
+    }
+
+    .immo-due-money .immo-meter,
+    .immo-due-money small {
+        grid-column: 1 / -1;
+    }
+
+    .btq-kpis.immo-totals strong {
+        font-size: 0.95rem;
+    }
+
+    .immo-bars {
+        gap: 5px;
+        height: 120px;
+    }
+}

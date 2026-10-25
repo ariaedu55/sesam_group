@@ -1,0 +1,470 @@
+/* Console SESAM : tableau de bord, revenus, fiche commerce. Couleurs pleines, bordures neutres. */
+
+.console-board .btq-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.console-trend {
+    display: inline-block;
+    margin-top: 2px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.console-trend.is-up { color: #0b6b44; }
+.console-trend.is-down { color: #a1260f; }
+
+/* Histogramme empilé */
+.console-chart {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: end;
+    gap: 6px;
+    height: 180px;
+    padding: 8px 0 0;
+}
+
+.console-chart.is-large {
+    height: 240px;
+}
+
+.console-month {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    align-items: end;
+    justify-items: center;
+    height: 100%;
+    min-width: 0;
+    gap: 4px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.console-month em {
+    grid-row: 1;
+    font-style: normal;
+    font-size: 0.68rem;
+    color: var(--muted, #5d6675);
+    white-space: nowrap;
+}
+
+.console-month small {
+    grid-row: 3;
+    font-size: 0.72rem;
+    color: var(--muted, #5d6675);
+    white-space: nowrap;
+}
+
+.console-month-stack {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: min(100%, 34px);
+    min-height: 3px;
+    border-radius: 8px 8px 3px 3px;
+    overflow: hidden;
+    background: #e7eefb;
+    align-self: end;
+}
+
+.console-month-stack i {
+    display: block;
+    width: 100%;
+}
+
+.console-month-stack .is-saas,
+.console-legend .is-saas::before { background: #0a6cf0; }
+.console-month-stack .is-agency,
+.console-legend .is-agency::before { background: #3cc4f5; }
+
+a.console-month:hover .console-month-stack,
+.console-month.is-on .console-month-stack {
+    outline: 2px solid #071a3d;
+    outline-offset: 2px;
+}
+
+.console-month.is-on small {
+    color: #071a3d;
+    font-weight: 700;
+}
+
+.console-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 14px 0 0;
+    font-size: 0.84rem;
+}
+
+.console-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.console-legend .is-saas::before,
+.console-legend .is-agency::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.console-big {
+    margin: 0 0 12px;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #071a3d;
+}
+
+.console-subhead {
+    margin: 16px 0 8px;
+    font-size: 0.92rem;
+}
+
+/* Répartition par module */
+.console-modules {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.console-modules a {
+    display: grid;
+    gap: 2px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--surface-2, #f6f7f9);
+    color: inherit;
+    text-decoration: none;
+}
+
+.console-modules strong {
+    font-size: 1.4rem;
+    color: #0a6cf0;
+}
+
+.console-modules span {
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+
+.console-modules small {
+    color: var(--muted, #5d6675);
+}
+
+/* Pouls de l'agence */
+.console-pulse {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.console-pulse li {
+    display: grid;
+    gap: 2px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--surface-2, #f6f7f9);
+}
+
+.console-pulse strong {
+    font-size: 1.3rem;
+    color: #071a3d;
+}
+
+.console-pulse span {
+    font-size: 0.84rem;
+    color: var(--muted, #5d6675);
+}
+
+/* Fiche commerce : encaissement, usage, notes */
+.console-usage {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+}
+
+.console-usage div {
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--surface-2, #f6f7f9);
+}
+
+.console-usage dt {
+    font-size: 0.82rem;
+    color: var(--muted, #5d6675);
+}
+
+.console-usage dd {
+    margin: 2px 0 0;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.console-notes {
+    list-style: none;
+    margin: 0 0 14px;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.console-notes li {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #fff8e6;
+}
+
+.console-notes p {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.console-notes small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted, #5d6675);
+}
+
+.console-pay {
+    display: grid;
+    gap: 12px;
+}
+
+.console-pay-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.console-pay .field {
+    margin: 0;
+}
+
+.console-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* La console a un menu latéral : 4 chiffres par ligne seulement sur grand écran. */
+@media (min-width: 720px) and (max-width: 1099px) {
+    .btq-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1100px) {
+    .btq-two {
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    }
+
+    .console-board .btq-kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 720px) {
+    .console-pay-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .console-usage {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .console-pulse {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .console-chart {
+        gap: 3px;
+        height: 150px;
+    }
+
+    .console-month em {
+        display: none;
+    }
+
+    .console-month small {
+        font-size: 0.62rem;
+    }
+
+    .console-modules {
+        grid-template-columns: 1fr;
+    }
+
+    .console-modules a {
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .console-pay-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.console-hint {
+    margin: 10px 0 0;
+}
+
+@media (max-width: 520px) {
+    .btq-kpi strong {
+        font-size: 1.22rem;
+    }
+}
+
+/* Montants et dates ne se coupent pas : le tableau défile dans son cadre sur téléphone. */
+.console-payments th,
+.console-payments td {
+    white-space: nowrap;
+}
+
+/* Essais gratuits : fiche commerce et création */
+.console-trial {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #e8f1ff;
+}
+
+.console-trial p {
+    margin: 0;
+}
+
+.console-trial-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.trial-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 8px;
+}
+
+.trial-choice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.trial-choice > span {
+    display: grid;
+}
+
+.trial-choice small {
+    color: var(--muted, #5d6675);
+}
+
+.trial-choice:has(input:checked) {
+    background: #e8f1ff;
+}
+
+/* Menu de la console en rubriques */
+.side-nav-group {
+    margin: 12px 0 4px;
+    padding: 0 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted, #5d6675);
+}
+
+.side-nav-group:first-child {
+    margin-top: 0;
+}
+
+/* Demandes de devis site web */
+.quote-requests {
+    display: grid;
+    gap: 12px;
+}
+
+.quote-request {
+    display: grid;
+    gap: 10px;
+}
+
+.quote-request-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.quote-request-head h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.quote-request-head p {
+    margin: 2px 0 0;
+}
+
+.quote-request-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    margin: 0;
+}
+
+.quote-request-facts div {
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--surface-2, #f6f7f9);
+}
+
+.quote-request-facts .is-wide {
+    grid-column: 1 / -1;
+}
+
+.quote-request-facts dt {
+    font-size: 0.76rem;
+    color: var(--muted, #5d6675);
+}
+
+.quote-request-facts dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+}
+
+.quote-request-message {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.quote-request-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.console-section {
+    margin: 8px 0 -4px;
+    font-size: 1rem;
+    color: var(--muted, #5d6675);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
