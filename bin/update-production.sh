@@ -4,7 +4,11 @@
 #   /home/jomas/sesam-tech.com/bin/update-production.sh
 set -euo pipefail
 
-APP_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
+if command -v readlink >/dev/null 2>&1; then
+  SCRIPT_PATH="$(readlink -f "$SCRIPT_PATH" 2>/dev/null || readlink -f "$0" 2>/dev/null || echo "$SCRIPT_PATH")"
+fi
+APP_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 PHP_BIN="${PHP_BIN:-/usr/local/apps/php84/bin/php}"
 COMPOSER_BIN="${COMPOSER_BIN:-/usr/local/bin/composer}"
 BRANCH="${SESAM_GIT_BRANCH:-main}"

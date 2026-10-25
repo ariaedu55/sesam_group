@@ -4,13 +4,17 @@
 set -euo pipefail
 
 APP=/home/jomas/sesam-tech.com
-REPO=https://github.com/ariaedu55/sesam_group.git
+# Deploy key SSH (Host github.com-sesam dans /root/.ssh/config)
+REPO=git@github.com-sesam:ariaedu55/sesam_group.git
 BRANCH=main
 
 cd "$APP"
 
-if [ -d .git ]; then
+git config --global --add safe.directory "$APP" 2>/dev/null || true
+
+if [ -d .git ] && git rev-parse --git-dir >/dev/null 2>&1; then
   echo "Git déjà initialisé."
+  git remote set-url origin "$REPO" 2>/dev/null || true
   git remote -v
   git status -sb
   exit 0
@@ -22,6 +26,8 @@ if [ ! -f .env ]; then
 fi
 
 cp -a .env /root/sesam-tech.com.env.bak
+# Nettoyer un .git incomplet éventuel
+rm -rf .git
 git init
 git remote add origin "$REPO"
 git fetch origin
