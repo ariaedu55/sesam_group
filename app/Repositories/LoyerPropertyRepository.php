@@ -14,7 +14,7 @@ final class LoyerPropertyRepository extends Repository
     public function listAll(int $tenantId): array
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, name, address FROM loyer_properties WHERE tenant_id = :tenant_id ORDER BY name ASC'
+            'SELECT id, name, address, city, kind, image_path, updated_at FROM loyer_properties WHERE tenant_id = :tenant_id ORDER BY name ASC'
         );
         $statement->execute(['tenant_id' => $tenantId]);
 
@@ -24,7 +24,7 @@ final class LoyerPropertyRepository extends Repository
     public function findById(int $id, int $tenantId): ?LoyerProperty
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, name, address FROM loyer_properties WHERE id = :id AND tenant_id = :tenant_id LIMIT 1'
+            'SELECT id, name, address, city, kind, image_path, updated_at FROM loyer_properties WHERE id = :id AND tenant_id = :tenant_id LIMIT 1'
         );
         $statement->execute(['id' => $id, 'tenant_id' => $tenantId]);
         $row = $statement->fetch();
@@ -62,6 +62,10 @@ final class LoyerPropertyRepository extends Repository
             'id' => (int) $row['id'],
             'name' => (string) $row['name'],
             'address' => (string) ($row['address'] ?? ''),
+            'city' => (string) ($row['city'] ?? ''),
+            'kind' => (string) ($row['kind'] ?? 'immeuble'),
+            'image_path' => isset($row['image_path']) && is_string($row['image_path']) && $row['image_path'] !== '' ? $row['image_path'] : null,
+            'updated_at' => (string) ($row['updated_at'] ?? ''),
         ]);
     }
 

@@ -18,7 +18,7 @@ $description = $settings->tagline() !== '' ? $settings->tagline() : 'Découvrez 
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><?= Html::e($title ?? $name) ?></title>
     <meta name="description" content="<?= Html::e($description) ?>">
     <meta property="og:type" content="<?= isset($ogTitle) ? 'product' : 'website' ?>">

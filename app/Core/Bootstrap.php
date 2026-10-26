@@ -115,6 +115,12 @@ final class Bootstrap
         );
         $boutique = new BoutiqueService($config['db'], $tenantContext, $images, $config['url']);
         $booking->useImages($images);
+        $immo->useImages(new ImageUploadService(
+            $root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'uploads',
+            (int) $uploads['max_bytes'],
+            1280,
+            80
+        ));
         $salon = new SalonService($config['db'], $tenantContext, $images, $config['url']);
         $profiles = new ProfileService($config['db']);
         $search = new SearchService($config['db'], $tenantContext);
@@ -158,6 +164,7 @@ final class Bootstrap
             $boutique,
             $salon,
             $booking,
+            $immo,
         );
         $router = new Router();
         $router->get('/t/{slug}/paiement/{id}/bac-a-sable', [$portal, 'sandbox']);
@@ -169,6 +176,7 @@ final class Bootstrap
         $router->get('/t/{slug}/creneaux', [$portal, 'slots']);
         $router->get('/t/{slug}/produit/{id}/image', [$portal, 'productImage']);
         $router->get('/t/{slug}/prestation/{id}/image', [$portal, 'prestationImage']);
+        $router->get('/t/{slug}/bien/{id}/image', [$portal, 'propertyImage']);
         $router->get('/t/{slug}/produit/{id}', [$portal, 'product']);
         $router->get('/t/{slug}/logo', [$portal, 'logo']);
         $router->get('/t/{slug}/couverture', [$portal, 'cover']);

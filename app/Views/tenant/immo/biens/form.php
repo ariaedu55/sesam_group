@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 use Sesam\Core\Immo\ImmoCatalog;
 use Sesam\Helpers\Html;
+use Sesam\Models\Tenant;
 
 $id = isset($id) && is_int($id) ? $id : null;
 $old = is_array($old ?? null) ? $old : [];
 $errors = is_array($errors ?? null) ? $errors : [];
+$tenant = ($tenant ?? null) instanceof Tenant ? $tenant : null;
+$slug = $tenant?->slug() ?? '';
+$hasPhoto = is_string($old['image_path'] ?? null) && $old['image_path'] !== '';
+$icon = dirname(__DIR__, 3) . '/partials/ui-icon.php';
 $val = static fn (string $key): string => Html::e(is_scalar($old[$key] ?? null) ? (string) $old[$key] : '');
 $err = static function (string $key) use ($errors): void {
     if (isset($errors[$key])) {
@@ -23,8 +28,27 @@ $err = static function (string $key) use ($errors): void {
             <p class="muted">Un bien regroupe un ou plusieurs logements (ex. un immeuble de 6 appartements).</p>
         </div>
     </header>
-    <form class="btq-form" method="post" action="<?= Html::url('/immo/biens' . ($id !== null ? '/' . $id : '')) ?>">
+    <form class="btq-form" method="post" action="<?= Html::url('/immo/biens' . ($id !== null ? '/' . $id : '')) ?>" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+        <fieldset>
+            <legend>Photo du bien</legend>
+            <div class="btq-upload">
+                <?php if ($hasPhoto && $id !== null && $slug !== ''): ?>
+                    <img class="btq-upload-preview is-wide" id="property-preview" src="<?= Html::url('/t/' . $slug . '/bien/' . $id . '/image') ?>?v=<?= Html::e(rawurlencode((string) ($old['updated_at'] ?? ''))) ?>" alt="">
+                <?php else: ?>
+                    <span class="btq-upload-preview is-wide" id="property-preview"><?php $name = 'image'; include $icon; ?></span>
+                <?php endif; ?>
+                <div class="field">
+                    <label for="image"><span>Ajouter une photo</span></label>
+                    <input class="input" id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-preview="property-preview">
+                    <p class="btq-help">JPEG, PNG, WebP ou GIF, 4 Mo maximum. Une photo de façade ou d’entrée suffit : elle s’affiche sur la page publique.</p>
+                    <?php $err('image'); ?>
+                </div>
+            </div>
+            <?php if ($hasPhoto): ?>
+                <label class="btq-switch"><input type="checkbox" name="remove_image" value="1"><span>Retirer la photo actuelle</span></label>
+            <?php endif; ?>
+        </fieldset>
         <fieldset>
             <legend>Le bien</legend>
             <div class="btq-grid-2">

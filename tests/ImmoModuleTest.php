@@ -183,6 +183,84 @@ final class ImmoModuleTest extends IntegrationTestCase
         $this->assertSame(403, $this->get($kernel, '/immo/parametres')->status());
     }
 
+    public function testPropertyPhotoIsStoredAndServedOnPublicPortal(): void
+    {
+        $tenantId = $this->tenant(Sector::LOYER);
+        $kernel = $this->kernel();
+        $this->loginAs($kernel, [Role::TENANT_OWNER], $tenantId);
+        $form = $this->get($kernel, '/immo/biens/nouveau');
+        $this->assertSame(200, $form->status());
+        $this->assertStringContainsString('name="image"', $form->content());
+        $this->assertStringContainsString('enctype="multipart/form-data"', $form->content());
+
+        $png = $this->pngFile(640, 400);
+        $saved = $this->submitWithFiles($kernel, '/immo/biens', [
+            'name' => 'Villa photo p20',
+            'kind' => 'villa',
+            'address' => 'Almadies',
+            'city' => 'Dakar',
+        ], [
+            'image' => [
+                'name' => 'facade.png',
+                'type' => 'image/png',
+                'tmp_name' => $png,
+                'error' => UPLOAD_ERR_OK,
+                'size' => (int) filesize($png),
+            ],
+        ], '/immo/biens/nouveau');
+        $this->assertSame(302, $saved->status());
+        $propertyId = (int) $this->value('SELECT id FROM loyer_properties WHERE tenant_id = ? AND name = ?', [$tenantId, 'Villa photo p20']);
+        $this->assertGreaterThan(0, $propertyId);
+        $imagePath = (string) $this->value('SELECT image_path FROM loyer_properties WHERE id = ?', [$propertyId]);
+        $this->assertMatchesRegularExpression('#^immo/' . $tenantId . '/[a-f0-9]{32}\.webp$#', $imagePath);
+        $absolute = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $imagePath);
+        $this->assertFileExists($absolute);
+
+        $this->insert('loyer_units', [
+            'tenant_id' => $tenantId,
+            'property_id' => $propertyId,
+            'label' => 'Villa entière',
+            'default_rent_minor' => 450000,
+            'is_active' => 1,
+        ]);
+        $slug = (string) $this->value('SELECT slug FROM tenants WHERE id = ?', [$tenantId]);
+        $this->logout($kernel);
+
+        $portal = $this->get($kernel, '/t/' . $slug);
+        $this->assertSame(200, $portal->status());
+        $this->assertStringContainsString('im-hero', $portal->content());
+        $this->assertStringContainsString('Villa photo p20', $portal->content());
+        $this->assertStringContainsString('/t/' . $slug . '/bien/' . $propertyId . '/image', $portal->content());
+
+        $image = $this->get($kernel, '/t/' . $slug . '/bien/' . $propertyId . '/image');
+        $this->assertSame(200, $image->status());
+        $this->assertSame('image/webp', $image->headers()['Content-Type'] ?? '');
+        $this->assertNotSame('', $image->content());
+
+        $otherId = $this->tenant(Sector::LOYER);
+        $otherSlug = (string) $this->value('SELECT slug FROM tenants WHERE id = ?', [$otherId]);
+        $this->assertSame(404, $this->get($kernel, '/t/' . $otherSlug . '/bien/' . $propertyId . '/image')->status());
+
+        if (is_file($absolute)) {
+            unlink($absolute);
+        }
+        if (is_file($png)) {
+            unlink($png);
+        }
+    }
+
+    private function pngFile(int $width, int $height): string
+    {
+        $image = imagecreatetruecolor($width, $height);
+        $this->assertInstanceOf(\GdImage::class, $image);
+        imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, imagecolorallocate($image, 15, 159, 110));
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sesam-immo-' . bin2hex(random_bytes(4)) . '.png';
+        imagepng($image, $path);
+        imagedestroy($image);
+
+        return $path;
+    }
+
     /**
      * @param array<string, string> $query
      */

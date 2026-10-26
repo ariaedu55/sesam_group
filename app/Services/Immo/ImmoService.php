@@ -11,12 +11,15 @@ use Sesam\Core\Database\Connection;
 use Sesam\Core\HttpException;
 use Sesam\Core\Immo\ImmoCatalog;
 use Sesam\Core\Immo\ImmoLedger;
+use Sesam\Core\Tenant\Sector;
 use Sesam\Core\Tenant\TenantContext;
 use Sesam\Core\Validation\ValidationException;
+use Sesam\Models\Tenant;
 use Sesam\Models\User;
 use Sesam\Services\MessagingService;
 use Sesam\Services\PaymentService;
 use Sesam\Services\Service;
+use Sesam\Services\Storage\ImageUploadService;
 
 /**
  * Sesam Immo : biens et logements, locataires, baux, loyers (paiements partiels, quittances),
@@ -45,6 +48,7 @@ final class ImmoService extends Service
 
     private readonly \PDO $pdo;
     private readonly ImmoLedger $ledger;
+    private ?ImageUploadService $images = null;
 
     /**
      * @param array{host: string, port: string, name: string, user: string, password: string} $database
@@ -57,6 +61,11 @@ final class ImmoService extends Service
     ) {
         $this->pdo = Connection::make($database);
         $this->ledger = new ImmoLedger($this->pdo);
+    }
+
+    public function useImages(ImageUploadService $images): void
+    {
+        $this->images = $images;
     }
 
     // ================================================================ Réglages
@@ -912,9 +921,29 @@ final class ImmoService extends Service
     }
 
     /**
-     * @param array<string, mixed> $input
+     * Photo publique d'un bien, isolée au commerce du slug.
+     *
+     * @return array{contents: string, mime: string}
      */
-    public function saveProperty(User $actor, ?int $id, array $input): int
+    public function propertyImage(Tenant $tenant, int $id): array
+    {
+        if ($this->images === null || $tenant->sector() !== Sector::LOYER || $id < 1) {
+            throw new HttpException(404, 'Image introuvable.');
+        }
+        $row = $this->row('SELECT image_path FROM loyer_properties WHERE id = ? AND tenant_id = ?', [$id, $tenant->id()]);
+        $path = is_array($row) && is_string($row['image_path'] ?? null) ? (string) $row['image_path'] : '';
+        if ($path === '') {
+            throw new HttpException(404, 'Image introuvable.');
+        }
+
+        return $this->images->read($path);
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @param array<string, mixed>|null $image
+     */
+    public function saveProperty(User $actor, ?int $id, array $input, ?array $image = null, bool $removeImage = false): int
     {
         $tenantId = $this->tenantId($actor, Permission::LOYER_PROPERTIES);
         $text = static fn (string $key, int $max): ?string => ($v = mb_substr(trim((string) ($input[$key] ?? '')), 0, $max)) !== '' ? $v : null;
@@ -930,17 +959,46 @@ final class ImmoService extends Service
         if ($errors !== []) {
             throw new ValidationException($errors);
         }
+        $currentPath = null;
+        if ($id !== null) {
+            $current = $this->row('SELECT image_path FROM loyer_properties WHERE id = ? AND tenant_id = ?', [$id, $tenantId]);
+            if ($current === null) {
+                throw new HttpException(404, 'Bien introuvable.');
+            }
+            $currentPath = is_string($current['image_path'] ?? null) && $current['image_path'] !== '' ? (string) $current['image_path'] : null;
+        }
+        $path = $this->storePropertyImage($tenantId, $image);
         $data = [$name, $kind, $text('address', 255), $text('city', 80), $text('owner_name', 120), $text('owner_phone', 40), $text('notes', 1000)];
         if ($id === null) {
-            $this->pdo->prepare('INSERT INTO loyer_properties (tenant_id, name, kind, address, city, owner_name, owner_phone, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())')
-                ->execute(array_merge([$tenantId], $data));
+            $this->pdo->prepare('INSERT INTO loyer_properties (tenant_id, name, kind, address, city, owner_name, owner_phone, notes, image_path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())')
+                ->execute(array_merge([$tenantId], $data, [$path]));
 
             return (int) $this->pdo->lastInsertId();
         }
         $this->pdo->prepare('UPDATE loyer_properties SET name = ?, kind = ?, address = ?, city = ?, owner_name = ?, owner_phone = ?, notes = ?, updated_at = UTC_TIMESTAMP() WHERE id = ? AND tenant_id = ?')
             ->execute(array_merge($data, [$id, $tenantId]));
+        if ($path !== null || $removeImage) {
+            $this->pdo->prepare('UPDATE loyer_properties SET image_path = ?, updated_at = UTC_TIMESTAMP() WHERE id = ? AND tenant_id = ?')
+                ->execute([$path, $id, $tenantId]);
+            $this->images?->delete($currentPath);
+        }
 
         return $id;
+    }
+
+    /**
+     * @param array<string, mixed>|null $image
+     */
+    private function storePropertyImage(int $tenantId, ?array $image): ?string
+    {
+        if ($this->images === null || !is_array($image) || (int) ($image['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+        try {
+            return $this->images->store($image, 'immo/' . $tenantId);
+        } catch (ValidationException $exception) {
+            throw new ValidationException(['image' => $exception->errors()['image'] ?? 'Photo invalide.']);
+        }
     }
 
     /**

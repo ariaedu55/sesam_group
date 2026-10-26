@@ -12,8 +12,10 @@ use Sesam\Core\Response\ViewRenderer;
 use Sesam\Core\Security\Csrf;
 use Sesam\Core\Tenant\Sector;
 use Sesam\Core\Validation\ValidationException;
+use Sesam\Core\Boutique\WhatsApp;
 use Sesam\Models\Tenant;
 use Sesam\Services\Boutique\BoutiqueService;
+use Sesam\Services\Immo\ImmoService;
 use Sesam\Services\Reservation\BookingService;
 use Sesam\Services\Reservation\SalonService;
 use Sesam\Services\Portal\PublicPortalService;
@@ -27,6 +29,7 @@ final class PortalController extends Controller
         private readonly BoutiqueService $boutique,
         private readonly ?SalonService $salon = null,
         private readonly ?BookingService $booking = null,
+        private readonly ?ImmoService $immo = null,
     ) {
         parent::__construct($views);
     }
@@ -41,6 +44,9 @@ final class PortalController extends Controller
         }
         if ($tenant->sector() === Sector::RESERVATION && $this->salon !== null) {
             return $this->salonPage($tenant, [], []);
+        }
+        if ($tenant->sector() === Sector::LOYER) {
+            return $this->immoPage($tenant, [], []);
         }
         $payload = $this->portal->homePayload($tenant);
 
@@ -69,6 +75,9 @@ final class PortalController extends Controller
         } catch (ValidationException $exception) {
             if ($tenant->sector() === Sector::RESERVATION && $this->salon !== null) {
                 return $this->salonPage($tenant, $input, $exception->errors(), 422);
+            }
+            if ($tenant->sector() === Sector::LOYER) {
+                return $this->immoPage($tenant, $input, $exception->errors(), 422);
             }
             $payload = $this->portal->homePayload($tenant);
 
@@ -153,6 +162,17 @@ final class PortalController extends Controller
         return $this->image($this->booking->prestationImage($tenant, $id));
     }
 
+    public function propertyImage(Request $request): Response
+    {
+        $tenant = $this->tenant($request);
+        $id = (int) $request->attribute('id', '0');
+        if ($tenant->sector() !== Sector::LOYER || $this->immo === null || $id < 1) {
+            throw new HttpException(404, 'Image introuvable.');
+        }
+
+        return $this->image($this->immo->propertyImage($tenant, $id));
+    }
+
     public function logo(Request $request): Response
     {
         return $this->brand($this->tenant($request), 'logo');
@@ -210,6 +230,32 @@ final class PortalController extends Controller
             'old' => $old,
             'errors' => $errors,
         ], $status, 'layouts/salon');
+    }
+
+    /**
+     * @param array<string, mixed> $old
+     * @param array<string, string> $errors
+     */
+    private function immoPage(Tenant $tenant, array $old, array $errors, int $status = 200): Response
+    {
+        $payload = $this->portal->homePayload($tenant);
+        $agency = $this->immo !== null ? $this->immo->settingsFor($tenant->id()) : [];
+        $phone = is_string($agency['whatsapp_phone'] ?? null) ? (string) $agency['whatsapp_phone'] : '';
+        $name = is_string($agency['display_name'] ?? null) && $agency['display_name'] !== ''
+            ? (string) $agency['display_name']
+            : $tenant->displayName();
+
+        return $this->render('portal/immo/home', $payload + [
+            'title' => $name . ' — Biens à louer',
+            'tenant' => $tenant,
+            'csrf' => $this->csrf->token(),
+            'old' => $old,
+            'errors' => $errors,
+            'agency' => $agency,
+            'whatsapp' => $phone !== '' && WhatsApp::isValid($phone)
+                ? WhatsApp::link($phone, 'Bonjour, je vous contacte depuis la page de ' . $name . '.')
+                : '',
+        ], $status, 'layouts/immo');
     }
 
     public function confirmation(Request $request): Response
@@ -306,6 +352,6 @@ final class PortalController extends Controller
             'title' => $tenant->displayName(),
             'tenant' => $tenant,
             'csrf' => $this->csrf->token(),
-        ], $status, 'layouts/portal');
+        ], $status, $tenant->sector() === Sector::LOYER ? 'layouts/immo' : 'layouts/portal');
     }
 }

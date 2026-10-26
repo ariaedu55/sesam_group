@@ -220,8 +220,12 @@ final class PublicPortalTest extends TestCase
             'is_active' => 1,
         ]);
         $list = $kernel->handle(new Request('GET', '/t/' . $loyer->slug()));
+        $this->assertSame(200, $list->status());
+        $this->assertStringContainsString('im-hero', $list->content());
+        $this->assertStringContainsString('im-card', $list->content());
         $this->assertStringContainsString('Immeuble Plateau', $list->content());
         $this->assertStringContainsString('F3-12', $list->content());
+        $this->assertStringNotContainsString('/bien/' . $propertyId . '/image', $list->content());
         $ask = $kernel->handle($this->post('/t/' . $loyer->slug(), [
             '_csrf' => $this->csrf($kernel, '/t/' . $loyer->slug()),
             'unit_label' => 'F3-12',

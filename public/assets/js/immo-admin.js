@@ -41,4 +41,25 @@
             toggle();
         }
     });
+
+    document.querySelectorAll('[data-preview]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var target = document.getElementById(input.getAttribute('data-preview') || '');
+            var file = input.files && input.files[0];
+            if (!target || !file || !window.FileReader || file.type.indexOf('image/') !== 0) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function () {
+                var img = document.createElement('img');
+                img.className = target.className;
+                img.id = target.id;
+                img.alt = '';
+                img.src = String(reader.result || '');
+                target.replaceWith(img);
+                target = img;
+            };
+            reader.readAsDataURL(file);
+        });
+    });
 }());

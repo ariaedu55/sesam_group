@@ -1,5 +1,10 @@
 # Journal des changements
 
+## 2026-10-26 — Portails publics et photo des biens Immo
+
+- Portails publics Réservation, Boutique et Immo : mise en page plus compacte sur mobile et tablette, cartes Boutique/Réservation limitées à 320 px, deux cartes par ligne sur téléphone, boutons Commander/Réserver plus petits (rayon 7 px).
+- Sesam Immo : photo facultative à l’ajout/modification d’un bien (`loyer_properties.image_path`), affichée sur le portail public.
+
 ## 2026-10-25 — Mise en ligne https://sesam-tech.com
 
 - Déploiement VPS Webuzo (`/home/jomas/sesam-tech.com`), document root `public/`, PHP 8.4-FPM.

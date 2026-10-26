@@ -30,6 +30,9 @@ $monthly = array_sum(array_map(static fn (array $u): int => (int) ($u['rent_mino
 ?>
 <section class="btq immo">
     <p><a class="muted" href="<?= Html::url('/immo/biens') ?>">← Tous les biens</a></p>
+    <?php if (!empty($property['image_path']) && ($tenant ?? null) instanceof \Sesam\Models\Tenant): ?>
+        <img class="immo-show-photo" src="<?= Html::url('/t/' . $tenant->slug() . '/bien/' . $property['id'] . '/image') ?>?v=<?= Html::e(rawurlencode((string) ($property['updated_at'] ?? ''))) ?>" alt="<?= Html::e($property['name']) ?>" width="960" height="420">
+    <?php endif; ?>
     <header class="btq-head">
         <div>
             <h1><?= Html::e($property['name']) ?></h1>

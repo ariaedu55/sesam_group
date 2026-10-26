@@ -201,8 +201,20 @@ final class ImmoController extends Controller
         $id = $request->attribute('id') !== null ? $this->id($request) : null;
         $input = $this->only($request, self::PROPERTY_FIELDS);
         try {
-            $propertyId = $this->immo->saveProperty($actor, $id, $input);
+            $propertyId = $this->immo->saveProperty(
+                $actor,
+                $id,
+                $input,
+                $request->file('image'),
+                $request->input('remove_image') === '1',
+            );
         } catch (ValidationException $exception) {
+            if ($id !== null) {
+                $existing = $this->immo->property($actor, $id)['property'] ?? [];
+                $input['image_path'] = $existing['image_path'] ?? null;
+                $input['updated_at'] = $existing['updated_at'] ?? '';
+            }
+
             return $this->propertyFormView($actor, $id, $input, $exception->errors(), 422);
         }
         $this->flash($id === null ? 'Bien ajouté. Ajoutez maintenant ses logements.' : 'Bien enregistré.');

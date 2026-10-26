@@ -161,13 +161,14 @@ abstract class IntegrationTestCase extends TestCase
 
     /**
      * @param array<string, mixed> $body
+     * @param array<string, mixed> $files
      */
-    protected function post(string $path, array $body, ?string $ip = null): Request
+    protected function post(string $path, array $body, ?string $ip = null, array $files = []): Request
     {
         $ip ??= '198.51.100.' . random_int(1, 250);
         $this->ips[] = $ip;
 
-        return new Request('POST', $path, [], $body, [], [], false, $ip);
+        return new Request('POST', $path, [], $body, [], [], false, $ip, '', $files);
     }
 
     /**
@@ -178,6 +179,17 @@ abstract class IntegrationTestCase extends TestCase
     protected function submit(Kernel $kernel, string $path, array $body = [], string $tokenPage = '/profil'): Response
     {
         return $kernel->handle($this->post($path, ['_csrf' => $this->csrf($kernel, $tokenPage)] + $body));
+    }
+
+    /**
+     * POST authentifié avec fichier (photo de bien, produit…).
+     *
+     * @param array<string, mixed> $body
+     * @param array<string, mixed> $files
+     */
+    protected function submitWithFiles(Kernel $kernel, string $path, array $body, array $files, string $tokenPage = '/profil'): Response
+    {
+        return $kernel->handle($this->post($path, ['_csrf' => $this->csrf($kernel, $tokenPage)] + $body, null, $files));
     }
 
     protected function get(Kernel $kernel, string $path): Response

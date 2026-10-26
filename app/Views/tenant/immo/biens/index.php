@@ -30,6 +30,13 @@ $icon = dirname(__DIR__, 3) . '/partials/ui-icon.php';
             <?php foreach ($items as $item): ?>
                 <?php $units = (int) $item['units']; $occupied = (int) $item['occupied']; ?>
                 <a class="btq-card immo-property" href="<?= Html::url('/immo/biens/' . $item['id']) ?>">
+                    <span class="immo-property-media<?= !empty($item['image_path']) ? '' : ' is-empty' ?>">
+                        <?php if (!empty($item['image_path']) && ($tenant ?? null) instanceof \Sesam\Models\Tenant): ?>
+                            <img src="<?= Html::url('/t/' . $tenant->slug() . '/bien/' . $item['id'] . '/image') ?>?v=<?= Html::e(rawurlencode((string) ($item['updated_at'] ?? ''))) ?>" alt="" width="480" height="300" loading="lazy" decoding="async">
+                        <?php else: ?>
+                            <span aria-hidden="true"><?= Html::e(Html::initials((string) $item['name'])) ?></span>
+                        <?php endif; ?>
+                    </span>
                     <span class="immo-property-kind"><?= Html::e(ImmoCatalog::PROPERTY_KINDS[$item['kind']] ?? $item['kind']) ?></span>
                     <strong><?= Html::e($item['name']) ?></strong>
                     <small><?= Html::e(trim(($item['address'] ?? '') . (($item['city'] ?? '') !== '' && $item['city'] !== null ? ', ' . $item['city'] : ''), ', ')) ?: '&nbsp;' ?></small>

@@ -121,7 +121,7 @@ Permissions : `commande.view`, `commande.products`, `commande.orders`.
 
 Secteur commerce `loyer`. Portail public : lecture des biens/unités + client/activité de contact. Pas d’encaissement de loyer sur le portail.
 
-`loyer_properties` / `loyer_units` : biens et unités locatives.
+`loyer_properties` / `loyer_units` : biens et unités locatives. Colonne `loyer_properties.image_path` (migration `202610261000_immo_property_image.sql`) : photo facultative du bien, chemin sous `storage/uploads/immo/{tenant_id}/`.
 
 `loyer_leases` : contrat locataire (client CRM), loyer, jour d'échéance (1–28), statut `active` / `ended`.
 
