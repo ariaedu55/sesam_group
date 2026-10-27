@@ -568,7 +568,7 @@ body.is-app::after {
     position: relative;
     min-height: 100vh;
     overflow-x: clip;
-    background: linear-gradient(145deg, #eef4ff 0%, #f8faff 42%, #ece8ff 100%);
+    background: #eef4ff;
 }
 
 .auth-page {
@@ -587,7 +587,7 @@ body.is-app::after {
     display: none;
     padding: clamp(2rem, 5vw, 4rem);
     color: #fff;
-    background: linear-gradient(155deg, #031a42 0%, #0349b8 48%, #087cff 100%);
+    background: #0349b8;
     overflow: hidden;
 }
 
@@ -602,7 +602,7 @@ body.is-app::after {
     position: absolute;
     inset: auto -20% -30% -10%;
     height: 70%;
-    background: radial-gradient(circle at 30% 40%, rgba(0, 217, 245, 0.35), transparent 62%);
+    background: rgba(0, 217, 245, 0.22);
     pointer-events: none;
 }
 
@@ -751,7 +751,7 @@ body.is-app::after {
 
 @media (max-width: 959px) {
     .auth-body {
-        background: linear-gradient(165deg, #e8f0ff 0%, #f5f8ff 38%, #ebe6ff 100%);
+        background: #eef3ff;
     }
 
     .auth-main {

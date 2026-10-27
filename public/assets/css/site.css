@@ -550,6 +550,7 @@ p {
     display: grid;
     gap: 0.9rem;
     justify-items: start;
+    order: 1;
 }
 
 .hx-title .line {
@@ -648,6 +649,7 @@ html:not(.js) .hx-rot-list {
 /* Scène : photo réelle + maquette du service actif */
 .hx-stage {
     position: relative;
+    order: 2;
     min-height: 340px;
     border-radius: var(--r);
     background: var(--ink);
@@ -907,14 +909,24 @@ html:not(.js) .hx-rot-list {
         grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
     }
 
+    .hx-copy {
+        order: 1;
+    }
+
     .hx-stage {
+        order: 2;
         min-height: 460px;
     }
 }
 
 /* Tablette : densifier sans perdre la lisibilité. */
 @media (min-width: 561px) and (max-width: 979px) {
+    .hx-copy {
+        order: 2;
+    }
+
     .hx-stage {
+        order: 1;
         min-height: 360px;
     }
 
@@ -941,12 +953,14 @@ html:not(.js) .hx-rot-list {
 }
 
 @media (max-width: 560px) {
-    .hx-stage {
-        min-height: 300px;
+    .hx-copy {
+        order: 2;
+        gap: 0.75rem;
     }
 
-    .hx-copy {
-        gap: 0.75rem;
+    .hx-stage {
+        order: 1;
+        min-height: 300px;
     }
 
     .hx-device--phone {
@@ -2166,7 +2180,7 @@ textarea.input {
 /* ---------- Inscription « Commencer » (page dédiée) ---------- */
 
 .page-commencer {
-    background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 28%);
+    background: var(--bg);
 }
 
 .signup-hero {
@@ -2220,11 +2234,10 @@ textarea.input {
     gap: 1.35rem;
     padding: clamp(1.35rem, 3.5vw, 2rem);
     border-radius: 1.5rem;
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--card);
     box-shadow:
         0 22px 48px -32px rgba(7, 26, 61, 0.35),
         inset 0 0 0 1px rgba(7, 26, 61, 0.08);
-    backdrop-filter: blur(12px);
 }
 
 .signup-steps-nav {
@@ -2258,7 +2271,7 @@ textarea.input {
     font-size: 0.72rem;
     font-weight: 800;
     color: #fff;
-    background: linear-gradient(135deg, var(--blue), #087cff);
+    background: var(--blue);
 }
 
 .signup-step {
@@ -2266,7 +2279,7 @@ textarea.input {
     padding: 1.1rem 1rem 1.15rem;
     border: 0;
     border-radius: 1.1rem;
-    background: linear-gradient(180deg, rgba(244, 247, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+    background: var(--paper);
     box-shadow: inset 0 0 0 1px rgba(7, 26, 61, 0.07);
 }
 
@@ -2291,8 +2304,7 @@ textarea.input {
     font-size: 0.85rem;
     font-weight: 800;
     color: #fff;
-    background: linear-gradient(145deg, #0349b8, #087cff);
-    box-shadow: 0 8px 16px -10px rgba(3, 73, 184, 0.8);
+    background: var(--blue);
 }
 
 .signup-service-grid {
@@ -2377,11 +2389,152 @@ textarea.input {
 }
 
 .signup-aside-secondary {
-    background: linear-gradient(180deg, #fff 0%, #f3f7ff 100%);
+    background: var(--card);
 }
 
 .page-commencer .password-field .input {
     min-height: 3rem;
+}
+
+@media (max-width: 959px) {
+    .page-commencer .signup-hero {
+        padding: 1rem 0 0.75rem;
+    }
+
+    .page-commencer .signup-hero-title {
+        font-size: clamp(1.45rem, 6vw, 1.85rem);
+    }
+
+    .page-commencer .signup-hero-lead {
+        font-size: 0.92rem;
+        line-height: 1.45;
+    }
+
+    .page-commencer .signup-hero-badge {
+        font-size: 0.68rem;
+        padding: 0.28rem 0.65rem;
+        letter-spacing: 0.04em;
+    }
+
+    .page-commencer .signup-form.quote-form {
+        gap: 0.85rem;
+        padding: 1rem 0.85rem 1.15rem;
+        border-radius: 1.1rem;
+    }
+
+    .page-commencer .signup-steps-nav {
+        gap: 0.35rem;
+        margin: 0;
+    }
+
+    .page-commencer .signup-steps-nav li {
+        padding: 0.22rem 0.55rem;
+        font-size: 0.72rem;
+    }
+
+    .page-commencer .signup-steps-nav span {
+        width: 1.1rem;
+        height: 1.1rem;
+        font-size: 0.62rem;
+    }
+
+    .page-commencer .signup-step {
+        padding: 0.75rem 0.7rem 0.85rem;
+        border-radius: 0.85rem;
+    }
+
+    .page-commencer .signup-step-title {
+        gap: 0.45rem;
+        margin: 0 0 0.55rem;
+        font-size: 0.92rem;
+    }
+
+    .page-commencer .signup-step-num {
+        flex: 0 0 1.4rem;
+        width: 1.4rem;
+        height: 1.4rem;
+        font-size: 0.72rem;
+        border-radius: 0.4rem;
+    }
+
+    .page-commencer .signup-service-grid {
+        gap: 0.4rem;
+    }
+
+    .page-commencer .signup-service {
+        gap: 0.55rem;
+        padding: 0.65rem 0.7rem;
+        border-radius: 0.75rem;
+    }
+
+    .page-commencer .signup-service-icon {
+        flex: 0 0 2rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.55rem;
+    }
+
+    .page-commencer .signup-service-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .page-commencer .signup-service small {
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+
+    .page-commencer .signup-fields {
+        gap: 0.7rem;
+        grid-template-columns: 1fr;
+    }
+
+    .page-commencer .signup-input,
+    .page-commencer .signup-form .input,
+    .page-commencer .password-field .input {
+        min-height: 2.65rem;
+        font-size: 0.95rem;
+        border-radius: 0.7rem;
+    }
+
+    .page-commencer .field label {
+        font-size: 0.85rem;
+    }
+
+    .page-commencer .signup-terms {
+        font-size: 0.82rem;
+        gap: 0.45rem;
+    }
+
+    .page-commencer .signup-submit-btn {
+        min-height: 2.85rem;
+        font-size: 0.95rem;
+        border-radius: 0.8rem;
+    }
+
+    .page-commencer .signup-login {
+        font-size: 0.85rem;
+    }
+
+    .page-commencer .signup-aside {
+        gap: 0.75rem;
+    }
+
+    .page-commencer .signup-aside-panel {
+        padding: 1rem;
+        border-radius: 1rem;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 959px) {
+    .page-commencer .signup-fields {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .page-commencer .signup-fields .field:first-child,
+    .page-commencer .signup-fields .signup-terms {
+        grid-column: 1 / -1;
+    }
 }
 
 .choice-grid {
