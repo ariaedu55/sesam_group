@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Assistant IA Jotform (pages d'authentification).
+ * Assistant IA Jotform (site public et pages d'authentification).
  * Exigence : script embed fourni par Jotform.
  */
 return [

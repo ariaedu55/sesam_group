@@ -53,7 +53,10 @@ final class SecurityHardeningTest extends TestCase
             $this->assertArrayHasKey('Permissions-Policy', $headers, $label);
             $this->assertArrayNotHasKey('Strict-Transport-Security', $headers, $label);
         }
-        $this->assertStringContainsString("script-src 'self';", SecurityHeaders::CONTENT_SECURITY_POLICY);
+        $this->assertStringContainsString("script-src 'self'", SecurityHeaders::CONTENT_SECURITY_POLICY);
+        $this->assertStringContainsString('https://cdn.jotfor.ms', SecurityHeaders::CONTENT_SECURITY_POLICY);
+        $this->assertStringContainsString('https://www.google.com', SecurityHeaders::CONTENT_SECURITY_POLICY);
+        $this->assertStringContainsString('https://maps.google.com', SecurityHeaders::CONTENT_SECURITY_POLICY);
         $this->assertStringContainsString("frame-ancestors 'none'", SecurityHeaders::CONTENT_SECURITY_POLICY);
     }
 

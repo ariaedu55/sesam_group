@@ -69,6 +69,15 @@ final class PublicSiteTest extends TestCase
         $this->assertStringContainsString('+221 71 097 45 45', $contact);
         $this->assertStringContainsString('183 West Foire', $contact);
         $this->assertStringContainsString('contact-map', $contact);
+        $this->assertStringContainsString('google.com/maps', $contact);
+        $this->assertStringContainsString('cdn.jotfor.ms/agent/embedjs', $contact);
+
+        $home = html_entity_decode($kernel->handle(new Request('GET', '/'))->content(), ENT_QUOTES, 'UTF-8');
+        $this->assertStringContainsString('cdn.jotfor.ms/agent/embedjs', $home);
+        foreach (['/services', '/offres', '/a-propos', '/portfolio', '/devis', '/commencer', '/connexion'] as $publicPath) {
+            $page = $kernel->handle(new Request('GET', $publicPath))->content();
+            $this->assertStringContainsString('cdn.jotfor.ms/agent/embedjs', $page, $publicPath);
+        }
 
         $quote = html_entity_decode($kernel->handle(new Request('GET', '/devis'))->content(), ENT_QUOTES, 'UTF-8');
         $this->assertStringContainsString('Propriétaire ou immeuble', $quote);
@@ -82,7 +91,7 @@ final class PublicSiteTest extends TestCase
         }
 
         $signup = html_entity_decode($kernel->handle(new Request('GET', '/commencer'))->content(), ENT_QUOTES, 'UTF-8');
-        foreach (['Essai gratuit 1 mois', 'Sesam Réservation', 'Sesam Boutique', 'Sesam Immo', 'Numéro WhatsApp', 'Mot de passe', 'Se connecter'] as $needle) {
+        foreach (['Essai gratuit 1 mois', 'Sesam Réservation', 'Sesam Boutique', 'Sesam Immo', 'Numéro WhatsApp', 'Mot de passe', 'Se connecter', 'data-signup-form', 'data-signup-step', 'data-signup-next', 'Continuer'] as $needle) {
             $this->assertStringContainsString($needle, $signup);
         }
     }

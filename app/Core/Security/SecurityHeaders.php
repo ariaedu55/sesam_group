@@ -16,7 +16,7 @@ final class SecurityHeaders
     public const CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self' https://cdn.jotfor.ms https://js.jotform.com https://www.jotform.com; style-src 'self' 'unsafe-inline' https://cdn.jotfor.ms https://www.jotform.com; "
         . "img-src 'self' data: blob: https://cdn.jotfor.ms https://www.jotform.com https://form.jotform.com; font-src 'self' https://cdn.jotfor.ms https://www.jotform.com; "
         . "connect-src 'self' https://fcmregistrations.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://api.jotform.com https://www.jotform.com https://form.jotform.com https://cdn.jotfor.ms; "
-        . "frame-src https://www.jotform.com https://form.jotform.com https://cdn.jotfor.ms; worker-src 'self' blob: https://www.jotform.com https://cdn.jotfor.ms; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+        . "frame-src https://www.jotform.com https://form.jotform.com https://cdn.jotfor.ms https://www.google.com https://maps.google.com; worker-src 'self' blob: https://www.jotform.com https://cdn.jotfor.ms; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
     public function apply(Request $request, Response $response): Response
     {

@@ -1752,11 +1752,20 @@ html:not(.js) .hx-rot-list {
 }
 
 .page-contact .contact-map {
+    display: block;
     width: 100%;
+    height: 320px;
     min-height: 280px;
     border: 0;
     border-radius: var(--r);
+    background: var(--paper-2);
     box-shadow: inset 0 0 0 1px var(--line);
+}
+
+body.site [class*="jotform"],
+body.site iframe[src*="jotform"],
+body.site iframe[src*="jotfor"] {
+    z-index: 900;
 }
 
 .page-contact .contact-map-caption {
@@ -2260,6 +2269,17 @@ textarea.input {
     color: var(--muted);
     background: var(--paper);
     box-shadow: inset 0 0 0 1px var(--line);
+    cursor: pointer;
+}
+
+.signup-steps-nav li.is-current {
+    color: var(--ink);
+    background: #e8f1ff;
+    box-shadow: inset 0 0 0 2px var(--blue);
+}
+
+.signup-steps-nav li.is-done {
+    color: var(--ink);
 }
 
 .signup-steps-nav span {
@@ -2324,8 +2344,8 @@ textarea.input {
 
     .signup-fields .field:first-child,
     .signup-fields .field:nth-child(2),
+    .signup-fields .field:has(.password-field),
     .signup-fields .signup-terms,
-    .signup-fields .password-field,
     .signup-fields .field-error {
         grid-column: 1 / -1;
     }
@@ -2370,10 +2390,85 @@ textarea.input {
     gap: 0.25rem;
 }
 
+.signup-form.is-wizard .signup-step:not(.is-current) {
+    display: none;
+}
+
+.signup-form:not(.is-wizard) .signup-nav {
+    display: none;
+}
+
+.signup-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.signup-nav-back,
+.signup-nav-next {
+    min-height: 2.85rem;
+}
+
+.signup-nav-next {
+    margin-left: auto;
+}
+
+.signup-form.is-wizard [hidden] {
+    display: none !important;
+}
+
+.signup-form.is-wizard .signup-submit {
+    display: none;
+}
+
+.signup-form.is-wizard .signup-step[data-signup-step="3"].is-current ~ .signup-submit {
+    display: grid;
+}
+
 .signup-submit {
     display: grid;
     gap: 0.85rem;
     padding-top: 0.25rem;
+}
+
+.password-field {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.password-field .input {
+    flex: 1;
+    padding-right: 2.75rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 0 0.7rem 0.7rem 0;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+    color: var(--blue);
+    outline: none;
+}
+
+.password-toggle .ui-icon {
+    width: 1.25rem;
+    height: 1.25rem;
 }
 
 .signup-submit-btn {
@@ -2532,6 +2627,7 @@ textarea.input {
     }
 
     .page-commencer .signup-fields .field:first-child,
+    .page-commencer .signup-fields .field:has(.password-field),
     .page-commencer .signup-fields .signup-terms {
         grid-column: 1 / -1;
     }

@@ -57,8 +57,10 @@ $notes = [
                     class="contact-map"
                     title="Carte — <?= Html::e($contactInfo['address']) ?>"
                     src="<?= Html::e($contactInfo['map_embed']) ?>"
+                    width="600"
+                    height="320"
                     loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade"
+                    referrerpolicy="strict-origin-when-cross-origin"
                     allowfullscreen
                 ></iframe>
                 <p class="contact-map-caption">

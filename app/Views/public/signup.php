@@ -27,21 +27,21 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
         <div class="s-wrap signup-hero-inner">
             <p class="signup-hero-badge">Essai gratuit 1 mois · sans carte bancaire</p>
             <h1 class="signup-hero-title">Créez votre espace <span class="s-mark">en une minute</span></h1>
-            <p class="signup-hero-lead">Choisissez votre outil, remplissez le formulaire : vous accédez tout de suite à votre tableau de bord. Après l'essai, continuez en abonnement mensuel (Wave ou Orange Money).</p>
+            <p class="signup-hero-lead">Trois étapes : votre métier, vos coordonnées, puis votre compte. Vous entrez ensuite directement dans votre espace.</p>
         </div>
     </header>
 
     <section class="s-wrap signup-layout quote">
-        <form class="signup-form quote-form" method="post" action="<?= Html::url('/commencer') ?>" novalidate>
+        <form class="signup-form quote-form" method="post" action="<?= Html::url('/commencer') ?>" data-signup-form novalidate>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
 
-            <ol class="signup-steps-nav" aria-label="Étapes du formulaire">
-                <li><span>1</span> Service</li>
-                <li><span>2</span> Vous</li>
-                <li><span>3</span> Connexion</li>
+            <ol class="signup-steps-nav" data-signup-nav aria-label="Étapes du formulaire">
+                <li data-step="1"><span>1</span> Service</li>
+                <li data-step="2"><span>2</span> Vous</li>
+                <li data-step="3"><span>3</span> Connexion</li>
             </ol>
 
-            <fieldset class="signup-step signup-services">
+            <fieldset class="signup-step signup-services is-current" data-signup-step="1">
                 <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">1</span> Votre service</legend>
                 <div class="signup-service-grid">
                     <?php foreach ($services as $key => [$label, $hint, $iconName]): ?>
@@ -58,7 +58,7 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
                 <?php $err('sector'); ?>
             </fieldset>
 
-            <fieldset class="signup-step">
+            <fieldset class="signup-step" data-signup-step="2">
                 <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">2</span> Vous</legend>
                 <div class="signup-fields">
                     <div class="field">
@@ -78,7 +78,7 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
                 </div>
             </fieldset>
 
-            <fieldset class="signup-step">
+            <fieldset class="signup-step" data-signup-step="3">
                 <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">3</span> Votre connexion</legend>
                 <div class="signup-fields">
                     <div class="field">
@@ -114,13 +114,21 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
                 </div>
             </fieldset>
 
-            <div class="signup-submit">
+            <div class="signup-nav">
+                <button class="s-btn s-btn--ghost s-btn--plain signup-nav-back" type="button" data-signup-back hidden>Retour</button>
+                <button class="s-btn signup-nav-next" type="button" data-signup-next>
+                    Continuer
+                    <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span>
+                </button>
+            </div>
+            <div class="signup-submit" data-signup-submit>
                 <button class="s-btn signup-submit-btn" type="submit">
                     Créer mon espace gratuitement
                     <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span>
                 </button>
-                <p class="signup-login">Déjà un compte&nbsp;? <a href="<?= Html::url('/connexion') ?>">Se connecter</a></p>
             </div>
+            <p class="signup-login">Déjà un compte&nbsp;? <a href="<?= Html::url('/connexion') ?>">Se connecter</a></p>
+            <script src="<?= Html::asset('assets/js/signup.js') ?>"></script>
         </form>
 
         <aside class="quote-side signup-aside">
