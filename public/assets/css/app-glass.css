@@ -686,12 +686,93 @@ body.is-app::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem) clamp(5rem, 10vw, 6rem);
+    padding: clamp(0.85rem, 3vw, 2.5rem) clamp(1rem, 4vw, 2rem) clamp(5rem, 10vw, 6rem);
+}
+
+.auth-main-inner {
+    width: 100%;
+    max-width: 26rem;
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+
+.auth-back--top {
+    text-align: left;
+}
+
+.auth-back--top a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0;
+    font-size: 0.9rem;
+}
+
+.auth-mobile-brand {
+    display: grid;
+    justify-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0 0.5rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.auth-mobile-brand img {
+    width: 4.75rem;
+    height: 4.75rem;
+    border-radius: 1.2rem;
+    object-fit: contain;
+    background: #fff;
+    box-shadow:
+        0 14px 32px -18px rgba(7, 26, 61, 0.45),
+        inset 0 0 0 1px rgba(7, 26, 61, 0.06);
+}
+
+.auth-mobile-brand-name {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--sesam-navy);
+}
+
+.auth-mobile-brand-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sesam-blue);
+    text-align: center;
+    max-width: 16rem;
+    line-height: 1.35;
+}
+
+@media (min-width: 960px) {
+    .auth-mobile-brand {
+        display: none;
+    }
+}
+
+@media (max-width: 959px) {
+    .auth-body {
+        background: linear-gradient(165deg, #e8f0ff 0%, #f5f8ff 38%, #ebe6ff 100%);
+    }
+
+    .auth-main {
+        align-items: start;
+        padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+    }
+
+    .auth-card {
+        border-color: rgba(8, 124, 255, 0.12);
+        box-shadow:
+            0 20px 44px -26px rgba(3, 73, 184, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
 }
 
 .auth-sheet {
     width: 100%;
-    max-width: 26rem;
     display: grid;
     gap: 1.25rem;
 }
