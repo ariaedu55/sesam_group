@@ -405,6 +405,137 @@
     };
     bindImagePreview(document);
 
+    document.addEventListener("click", function (event) {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+        var row = event.target.closest("[data-row-href]");
+        if (!row || event.target.closest("a, button, input, select, textarea, label")) {
+            return;
+        }
+        window.location.assign(row.getAttribute("data-row-href"));
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+        var row = event.target.closest("[data-row-href]");
+        if (!row || event.target.closest("a, button, input, select, textarea")) {
+            return;
+        }
+        event.preventDefault();
+        window.location.assign(row.getAttribute("data-row-href"));
+    });
+
+    document.querySelectorAll("form[data-live-filter]").forEach(function (form) {
+        var targetSelector = form.getAttribute("data-live-filter-target") || "";
+        var target = targetSelector ? document.querySelector(targetSelector) : null;
+        if (!target) {
+            return;
+        }
+        var delay = Number(form.getAttribute("data-live-filter-delay") || 280);
+        if (!Number.isFinite(delay) || delay < 0) {
+            delay = 280;
+        }
+        var searchField = form.querySelector('[name="q"]');
+        var timer = null;
+        var controller = null;
+        var buildUrl = function (extraParams) {
+            var params = new URLSearchParams(new FormData(form));
+            if (extraParams) {
+                Object.keys(extraParams).forEach(function (key) {
+                    if (extraParams[key] === null || extraParams[key] === "") {
+                        params.delete(key);
+                    } else {
+                        params.set(key, extraParams[key]);
+                    }
+                });
+            }
+            params.delete("page");
+            params.forEach(function (value, key) {
+                if (value === "") {
+                    params.delete(key);
+                }
+            });
+            var query = params.toString();
+            return form.action + (query ? "?" + query : "");
+        };
+
+        var load = function (url) {
+            if (controller && typeof controller.abort === "function") {
+                controller.abort();
+            }
+            controller = typeof AbortController === "function" ? new AbortController() : null;
+            target.classList.add("is-loading");
+            target.setAttribute("aria-busy", "true");
+            fetch(url, {
+                credentials: "same-origin",
+                signal: controller ? controller.signal : undefined,
+                headers: { "X-Sesam-Partial": "1" }
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("filter");
+                    }
+                    return response.text();
+                })
+                .then(function (html) {
+                    target.innerHTML = html;
+                    if (window.history && typeof window.history.replaceState === "function") {
+                        window.history.replaceState(null, "", url);
+                    }
+                })
+                .catch(function (error) {
+                    if (error && error.name === "AbortError") {
+                        return;
+                    }
+                    form.submit();
+                })
+                .then(function () {
+                    target.classList.remove("is-loading");
+                    target.removeAttribute("aria-busy");
+                });
+        };
+
+        var schedule = function () {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(function () {
+                load(buildUrl());
+            }, delay);
+        };
+
+        if (searchField) {
+            searchField.addEventListener("input", schedule);
+            searchField.addEventListener("search", function () {
+                if (searchField.value === "") {
+                    schedule();
+                }
+            });
+        }
+
+        form.querySelectorAll("select").forEach(function (select) {
+            select.addEventListener("change", function () {
+                load(buildUrl());
+            });
+        });
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            window.clearTimeout(timer);
+            load(buildUrl());
+        });
+
+        target.addEventListener("click", function (event) {
+            var link = event.target.closest("a[href]");
+            if (!link || !target.contains(link) || !link.closest("[data-live-filter-pages]")) {
+                return;
+            }
+            event.preventDefault();
+            load(link.href);
+        });
+    });
+
     /*
      * Formulaires en modale plein écran (espaces commerce et SESAM).
      * a[data-modal] : la page du formulaire est chargée puis affichée dans la modale.

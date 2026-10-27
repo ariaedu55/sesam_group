@@ -36,15 +36,26 @@ if ($status === OrderStatus::NEW) {
     $actions[] = [OrderStatus::NEW, 'Réactiver la commande', 'btn-secondary', 'bag'];
 }
 
+$heroBackHref = '/boutique/commandes';
+$heroBackLabel = 'Commandes';
+$heroTitle = 'Commande ' . $order->orderNumber();
+$heroSubtitle = 'Reçue le ' . $date($order->createdAt()) . ' · ' . ($order->source() === 'whatsapp' ? 'boutique en ligne' : 'saisie manuelle');
+$heroTone = 'electric';
+$heroInitials = null;
+$heroStatusText = OrderStatus::label($status);
+$heroStatusTone = OrderStatus::tone($status);
+$heroBadgesHtml = $order->isPaid() ? '<span class="btq-status btq-status-success">Payée</span>' : '';
+$heroStats = [
+    ['label' => 'Total', 'value' => Money::format($order->totalMinor())],
+    ['label' => 'Articles', 'value' => (string) $order->itemCount()],
+    ['label' => 'Client', 'value' => $order->customerName()],
+    ['label' => 'Paiement', 'value' => $order->isPaid() ? 'Reçu' : 'En attente', 'alert' => !$order->isPaid()],
+];
+$heroActions = '';
+
 ?>
-<section class="btq">
-    <header class="btq-head">
-        <div>
-            <h1>Commande <?= Html::e($order->orderNumber()) ?></h1>
-            <p class="muted">Reçue le <?= Html::e($date($order->createdAt())) ?> · <?= $order->source() === 'whatsapp' ? 'boutique en ligne' : 'saisie manuelle' ?></p>
-        </div>
-        <a class="btn btn-secondary" href="<?= Html::url('/boutique/commandes') ?>">Toutes les commandes</a>
-    </header>
+<section class="record-detail btq">
+    <?php require dirname(__DIR__, 3) . '/partials/record-hero.php'; ?>
 
     <?php if ($errors !== []): ?>
         <div class="alert alert-danger" role="alert">
@@ -62,10 +73,10 @@ if ($status === OrderStatus::NEW) {
         </div>
     <?php endif; ?>
 
-    <div class="btq-two">
+    <div class="record-body is-two btq-two">
         <div class="btq">
-            <section class="btq-card">
-                <h2>Produits</h2>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Produits'; $panelIcon = 'tag'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                 <div class="table-wrap">
                     <table class="data-table">
                         <thead>
@@ -91,8 +102,8 @@ if ($status === OrderStatus::NEW) {
             </section>
 
             <?php if ($canManage && $actions !== []): ?>
-                <section class="btq-card">
-                    <h2>Que voulez-vous faire ?</h2>
+                <section class="btq-card record-panel">
+                    <?php $panelTitle = 'Actions'; $panelIcon = 'spark'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                     <div class="btq-big-actions">
                         <?php foreach ($actions as [$next, $label, $class, $iconName]): ?>
                             <form method="post" action="<?= Html::url('/boutique/commandes/' . $order->id() . '/statut') ?>">
@@ -107,13 +118,13 @@ if ($status === OrderStatus::NEW) {
         </div>
 
         <div class="btq">
-            <section class="btq-card">
-                <h2>Client</h2>
-                <dl class="btq-dl">
-                    <dt>Nom</dt><dd><?= Html::e($order->customerName()) ?></dd>
-                    <?php if ($order->customerPhone() !== ''): ?><dt>Téléphone</dt><dd><a href="tel:<?= Html::e(preg_replace('/[^\d+]/', '', $order->customerPhone()) ?? '') ?>"><?= Html::e($order->customerPhone()) ?></a></dd><?php endif; ?>
-                    <?php if ($order->customerAddress() !== ''): ?><dt>Adresse</dt><dd><?= Html::e($order->customerAddress()) ?></dd><?php endif; ?>
-                    <?php if ($order->note() !== ''): ?><dt>Message</dt><dd><?= nl2br(Html::e($order->note())) ?></dd><?php endif; ?>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Client'; $panelIcon = 'person'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
+                <dl class="record-facts is-grid">
+                    <div><dt>Nom</dt><dd><?= Html::e($order->customerName()) ?></dd></div>
+                    <?php if ($order->customerPhone() !== ''): ?><div><dt>Téléphone</dt><dd><a href="tel:<?= Html::e(preg_replace('/[^\d+]/', '', $order->customerPhone()) ?? '') ?>"><?= Html::e($order->customerPhone()) ?></a></dd></div><?php endif; ?>
+                    <?php if ($order->customerAddress() !== ''): ?><div><dt>Adresse</dt><dd><?= Html::e($order->customerAddress()) ?></dd></div><?php endif; ?>
+                    <?php if ($order->note() !== ''): ?><div><dt>Message</dt><dd><?= nl2br(Html::e($order->note())) ?></dd></div><?php endif; ?>
                 </dl>
                 <div class="btq-big-actions">
                     <?php if ($whatsapp !== ''): ?>
@@ -125,8 +136,8 @@ if ($status === OrderStatus::NEW) {
                 </div>
             </section>
 
-            <section class="btq-card">
-                <h2>Paiement</h2>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Paiement'; $panelIcon = 'coin'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                 <p><span class="btq-status btq-status-<?= $order->isPaid() ? 'success' : 'warning' ?>"><?= $order->isPaid() ? 'Payée' : 'Pas encore payée' ?></span></p>
                 <?php if ($canManage): ?>
                     <form method="post" action="<?= Html::url('/boutique/commandes/' . $order->id() . '/paiement') ?>">

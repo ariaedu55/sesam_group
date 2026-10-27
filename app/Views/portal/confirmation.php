@@ -21,9 +21,9 @@ $mock = (bool) ($whatsapp_mock ?? true);
     <?php endif; ?>
     <article class="portal-confirm-card">
         <?php if ($status === DeliveryStatus::MOCK || $mock): ?>
-            <p>Un message WhatsApp de confirmation est prévu. En mode mock, il n’est <strong>pas expédié</strong> — l’intention est seulement journalisée.</p>
+            <p>Votre demande est bien enregistrée auprès de <?= Html::e($tenant?->displayName() ?? 'ce commerce') ?>. Vous recevrez une confirmation par message.</p>
         <?php elseif ($status === DeliveryStatus::SENT): ?>
-            <p>Un message WhatsApp a été enregistré comme envoyé.</p>
+            <p>Une confirmation vient de vous être envoyée sur WhatsApp.</p>
         <?php else: ?>
             <p>WhatsApp n’a pas pu partir. Votre demande est tout de même enregistrée auprès de <?= Html::e($tenant?->displayName() ?? 'ce commerce') ?>.</p>
         <?php endif; ?>

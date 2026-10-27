@@ -178,9 +178,8 @@ button:focus-visible {
 /* ---------- Hero ---------- */
 .im-hero {
     color: #fff;
-    background:
-        radial-gradient(1200px 420px at 10% -20%, rgba(15, 159, 110, 0.35), transparent 60%),
-        linear-gradient(165deg, #071a3d 0%, #0b2a5c 58%, #0a4a3a 100%);
+    background-color: #071a3d;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Ccircle cx='2' cy='2' r='1.6' fill='%23ffffff' fill-opacity='0.12'/%3E%3C/svg%3E");
 }
 
 .im-hero-inner {

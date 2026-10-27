@@ -1,5 +1,27 @@
 # Journal des changements
 
+## 2026-10-27 — Popups de bienvenue animés (espace connecté et site public)
+
+- À la connexion, un popup animé accueille l'utilisateur, une seule fois par connexion (`WelcomeService`, `partials/welcome.php`, `welcome.css`, `welcome.js`) :
+  - **Première connexion d'un commerce** : visite guidée en 3 écrans adaptée au métier (Réservation, Boutique, Immo) — fusée, planète, confettis — avec les 3 premiers gestes en liens directs, « Suivant », « Passer », glisser sur téléphone.
+  - **Retour d'un commerce** : « Bonjour / Bon après-midi / Bonsoir » selon l'heure, soleil levant, soleil ou lune, et les chiffres du jour qui défilent (rendez-vous du jour et à confirmer ; commandes à traiter et stock bas ; loyers à encaisser et en retard), plus les notifications non lues.
+  - **Équipe SESAM** : tableau de bord animé et chiffres de la console (nouveaux commerces, essais qui finissent, abonnements échus).
+- Site public : popup ouvert 2 secondes après l'arrivée, une fois par visite et par page (rien sur Contact et Devis). Accueil, Services, Offres, À propos et Réalisations tirent une variante au hasard parmi 7 (bienvenue / fusée, 1 mois offert / cadeau, démo en direct / téléphone, Réservation / agenda, Boutique / sac, Immo / immeuble, Sites web / navigateur) ; chaque page service affiche le popup dédié à son service. Puces d'avantages, bouton d'essai (service présélectionné), lien vers la démo, « Non merci ».
+- Fermeture fiabilisée : croix, « Non merci », fond ou Échap ferment immédiatement le popup (un seul écouteur, plus aucun clic capté pendant l'animation de sortie) ; un visiteur qui ferme un popup n'en revoit plus aucun pendant sa visite, même en changeant de page.
+- Format compact sur téléphone : illustration réduite, texte limité à 3 lignes, avantages en ligne, deux boutons côte à côte ; le popup occupe environ 40 % de l'écran.
+- Accessibles : fenêtre de dialogue, focus gardé dans le popup, Échap pour fermer, animations coupées si l'appareil demande moins de mouvement ; sur téléphone, le popup monte du bas de l'écran. Aplats SESAM, sans dégradé.
+- Tests `WelcomeTest`.
+
+## 2026-10-27 — Réservation en ligne guidée pas à pas, confirmation refaite
+
+- Page publique du salon : la réservation devient un parcours guidé, une étape à la fois (Prestation → Personne → Date et heure → Vos infos), avec barre de progression cliquable, bouton « Continuer » collé en bas de l'écran, passage automatique à l'étape suivante dès qu'un choix est fait, retour possible à tout moment.
+- Créneaux groupés par moment de la journée (matin, après-midi, soir) ; si un jour est complet ou fermé, le prochain jour libre est cherché automatiquement et proposé en un clic.
+- Dernière étape : récapitulatif modifiable (prestation, personne, date, prix, acompte), champs vérifiés avant l'envoi (nom, numéro), bouton « Confirmer mon rendez-vous » / « Confirmer et payer l'acompte », double envoi impossible. Sans JavaScript, le formulaire complet reste utilisable.
+- Nouvelle page de confirmation aux couleurs du salon (`portal/salon/confirmation.php`) : coche ou horloge selon que le rendez-vous est confirmé ou en attente, récapitulatif, « Et maintenant ? » en 3 points, WhatsApp et retour au salon. Le message technique « mode mock » n'est plus montré aux clients (page de confirmation générique aussi).
+- Atouts du salon sur une ligne compacte sur téléphone ; phrase d'accueil de la page Immo plus engageante.
+- Dégradés retirés (bannières salon et boutique, en-tête Immo) : aplats et motif de points, selon la charte.
+- Tests : parcours et confirmation (`ReservationModuleTest`, `PublicPortalTest`).
+
 ## 2026-10-26 — Portails publics et photo des biens Immo
 
 - Portails publics Réservation, Boutique et Immo : mise en page plus compacte sur mobile et tablette, cartes Boutique/Réservation limitées à 320 px, deux cartes par ligne sur téléphone, boutons Commander/Réserver plus petits (rayon 7 px).

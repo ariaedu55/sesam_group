@@ -17,28 +17,31 @@ if ($lease === []) {
 $active = $lease['status'] === 'active';
 $badge = ['paid' => ['success', 'Payé'], 'partial' => ['info', 'Partiel'], 'pending' => ['warning', 'À payer'], 'late' => ['danger', 'En retard'], 'cancelled' => ['muted', 'Annulé']];
 
+$heroBackHref = '/immo/baux';
+$heroBackLabel = 'Contrats de bail';
+$heroTitle = 'Bail ' . (string) $lease['reference'];
+$heroSubtitle = $lease['full_name'] . ' · ' . $lease['property_name'] . ' — ' . $lease['unit_label'];
+$heroTone = 'emerald';
+$heroInitials = Html::initials((string) $lease['full_name']);
+$heroStatusText = $active ? 'En cours' : 'Terminé';
+$heroStatusTone = $active ? 'success' : 'muted';
+$heroBadgesHtml = '';
+$heroStats = [
+    ['label' => 'Loyer + charges', 'value' => Money::format((int) $lease['rent_minor'] + (int) $lease['charges_minor']), 'hint' => 'Loyer ' . Money::format((int) $lease['rent_minor'])],
+    ['label' => 'Impayés', 'value' => Money::format((int) $lease['balance']), 'alert' => (int) $lease['balance'] > 0],
+    ['label' => 'Encaissé', 'value' => Money::format((int) $data['paidTotal'])],
+    ['label' => 'Caution', 'value' => (int) $lease['deposit_minor'] === 0 ? '—' : Money::format((int) $lease['deposit_minor'])],
+];
+$heroActions = '';
+
 ?>
-<section class="btq immo">
-    <p><a class="muted" href="<?= Html::url('/immo/baux') ?>">← Tous les contrats de bail</a></p>
-    <header class="btq-head">
-        <div>
-            <h1>Contrat de bail <?= Html::e((string) $lease['reference']) ?></h1>
-            <p class="muted"><a href="<?= Html::url('/immo/locataires/' . $lease['client_id']) ?>"><?= Html::e($lease['full_name']) ?></a> · <a href="<?= Html::url('/immo/biens/' . $lease['property_id']) ?>"><?= Html::e($lease['property_name']) ?></a> — <?= Html::e($lease['unit_label']) ?></p>
-        </div>
-        <span class="btq-status btq-status-<?= $active ? 'success' : 'muted' ?> immo-big-status"><?= $active ? 'En cours' : 'Terminé le ' . Html::e(ImmoCatalog::date($lease['ended_on'])) ?></span>
-    </header>
+<section class="record-detail btq immo">
+    <?php require dirname(__DIR__, 3) . '/partials/record-hero.php'; ?>
     <?php if ($errors !== []): ?><p class="alert alert-danger" role="alert"><?= Html::e(implode(' ', $errors)) ?></p><?php endif; ?>
 
-    <div class="btq-kpis">
-        <article class="btq-kpi"><p>Loyer + charges</p><strong><?= Html::e(Money::format((int) $lease['rent_minor'] + (int) $lease['charges_minor'])) ?></strong><span class="muted">loyer <?= Html::e(Money::format((int) $lease['rent_minor'])) ?></span></article>
-        <article class="btq-kpi<?= (int) $lease['balance'] > 0 ? ' is-alert' : '' ?>"><p>Impayés</p><strong><?= Html::e(Money::format((int) $lease['balance'])) ?></strong></article>
-        <article class="btq-kpi"><p>Total encaissé</p><strong><?= Html::e(Money::format((int) $data['paidTotal'])) ?></strong></article>
-        <article class="btq-kpi<?= (int) $lease['deposit_minor'] > 0 && $lease['deposit_paid_on'] === null ? ' is-alert' : '' ?>"><p>Caution</p><strong><?= Html::e(Money::format((int) $lease['deposit_minor'])) ?></strong><span class="muted"><?= (int) $lease['deposit_minor'] === 0 ? 'aucune' : ($lease['deposit_paid_on'] !== null ? 'versée le ' . Html::e(ImmoCatalog::date($lease['deposit_paid_on'])) : 'pas encore versée') ?></span></article>
-    </div>
-
-    <div class="btq-two">
-        <section class="btq-card">
-            <h2>Échéancier</h2>
+    <div class="record-body is-two btq-two">
+        <section class="btq-card record-panel">
+            <?php $panelTitle = 'Échéancier'; $panelIcon = 'calendar'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
             <?php if ($dues === []): ?>
                 <p class="muted">Aucune échéance.</p>
             <?php else: ?>
@@ -55,14 +58,14 @@ $badge = ['paid' => ['success', 'Payé'], 'partial' => ['info', 'Partiel'], 'pen
         </section>
 
         <div class="btq">
-            <section class="btq-card">
-                <h2>Conditions</h2>
-                <dl class="btq-dl">
-                    <dt>Entrée</dt><dd><?= Html::e(ImmoCatalog::date($lease['starts_on'])) ?></dd>
-                    <dt>Fin prévue</dt><dd><?= $lease['ends_on'] ? Html::e(ImmoCatalog::date($lease['ends_on'])) : 'Sans date de fin' ?></dd>
-                    <dt>Échéance</dt><dd>le <?= (int) $lease['due_day'] ?> de chaque mois</dd>
-                    <dt>Préavis</dt><dd><?= (int) $lease['notice_months'] ?> mois</dd>
-                    <?php if ($lease['end_reason']): ?><dt>Motif de sortie</dt><dd><?= Html::e($lease['end_reason']) ?></dd><?php endif; ?>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Conditions'; $panelIcon = 'file'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
+                <dl class="record-facts is-grid">
+                    <div><dt>Entrée</dt><dd><?= Html::e(ImmoCatalog::date($lease['starts_on'])) ?></dd></div>
+                    <div><dt>Fin prévue</dt><dd><?= $lease['ends_on'] ? Html::e(ImmoCatalog::date($lease['ends_on'])) : 'Sans date de fin' ?></dd></div>
+                    <div><dt>Échéance</dt><dd>le <?= (int) $lease['due_day'] ?> de chaque mois</dd></div>
+                    <div><dt>Préavis</dt><dd><?= (int) $lease['notice_months'] ?> mois</dd></div>
+                    <?php if ($lease['end_reason']): ?><div><dt>Motif de sortie</dt><dd><?= Html::e($lease['end_reason']) ?></dd></div><?php endif; ?>
                 </dl>
                 <?php if ($lease['notes']): ?><p class="immo-note"><?= nl2br(Html::e($lease['notes'])) ?></p><?php endif; ?>
             </section>

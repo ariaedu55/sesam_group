@@ -1,0 +1,536 @@
+/**
+ * Fiches détail SaaS (client, commande, RDV, locataire, bien…).
+ * Sans dégradé : aplats navy + accents data-tone + verre sur les panneaux.
+ */
+
+.is-app .record-detail {
+    display: grid;
+    gap: var(--sesam-space-5);
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-bottom: var(--sesam-space-6);
+}
+
+.is-app .record-hero {
+    position: relative;
+    padding: var(--sesam-space-5);
+    border-radius: var(--sesam-radius-lg);
+    background: var(--sesam-navy);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--sesam-shadow-lift);
+    overflow: hidden;
+}
+
+.is-app .record-hero::after {
+    content: "";
+    position: absolute;
+    top: -48px;
+    right: -32px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: rgba(0, 217, 245, 0.12);
+    pointer-events: none;
+}
+
+.is-app .record-hero[data-tone="teal"]::after {
+    background: rgba(10, 147, 150, 0.2);
+}
+
+.is-app .record-hero[data-tone="amber"]::after {
+    background: rgba(224, 138, 0, 0.18);
+}
+
+.is-app .record-hero[data-tone="coral"]::after {
+    background: rgba(229, 72, 77, 0.16);
+}
+
+.is-app .record-hero[data-tone="electric"]::after {
+    background: rgba(8, 124, 255, 0.2);
+}
+
+.is-app .record-hero[data-tone="emerald"]::after {
+    background: rgba(15, 159, 110, 0.18);
+}
+
+.is-app .record-back {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: var(--sesam-space-4);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.82);
+    text-decoration: none;
+}
+
+.is-app .record-back:hover {
+    color: #fff;
+}
+
+.is-app .record-back .ui-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.is-app .record-hero-main {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sesam-space-4);
+}
+
+.is-app .record-hero-id {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sesam-space-4);
+    min-width: 0;
+}
+
+.is-app .record-avatar {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--sesam-navy);
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(7, 26, 61, 0.2);
+}
+
+.is-app .record-avatar.is-photo {
+    padding: 0;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.is-app .record-avatar.is-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.is-app .record-hero-copy {
+    min-width: 0;
+}
+
+.is-app .record-hero-copy h1 {
+    margin: 0 0 6px;
+    font-size: clamp(1.35rem, 4vw, 1.75rem);
+    line-height: 1.15;
+    color: #fff;
+}
+
+.is-app .record-hero-copy .record-subtitle {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.45;
+}
+
+.is-app .record-hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: var(--sesam-space-3);
+}
+
+.is-app .record-hero-badges .badge,
+.is-app .record-hero-badges .btq-status {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.is-app .record-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.is-app .record-hero-actions .btn-secondary {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #fff;
+}
+
+.is-app .record-hero-actions .btn-ghost {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.is-app .record-hero-stats {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sesam-space-3);
+    margin-top: var(--sesam-space-5);
+}
+
+@media (min-width: 640px) {
+    .is-app .record-hero-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.is-app .record-stat {
+    padding: var(--sesam-space-3) var(--sesam-space-4);
+    border-radius: var(--sesam-radius-md);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.is-app .record-stat.is-alert {
+    background: rgba(229, 72, 77, 0.22);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.is-app .record-stat p {
+    margin: 0 0 4px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.is-app .record-stat strong {
+    display: block;
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.is-app .record-stat small {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.is-app .record-body {
+    display: grid;
+    gap: var(--sesam-space-4);
+}
+
+@media (min-width: 900px) {
+    .is-app .record-body.is-two {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        align-items: start;
+    }
+
+    .is-app .record-body.is-split {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.is-app .record-detail .record-panel,
+.is-app .record-detail .btq-card.record-panel,
+.is-app .record-detail .card.record-panel {
+    border-radius: var(--sesam-radius-lg);
+    border: 1px solid var(--sesam-glass-line);
+    background: var(--sesam-glass-strong);
+    box-shadow: var(--sesam-shadow-soft);
+    padding: var(--sesam-space-5);
+}
+
+.is-app .record-panel-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sesam-space-3);
+    margin-bottom: var(--sesam-space-4);
+}
+
+.is-app .record-panel-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(8, 124, 255, 0.1);
+    color: var(--sesam-blue);
+}
+
+.is-app .record-panel-icon .ui-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.is-app .record-panel-head h2 {
+    margin: 0;
+    font-size: 1.0625rem;
+    color: var(--sesam-navy);
+}
+
+.is-app .record-panel-head .record-panel-actions {
+    margin-left: auto;
+}
+
+.is-app .record-facts {
+    display: grid;
+    gap: var(--sesam-space-3);
+    margin: 0;
+}
+
+@media (min-width: 560px) {
+    .is-app .record-facts.is-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.is-app .record-facts div {
+    padding: var(--sesam-space-3);
+    border-radius: var(--sesam-radius-md);
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid var(--sesam-glass-line);
+}
+
+.is-app .record-facts dt {
+    margin: 0 0 4px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--sesam-muted);
+}
+
+.is-app .record-facts dd {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--sesam-text);
+    word-break: break-word;
+}
+
+.is-app .record-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 var(--sesam-space-4);
+    border-left: 2px solid rgba(8, 124, 255, 0.2);
+    display: grid;
+    gap: var(--sesam-space-4);
+}
+
+.is-app .record-timeline li {
+    position: relative;
+    padding-left: var(--sesam-space-3);
+}
+
+.is-app .record-timeline li::before {
+    content: "";
+    position: absolute;
+    left: calc(-1 * var(--sesam-space-4) - 5px);
+    top: 0.35rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--sesam-electric);
+    box-shadow: 0 0 0 3px rgba(8, 124, 255, 0.15);
+}
+
+.is-app .record-timeline li p {
+    margin: 0 0 4px;
+}
+
+.is-app .record-timeline li p.muted {
+    font-size: 0.8125rem;
+}
+
+.is-app .record-timeline a {
+    font-weight: 700;
+}
+
+.is-app .record-detail .crm-notes {
+    gap: var(--sesam-space-3);
+}
+
+.is-app .record-detail .crm-notes li {
+    padding: var(--sesam-space-3) var(--sesam-space-4);
+    border-radius: var(--sesam-radius-md);
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid var(--sesam-glass-line);
+}
+
+.is-app .record-detail .btq-steps-bar {
+    margin-top: calc(-1 * var(--sesam-space-2));
+}
+
+.is-app .record-detail .immo-show-photo {
+    border-radius: var(--sesam-radius-lg);
+    margin-bottom: var(--sesam-space-4);
+    box-shadow: var(--sesam-shadow-soft);
+}
+
+.is-app .record-detail.pay-detail .pay-receipt {
+    border-radius: var(--sesam-radius-lg);
+}
+
+/* Pages liste (commandes, RDV, clients…) — même langage visuel que les fiches */
+.is-app .record-index {
+    display: grid;
+    gap: var(--sesam-space-5);
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-bottom: var(--sesam-space-6);
+}
+
+.is-app .record-index-toolbar {
+    display: grid;
+    gap: var(--sesam-space-4);
+    padding: var(--sesam-space-4);
+    border-radius: var(--sesam-radius-lg);
+    border: 1px solid var(--sesam-glass-line);
+    background: var(--sesam-glass-strong);
+    box-shadow: var(--sesam-shadow-soft);
+}
+
+.is-app .record-index-toolbar .btq-filters,
+.is-app .record-index-toolbar .staff-search,
+.is-app .record-index-toolbar .immo-search {
+    margin: 0;
+}
+
+/* Filtre principal : liste déroulante dans la barre d’outils */
+.is-app .record-index-toolbar .record-filter-field {
+    margin: 0;
+    min-width: 0;
+}
+
+.is-app .record-index-toolbar .record-filter-field .input {
+    width: 100%;
+    min-width: 0;
+}
+
+.is-app .record-index-toolbar .btq-filters,
+.is-app .record-index-toolbar .immo-search {
+    align-items: flex-end;
+}
+
+.is-app .record-index-toolbar .btq-filters .record-filter-field,
+.is-app .record-index-toolbar .immo-search .record-filter-field {
+    flex: 1 1 180px;
+}
+
+.is-app .record-index-results {
+    display: grid;
+    gap: var(--sesam-space-3);
+}
+
+.is-app .record-index-results.is-loading {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.is-app .record-list-rich.btq-list {
+    gap: var(--sesam-space-3);
+}
+
+.is-app .record-list-rich.btq-list li > a,
+.is-app .record-list-rich.btq-list li > div {
+    padding: var(--sesam-space-4);
+    border-radius: var(--sesam-radius-lg);
+    border: 1px solid var(--sesam-glass-line);
+    background: var(--sesam-glass-strong);
+    box-shadow: var(--sesam-shadow-soft);
+    transition: box-shadow 0.15s var(--sesam-ease), transform 0.15s var(--sesam-ease);
+}
+
+.is-app .record-list-rich.btq-list li > a:hover,
+.is-app .record-list-rich.btq-list li > a:focus-visible {
+    box-shadow: var(--sesam-shadow-lift);
+    transform: translateY(-1px);
+}
+
+.is-app .record-list-leading {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sesam-space-3);
+    min-width: 0;
+    flex: 1;
+}
+
+.is-app .record-list-avatar {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    color: var(--sesam-navy);
+    background: rgba(8, 124, 255, 0.12);
+}
+
+.is-app .record-list-avatar[data-tone="order"] {
+    background: rgba(8, 124, 255, 0.14);
+    color: var(--sesam-blue);
+}
+
+.is-app .record-list-avatar[data-tone="calendar"] {
+    background: rgba(229, 72, 77, 0.12);
+    color: #b42318;
+}
+
+.is-app .record-list-avatar[data-tone="person"] {
+    background: rgba(10, 147, 150, 0.14);
+    color: #0a9396;
+}
+
+.is-app .record-list-meta {
+    display: grid;
+    gap: 6px;
+    justify-items: end;
+    text-align: right;
+}
+
+.is-app .record-index .empty.btq-card,
+.is-app .record-index .empty {
+    padding: var(--sesam-space-6);
+    border-radius: var(--sesam-radius-lg);
+    border: 1px dashed var(--sesam-glass-line);
+    background: var(--sesam-glass-strong);
+    text-align: center;
+}
+
+.is-app .record-index .table-wrap {
+    border-radius: var(--sesam-radius-lg);
+    border: 1px solid var(--sesam-glass-line);
+    background: var(--sesam-glass-strong);
+    box-shadow: var(--sesam-shadow-soft);
+    overflow: hidden;
+}
+
+@media (max-width: 719px) {
+    .is-app .record-hero {
+        padding: var(--sesam-space-4);
+    }
+
+    .is-app .record-hero-actions {
+        width: 100%;
+    }
+
+    .is-app .record-hero-actions .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .is-app .record-hero,
+    .is-app .record-panel {
+        animation: none;
+    }
+}

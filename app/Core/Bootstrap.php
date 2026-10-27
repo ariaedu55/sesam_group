@@ -84,6 +84,7 @@ final class Bootstrap
         $auth = new AuthService($config['db'], $session);
         $mailer = new \Sesam\Core\Mail\Mailer(require $root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'mail.php', $logger);
         \Sesam\Core\Mail\Mailer::setCurrent($mailer);
+        \Sesam\Services\WelcomeService::setCurrent(new \Sesam\Services\WelcomeService($config['db']));
         $auth->useMailer($mailer, $config['url']);
         $users = new UserService($config['db'], $tenantContext, $logger);
         $tenants = new TenantService($config['db'], $tenantContext, $logger);

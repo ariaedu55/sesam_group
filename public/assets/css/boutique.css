@@ -225,7 +225,7 @@ button:focus-visible {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(10, 12, 18, 0.22) 0%, rgba(10, 12, 18, 0.7) 100%);
+    background: rgba(10, 12, 18, 0.6);
 }
 
 .shop-hero-inner {

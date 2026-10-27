@@ -200,7 +200,7 @@ button:focus-visible {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(10, 12, 18, 0.28) 0%, rgba(10, 12, 18, 0.72) 100%);
+    background: rgba(10, 12, 18, 0.58);
 }
 
 .sl-hero-inner {
@@ -1297,5 +1297,512 @@ button:focus-visible {
     *::after {
         transition: none !important;
         scroll-behavior: auto !important;
+    }
+}
+
+/* =====================================================================
+ * Réservation guidée pas à pas (activée par salon.js : form.is-wizard).
+ * Une étape à la fois, barre de progression, bouton « Continuer » toujours à portée de pouce.
+ * ===================================================================== */
+.sl-book-head {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 6px;
+}
+
+.sl-book-kicker {
+    margin: 0;
+    color: var(--shop-accent);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sl-book-title {
+    margin: 0;
+    font-size: clamp(1.35rem, 4vw, 1.9rem);
+    letter-spacing: -0.02em;
+}
+
+.sl-progress {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sl-progress[hidden] {
+    display: none;
+}
+
+.sl-progress li {
+    min-width: 0;
+}
+
+.sl-progress button {
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+    width: 100%;
+    padding: 0 0 2px;
+    border: 0;
+    background: none;
+    color: var(--sl-muted);
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.sl-progress button::before {
+    content: "";
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(22, 24, 29, 0.1);
+    transition: background 0.2s ease;
+}
+
+.sl-progress button span {
+    display: none;
+}
+
+.sl-progress button:disabled {
+    cursor: default;
+}
+
+.sl-progress .is-done button {
+    color: var(--shop-ink);
+}
+
+.sl-progress .is-done button::before,
+.sl-progress .is-current button::before {
+    background: var(--shop-accent);
+}
+
+.sl-progress .is-current button {
+    color: var(--shop-accent);
+}
+
+.sl-step-head > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sl-step-hint {
+    margin: 0;
+    color: var(--sl-muted);
+    font-size: 0.86rem;
+}
+
+.sl-step[hidden] {
+    display: none;
+}
+
+.is-wizard .sl-step {
+    animation: sl-step-in 0.25s ease;
+}
+
+@keyframes sl-step-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Barre « Retour / Continuer » : collée en bas de l'écran tant que l'étape est visible. */
+.sl-step-nav {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    gap: 10px;
+    margin: 18px -16px -20px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 0 0 var(--sl-radius) var(--sl-radius);
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 -10px 24px -18px rgba(22, 24, 29, 0.45);
+}
+
+.sl-step-nav[hidden],
+.sl-step-reassure[hidden],
+.sl-recap[hidden] {
+    display: none;
+}
+
+.sl-step-nav .sl-btn {
+    min-height: 48px;
+    font-size: 0.95rem;
+}
+
+.sl-btn-next {
+    flex: 1;
+}
+
+.sl-btn-ghost {
+    flex: none;
+    background: var(--sl-bg);
+    color: var(--sl-text);
+}
+
+.sl-btn-ghost:hover {
+    box-shadow: none;
+}
+
+.sl-btn-confirm {
+    background: var(--shop-ink);
+}
+
+.sl-step-reassure {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 28px 0 0;
+    color: var(--sl-muted);
+    font-size: 0.82rem;
+}
+
+.sl-step-reassure svg {
+    margin-top: 2px;
+    color: var(--sl-wa);
+}
+
+/* Récapitulatif modifiable (dernière étape) */
+.sl-recap {
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: var(--shop-soft);
+    color: var(--shop-ink);
+}
+
+.sl-recap-title {
+    margin: 0 0 8px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sl-recap dl {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+}
+
+.sl-recap dl > div {
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.sl-recap dt {
+    font-size: 0.82rem;
+    opacity: 0.75;
+}
+
+.sl-recap dd {
+    margin: 0;
+    font-weight: 700;
+    min-width: 0;
+}
+
+.sl-recap button {
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    color: var(--shop-accent);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Créneaux groupés : matin, après-midi, soir */
+.sl-slots {
+    display: block;
+}
+
+.sl-slots .sl-slot-group {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    text-align: left;
+    margin: 16px 0 8px;
+    color: var(--sl-muted);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sl-slots .sl-slot-group:first-child {
+    margin-top: 8px;
+}
+
+.sl-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 8px;
+}
+
+.sl-slots .sl-slots-note {
+    display: block;
+    margin: 8px 0 0;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--sl-bg);
+    color: var(--sl-muted);
+    text-align: center;
+    line-height: 1.6;
+}
+
+.sl-slots .sl-slots-note .sl-btn {
+    margin-top: 10px;
+    min-height: 44px;
+    border-radius: var(--sl-btn-radius);
+    background: var(--shop-accent);
+    color: #fff;
+}
+
+.sl-slots[aria-busy="true"] .sl-slots-note {
+    animation: sl-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes sl-pulse {
+    50% {
+        opacity: 0.55;
+    }
+}
+
+.sl-field input[aria-invalid="true"] {
+    background: #fdf0ee;
+    box-shadow: 0 0 0 2px #d64532;
+}
+
+/* Sur téléphone et tablette, le parcours remplace le résumé collé en bas. */
+@media (max-width: 999px) {
+    .is-wizard .sl-summary {
+        display: none;
+    }
+
+    .is-wizard .sl-step {
+        padding-bottom: 20px;
+    }
+}
+
+@media (min-width: 720px) {
+    .sl-step-nav {
+        margin: 22px -26px -26px;
+        padding: 14px 26px;
+    }
+
+    .sl-progress button {
+        font-size: 0.82rem;
+    }
+
+    .sl-progress button span {
+        display: none;
+    }
+}
+
+@media (min-width: 1000px) {
+    .is-wizard .sl-summary .sl-btn {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .is-wizard .sl-step,
+    .sl-slots[aria-busy="true"] .sl-slots-note {
+        animation: none;
+    }
+}
+
+/* ---------- Page de confirmation après réservation ---------- */
+.sl-done {
+    display: grid;
+    min-height: calc(100vh - 160px);
+    padding: 28px 16px 40px;
+    align-content: start;
+    justify-items: center;
+}
+
+.sl-done-card {
+    width: 100%;
+    max-width: 520px;
+    padding: 30px 22px 26px;
+    border-radius: var(--sl-radius);
+    background: var(--sl-card);
+    box-shadow: var(--sl-shadow);
+    text-align: center;
+    animation: sl-step-in 0.35s ease;
+}
+
+.sl-done-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    background: #e3f7ea;
+    color: #1d9a4a;
+    box-shadow: 0 0 0 10px rgba(29, 154, 74, 0.08);
+}
+
+.sl-done-icon.is-pending {
+    background: var(--shop-soft);
+    color: var(--shop-accent);
+    box-shadow: 0 0 0 10px var(--shop-soft);
+}
+
+.sl-done-icon svg {
+    width: 36px;
+    height: 36px;
+    stroke-width: 2.4;
+}
+
+.sl-done-card h1 {
+    margin: 0;
+    font-size: clamp(1.45rem, 5vw, 1.9rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.sl-done-lead {
+    margin: 8px auto 0;
+    max-width: 400px;
+    color: var(--sl-muted);
+}
+
+.sl-done-recap {
+    display: grid;
+    gap: 8px;
+    margin: 22px 0 0;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--shop-soft);
+    color: var(--shop-ink);
+    text-align: left;
+}
+
+.sl-done-recap > div {
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 10px;
+}
+
+.sl-done-recap dt {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.sl-done-recap dd {
+    margin: 0;
+    font-weight: 700;
+}
+
+.sl-done-next-title {
+    margin: 24px 0 10px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sl-muted);
+    text-align: left;
+}
+
+.sl-done-next {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: done;
+    text-align: left;
+}
+
+.sl-done-next li {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    column-gap: 12px;
+    counter-increment: done;
+}
+
+.sl-done-next li::before {
+    content: counter(done);
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--shop-accent);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.sl-done-next b {
+    font-size: 0.95rem;
+}
+
+.sl-done-next span {
+    color: var(--sl-muted);
+    font-size: 0.86rem;
+}
+
+.sl-done-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.sl-done-actions .sl-btn {
+    min-height: 48px;
+    font-size: 0.95rem;
+}
+
+.sl-done-policy {
+    margin: 16px 0 0;
+    color: var(--sl-muted);
+    font-size: 0.82rem;
+}
+
+/* Atouts : une ligne compacte de trois cartes, même sur téléphone. */
+@media (max-width: 719px) {
+    .sl-perks {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .sl-perks li {
+        padding: 10px 8px;
+        text-align: center;
+    }
+
+    .sl-perks b {
+        font-size: 0.92rem;
+    }
+
+    .sl-perks span {
+        font-size: 0.72rem;
     }
 }

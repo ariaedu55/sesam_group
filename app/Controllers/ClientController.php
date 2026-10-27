@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sesam\Controllers;
 
 use Sesam\Controllers\Concerns\RendersAppArea;
+use Sesam\Controllers\Concerns\RendersListPartial;
 use Sesam\Core\Auth\Permission;
 use Sesam\Core\HttpException;
 use Sesam\Core\Request\Request;
@@ -25,6 +26,7 @@ use Sesam\Services\NotificationService;
 final class ClientController extends Controller
 {
     use RendersAppArea;
+    use RendersListPartial;
 
     public function __construct(
         ViewRenderer $views,
@@ -49,15 +51,21 @@ final class ClientController extends Controller
         $tagId = is_numeric($tagRaw) ? (int) $tagRaw : null;
         $page = (int) $request->input('page', 1);
         $list = $this->clients->paginate($actor, $query, $status, $tagId, $page);
-
-        return $this->renderAppArea('tenant/clients/index', [
+        $data = [
             'title' => 'Clients — SESAM',
             'navTitle' => 'Clients',
             'current' => 'clients',
             'list' => $list,
             'canCreate' => $actor->can(Permission::CLIENTS_CREATE),
             'canExport' => $actor->can(Permission::CLIENTS_EXPORT),
-        ], $actor);
+        ];
+
+        $partial = $this->renderListPartial($request, 'tenant/clients/_results', $data);
+        if ($partial !== null) {
+            return $partial;
+        }
+
+        return $this->renderAppArea('tenant/clients/index', $data, $actor);
     }
 
     public function export(Request $request): Response

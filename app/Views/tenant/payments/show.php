@@ -37,10 +37,27 @@ $date = static fn (?string $value): string => $value === null || $value === '' ?
 $isSandbox = $payment->mode() === 'sandbox';
 
 ?>
-<section class="btq pay-detail">
-    <p><a class="muted" href="<?= Html::url('/paiements') ?>">← Tous les paiements</a></p>
+<?php
+$heroBackHref = '/paiements';
+$heroBackLabel = 'Paiements';
+$heroTitle = number_format($payment->amountMinor(), 0, ',', ' ') . ' FCFA';
+$heroSubtitle = $payment->description();
+$heroTone = 'blue';
+$heroInitials = null;
+$heroStatusText = $state[1];
+$heroStatusTone = $state[0];
+$heroStats = [
+    ['label' => 'Statut', 'value' => $statuses[$payment->status()] ?? $payment->status()],
+    ['label' => 'Mode', 'value' => $isSandbox ? 'Simulation' : 'Production'],
+    ['label' => 'Créé', 'value' => $date($payment->createdAt())],
+    ['label' => 'Payé', 'value' => $payment->paidAt() !== null ? $date($payment->paidAt()) : '—'],
+];
+$heroActions = '';
+?>
+<section class="record-detail btq pay-detail">
+    <?php require dirname(__DIR__, 2) . '/partials/record-hero.php'; ?>
 
-    <article class="btq-card pay-receipt is-<?= Html::e($state[0]) ?>">
+    <article class="btq-card record-panel pay-receipt is-<?= Html::e($state[0]) ?>">
         <span class="pay-receipt-icon" aria-hidden="true"><?= Html::e($state[2]) ?></span>
         <p class="pay-receipt-state"><?= Html::e($state[1]) ?></p>
         <p class="pay-receipt-amount"><?= Html::e(number_format($payment->amountMinor(), 0, ',', ' ')) ?> FCFA</p>

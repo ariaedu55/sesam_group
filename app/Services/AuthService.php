@@ -22,6 +22,7 @@ final class AuthService extends Service
     private const WINDOW_MINUTES = 15;
     private const RESET_TTL_SECONDS = 3600;
     private const SESSION_USER = 'auth_user_id';
+    public const SESSION_WELCOME = 'welcome_popup';
 
     private readonly UserRepository $users;
     private readonly PasswordResetRepository $resets;
@@ -79,6 +80,8 @@ final class AuthService extends Service
         $this->session->regenerate();
         $this->session->forget(Csrf::SESSION_KEY);
         $this->session->put(self::SESSION_USER, $user->id());
+        // Popup de bienvenue à l'arrivée dans l'espace : découverte la première fois, « bon retour » ensuite.
+        $this->session->put(self::SESSION_WELCOME, ['first' => $user->lastLoginAt() === null]);
         $this->users->touchLastLogin($user->id());
     }
 
@@ -90,6 +93,7 @@ final class AuthService extends Service
         $this->session->regenerate();
         $this->session->forget(Csrf::SESSION_KEY);
         $this->session->put(self::SESSION_USER, $userId);
+        $this->session->put(self::SESSION_WELCOME, ['first' => true]);
         $this->users->touchLastLogin($userId);
     }
 

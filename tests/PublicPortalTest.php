@@ -136,7 +136,7 @@ final class PublicPortalTest extends TestCase
         $token = is_string($query['k'] ?? null) ? $query['k'] : '';
         $done = $kernel->handle(new Request('GET', '/t/' . $tenantA->slug() . '/confirmation', ['k' => $token]));
         $this->assertSame(200, $done->status());
-        $this->assertStringContainsString('pas expédié', $done->content());
+        $this->assertStringContainsString('Et maintenant ?', html_entity_decode($done->content(), ENT_QUOTES, 'UTF-8'));
         $this->assertSame(404, $kernel->handle(new Request('GET', '/t/' . $tenantA->slug() . '/confirmation'))->status());
     }
 

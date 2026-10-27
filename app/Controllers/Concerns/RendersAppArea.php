@@ -32,6 +32,14 @@ trait RendersAppArea
         $resetLink = $session->get('reset_link', '');
         $session->forget('reset_link');
         $tenant = $context->tenant();
+        $unread = $notifications->unreadCount($user);
+        // Popup de bienvenue : une seule fois, à la première page affichée après la connexion.
+        $welcome = null;
+        $flag = $session->get(\Sesam\Services\AuthService::SESSION_WELCOME);
+        if (is_array($flag) && $status === 200) {
+            $session->forget(\Sesam\Services\AuthService::SESSION_WELCOME);
+            $welcome = \Sesam\Services\WelcomeService::current()?->payload($flag, $user, $tenant, $unread);
+        }
 
         return $this->render($template, $data + StaffLayout::flags($user) + TenantLayout::meta($tenant, $user) + [
             'csrf' => $csrf->token(),
@@ -39,7 +47,8 @@ trait RendersAppArea
             'tenant' => $tenant,
             'status' => is_string($message) ? $message : '',
             'resetLink' => is_string($resetLink) ? $resetLink : '',
-            'notificationUnread' => $notifications->unreadCount($user),
+            'notificationUnread' => $unread,
+            'welcome' => $welcome,
             'subscriptionAccess' => $user->tenantId() !== null ? $context->subscription() : [],
         ], $status, $layout);
     }

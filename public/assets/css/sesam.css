@@ -3985,6 +3985,26 @@ body.is-app::after {
     background: rgba(255, 255, 255, 0.7);
 }
 
+.is-app tbody tr.table-row-link {
+    cursor: pointer;
+}
+
+.is-app tbody tr.table-row-link:focus-visible {
+    outline: 2px solid var(--sesam-electric);
+    outline-offset: -2px;
+}
+
+.is-app tbody tr.table-row-link .table-row-label {
+    color: var(--sesam-blue);
+    font-weight: 600;
+}
+
+.is-app .crm-clients-results.is-loading,
+.is-app .record-index-results.is-loading {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
 .is-app tbody tr:last-child td {
     border-bottom: 0;
 }

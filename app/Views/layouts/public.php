@@ -130,5 +130,6 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
 </footer>
 <script src="<?= Html::asset('assets/js/sesam.js') ?>" defer></script>
 <script src="<?= Html::asset('assets/js/site.js') ?>" defer></script>
+<?php require dirname(__DIR__) . '/partials/site-popup.php'; ?>
 </body>
 </html>

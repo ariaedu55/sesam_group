@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sesam\Controllers;
 
 use Sesam\Controllers\Concerns\RendersAppArea;
+use Sesam\Controllers\Concerns\RendersListPartial;
 use Sesam\Controllers\Concerns\RequiresLoyerSector;
 use Sesam\Core\Auth\Permission;
 use Sesam\Core\HttpException;
@@ -27,6 +28,7 @@ use Sesam\Services\NotificationService;
 final class ImmoController extends Controller
 {
     use RendersAppArea;
+    use RendersListPartial;
     use RequiresLoyerSector;
 
     private const TENANT_FIELDS = ['full_name', 'phone', 'email', 'id_type', 'id_number', 'profession', 'employer', 'emergency_name', 'emergency_phone', 'guarantor_name', 'guarantor_phone', 'notes'];
@@ -53,13 +55,19 @@ final class ImmoController extends Controller
     {
         $actor = $this->actor(Permission::LOYER_VIEW);
 
-        return $this->page('tenant/immo/loyers/index', 'Loyers', 'immo-loyers', $actor, [
+        $data = [
             'data' => $this->immo->dues($actor, [
                 'mois' => (string) $request->input('mois', ''),
                 'vue' => (string) $request->input('vue', ''),
                 'q' => (string) $request->input('q', ''),
             ]),
-        ]);
+        ];
+        $partial = $this->renderListPartial($request, 'tenant/immo/loyers/_results', $data);
+        if ($partial !== null) {
+            return $partial;
+        }
+
+        return $this->page('tenant/immo/loyers/index', 'Loyers', 'immo-loyers', $actor, $data);
     }
 
     public function due(Request $request): Response
@@ -124,10 +132,16 @@ final class ImmoController extends Controller
     {
         $actor = $this->actor(Permission::LOYER_VIEW);
 
-        return $this->page('tenant/immo/locataires/index', 'Locataires', 'immo-locataires', $actor, [
+        $data = [
             'data' => $this->immo->tenants($actor, trim((string) $request->input('q', '')), (string) $request->input('vue', '')),
             'canManage' => $actor->can(Permission::LOYER_LEASES),
-        ]);
+        ];
+        $partial = $this->renderListPartial($request, 'tenant/immo/locataires/_results', $data);
+        if ($partial !== null) {
+            return $partial;
+        }
+
+        return $this->page('tenant/immo/locataires/index', 'Locataires', 'immo-locataires', $actor, $data);
     }
 
     public function tenant(Request $request): Response

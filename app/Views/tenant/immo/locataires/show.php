@@ -26,37 +26,40 @@ $facts = array_filter([
     'Garant' => trim(($profile['guarantor_name'] ?? '') . ' ' . ($profile['guarantor_phone'] ?? '')),
 ]);
 
+ob_start();
+if (WhatsApp::isValid($phone)): ?>
+    <a class="btn btn-secondary" href="<?= Html::e(WhatsApp::link($phone)) ?>" target="_blank" rel="noopener">WhatsApp</a>
+<?php endif;
+if ($canManage): ?>
+    <a class="btn btn-secondary" href="<?= Html::url('/immo/locataires/' . $client['id'] . '/modifier') ?>">Modifier</a>
+    <a class="btn btn-primary" href="<?= Html::url('/immo/baux/nouveau?locataire=' . $client['id']) ?>">Nouveau bail</a>
+<?php endif;
+$heroActions = ob_get_clean() ?: '';
+
+$heroBackHref = '/immo/locataires';
+$heroBackLabel = 'Locataires';
+$heroTitle = (string) $client['full_name'];
+$heroSubtitle = trim((string) ($client['phone'] ?? '') . (($client['email'] ?? '') !== '' && $client['email'] !== null ? ' · ' . $client['email'] : ''));
+$heroTone = 'emerald';
+$heroInitials = Html::initials((string) $client['full_name']);
+$heroStatusText = (int) $file['balance'] > 0 ? 'Impayés' : 'À jour';
+$heroStatusTone = (int) $file['balance'] > 0 ? 'danger' : 'success';
+$heroBadgesHtml = '';
+$heroStats = [
+    ['label' => 'Impayés', 'value' => Money::format((int) $file['balance']), 'alert' => (int) $file['balance'] > 0],
+    ['label' => 'Total payé', 'value' => Money::format((int) $file['paidTotal'])],
+    ['label' => 'Baux', 'value' => (string) count($leases)],
+    ['label' => 'Depuis', 'value' => ImmoCatalog::date($leases !== [] ? (string) end($leases)['starts_on'] : (string) $client['created_at'])],
+];
+
 ?>
-<section class="btq immo">
-    <p><a class="muted" href="<?= Html::url('/immo/locataires') ?>">← Tous les locataires</a></p>
-    <header class="btq-head">
-        <div class="immo-headline">
-            <span class="immo-avatar is-large" aria-hidden="true"><?= Html::e(Html::initials((string) $client['full_name'])) ?></span>
-            <div>
-                <h1><?= Html::e($client['full_name']) ?></h1>
-                <p class="muted"><?= Html::e((string) ($client['phone'] ?? '')) ?><?= ($client['email'] ?? '') !== '' && $client['email'] !== null ? ' · ' . Html::e($client['email']) : '' ?></p>
-            </div>
-        </div>
-        <div class="btq-actions">
-            <?php if (WhatsApp::isValid($phone)): ?><a class="btn btn-secondary" href="<?= Html::e(WhatsApp::link($phone)) ?>" target="_blank" rel="noopener">WhatsApp</a><?php endif; ?>
-            <?php if ($canManage): ?>
-                <a class="btn btn-secondary" href="<?= Html::url('/immo/locataires/' . $client['id'] . '/modifier') ?>">Modifier</a>
-                <a class="btn btn-primary" href="<?= Html::url('/immo/baux/nouveau?locataire=' . $client['id']) ?>">Nouveau contrat de bail</a>
-            <?php endif; ?>
-        </div>
-    </header>
+<section class="record-detail btq immo">
+    <?php require dirname(__DIR__, 3) . '/partials/record-hero.php'; ?>
 
-    <div class="btq-kpis">
-        <article class="btq-kpi<?= (int) $file['balance'] > 0 ? ' is-alert' : '' ?>"><p>Impayés</p><strong><?= Html::e(Money::format((int) $file['balance'])) ?></strong></article>
-        <article class="btq-kpi"><p>Total payé</p><strong><?= Html::e(Money::format((int) $file['paidTotal'])) ?></strong></article>
-        <article class="btq-kpi"><p>Contrats de bail</p><strong><?= count($leases) ?></strong></article>
-        <article class="btq-kpi"><p>Locataire depuis</p><strong><?= Html::e(ImmoCatalog::date($leases !== [] ? (string) end($leases)['starts_on'] : (string) $client['created_at'])) ?></strong></article>
-    </div>
-
-    <div class="btq-two">
+    <div class="record-body is-two btq-two">
         <div class="btq">
-            <section class="btq-card">
-                <h2>Loyers</h2>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Loyers'; $panelIcon = 'coin'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                 <?php if ($dues === []): ?>
                     <p class="muted">Aucun loyer pour l'instant.</p>
                 <?php else: ?>
@@ -73,8 +76,8 @@ $facts = array_filter([
             </section>
         </div>
         <div class="btq">
-            <section class="btq-card">
-                <h2>Fiche</h2>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Fiche locataire'; $panelIcon = 'file'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                 <?php if ($facts === [] && ($profile['notes'] ?? '') === ''): ?>
                     <p class="muted">Pièce d'identité, profession, contact d'urgence et garant ne sont pas encore renseignés.</p>
                 <?php else: ?>
@@ -84,8 +87,8 @@ $facts = array_filter([
                     <?php if (($profile['notes'] ?? '') !== '' && $profile['notes'] !== null): ?><p class="immo-note"><?= nl2br(Html::e($profile['notes'])) ?></p><?php endif; ?>
                 <?php endif; ?>
             </section>
-            <section class="btq-card">
-                <h2>Contrats de bail</h2>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Contrats de bail'; $panelIcon = 'book'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                 <ul class="btq-list">
                     <?php foreach ($leases as $lease): ?>
                         <li><a href="<?= Html::url('/immo/baux/' . $lease['id']) ?>">
@@ -97,8 +100,8 @@ $facts = array_filter([
                 <?php if ($leases === []): ?><p class="muted">Aucun contrat de bail.</p><?php endif; ?>
             </section>
             <?php if ($reminders !== []): ?>
-                <section class="btq-card">
-                    <h2>Dernières relances</h2>
+                <section class="btq-card record-panel">
+                    <?php $panelTitle = 'Dernières relances'; $panelIcon = 'bell'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                     <ul class="pay-timeline">
                         <?php foreach ($reminders as $reminder): ?>
                             <li class="is-<?= $reminder['status'] === 'sent' ? 'success' : 'pending' ?>"><strong><?= Html::e(ImmoCatalog::REMINDER_KINDS[$reminder['kind']] ?? $reminder['kind']) ?></strong><span class="muted"><?= Html::e(ImmoCatalog::date($reminder['created_at'])) ?></span></li>

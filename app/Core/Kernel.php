@@ -27,6 +27,7 @@ final class Kernel
 
     public const MODAL_HEADER = 'X-Sesam-Modal';
     public const MODAL_LOCATION = 'X-Sesam-Location';
+    public const PARTIAL_HEADER = 'X-Sesam-Partial';
 
     public function handle(Request $request): Response
     {

@@ -133,11 +133,26 @@ $anchor = static fn (string $text): string => 'cat-' . substr(md5($text), 0, 8);
     <?php else: ?>
         <form class="sl-book" id="reserver" method="post" action="<?= Html::url($base) ?>" data-salon="<?= Html::url($base . '/creneaux') ?>">
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+            <?php if ($canBook): ?>
+                <div class="sl-book-head">
+                    <p class="sl-book-kicker">Réservation en ligne</p>
+                    <h2 class="sl-book-title">Prenez rendez-vous en <?= $team !== [] ? 4 : 3 ?> étapes</h2>
+                    <ol class="sl-progress" data-progress hidden>
+                        <li data-progress-item><button type="button" data-goto="0"><span>1</span>Prestation</button></li>
+                        <?php if ($team !== []): ?><li data-progress-item><button type="button" data-goto="1"><span>2</span>Personne</button></li><?php endif; ?>
+                        <li data-progress-item><button type="button" data-goto="<?= $team !== [] ? 2 : 1 ?>"><span><?= $team !== [] ? 3 : 2 ?></span>Date et heure</button></li>
+                        <li data-progress-item><button type="button" data-goto="<?= $team !== [] ? 3 : 2 ?>"><span><?= $team !== [] ? 4 : 3 ?></span>Vos infos</button></li>
+                    </ol>
+                </div>
+            <?php endif; ?>
             <div class="sl-book-steps">
-                <section class="sl-step" aria-labelledby="step-<?= $step ?>">
+                <section class="sl-step" data-step="service" aria-labelledby="step-<?= $step ?>">
                     <header class="sl-step-head">
                         <span class="sl-step-num"><?= $step ?></span>
-                        <h2 id="step-<?= $step++ ?>">Nos prestations</h2>
+                        <div>
+                            <h2 id="step-<?= $step++ ?>">Nos prestations</h2>
+                            <p class="sl-step-hint">Touchez la prestation qui vous fait envie.</p>
+                        </div>
                     </header>
                     <?php if (count($groups) > 1): ?>
                         <nav class="sl-cats" aria-label="Catégories">
@@ -173,14 +188,20 @@ $anchor = static fn (string $text): string => 'cat-' . substr(md5($text), 0, 8);
                             <?php endforeach; ?>
                         </div>
                     <?php endforeach; ?>
+                    <div class="sl-step-nav" data-step-nav hidden>
+                        <button type="button" class="sl-btn sl-btn-next" data-next>Continuer</button>
+                    </div>
                 </section>
 
                 <?php if ($canBook): ?>
                     <?php if ($team !== []): ?>
-                        <section class="sl-step" aria-labelledby="step-<?= $step ?>">
+                        <section class="sl-step" data-step="staff" aria-labelledby="step-<?= $step ?>">
                             <header class="sl-step-head">
                                 <span class="sl-step-num"><?= $step ?></span>
-                                <h2 id="step-<?= $step++ ?>">Avec qui ?</h2>
+                                <div>
+                                    <h2 id="step-<?= $step++ ?>">Avec qui ?</h2>
+                                    <p class="sl-step-hint">Pas de préférence ? Choisissez « Peu importe ».</p>
+                                </div>
                             </header>
                             <div class="sl-people">
                                 <label class="sl-person"><input type="radio" name="staff_id" value=""<?= $val('staff_id') === '' ? ' checked' : '' ?>><span><i>✦</i><strong>Peu importe</strong><small>La première personne libre</small></span></label>
@@ -189,13 +210,20 @@ $anchor = static fn (string $text): string => 'cat-' . substr(md5($text), 0, 8);
                                     <label class="sl-person" data-services="<?= Html::e(implode(',', $member->serviceIds())) ?>"><input type="radio" name="staff_id" value="<?= $member->id() ?>"<?= $val('staff_id') === (string) $member->id() ? ' checked' : '' ?>><span><i><?= Html::e(Html::initials($member->name())) ?></i><strong><?= Html::e($member->name()) ?></strong><?php if ($member->roleLabel() !== ''): ?><small><?= Html::e($member->roleLabel()) ?></small><?php endif; ?></span></label>
                                 <?php endforeach; ?>
                             </div>
+                            <div class="sl-step-nav" data-step-nav hidden>
+                                <button type="button" class="sl-btn sl-btn-ghost" data-prev>← Retour</button>
+                                <button type="button" class="sl-btn sl-btn-next" data-next>Continuer</button>
+                            </div>
                         </section>
                     <?php endif; ?>
 
-                    <section class="sl-step" aria-labelledby="step-<?= $step ?>">
+                    <section class="sl-step" data-step="slot" aria-labelledby="step-<?= $step ?>">
                         <header class="sl-step-head">
                             <span class="sl-step-num"><?= $step ?></span>
-                            <h2 id="step-<?= $step++ ?>">Choisissez le jour et l'heure</h2>
+                            <div>
+                                <h2 id="step-<?= $step++ ?>">Choisissez le jour et l'heure</h2>
+                                <p class="sl-step-hint">Seuls les horaires encore libres sont proposés.</p>
+                            </div>
                         </header>
                         <div class="sl-days" data-days hidden>
                             <?php foreach ($days as $index => $ts): ?>
@@ -207,19 +235,40 @@ $anchor = static fn (string $text): string => 'cat-' . substr(md5($text), 0, 8);
                             <label for="starts_at">Date et heure souhaitées</label>
                             <input id="starts_at" name="starts_at" type="datetime-local" required value="<?= Html::e(str_replace(' ', 'T', substr($val('starts_at'), 0, 16))) ?>">
                         </div>
+                        <div class="sl-step-nav" data-step-nav hidden>
+                            <button type="button" class="sl-btn sl-btn-ghost" data-prev>← Retour</button>
+                            <button type="button" class="sl-btn sl-btn-next" data-next>Continuer</button>
+                        </div>
                     </section>
 
-                    <section class="sl-step" aria-labelledby="step-<?= $step ?>">
+                    <section class="sl-step" data-step="contact" aria-labelledby="step-<?= $step ?>">
                         <header class="sl-step-head">
                             <span class="sl-step-num"><?= $step ?></span>
-                            <h2 id="step-<?= $step++ ?>">Vos coordonnées</h2>
+                            <div>
+                                <h2 id="step-<?= $step++ ?>">Vos coordonnées</h2>
+                                <p class="sl-step-hint">Pas de compte à créer : votre nom et votre numéro suffisent.</p>
+                            </div>
                         </header>
+                        <div class="sl-recap" data-recap hidden>
+                            <p class="sl-recap-title">Votre rendez-vous</p>
+                            <dl>
+                                <div><dt>Prestation</dt><dd data-recap-service>—</dd><button type="button" data-goto="0">Modifier</button></div>
+                                <?php if ($team !== []): ?><div><dt>Avec</dt><dd data-recap-staff>Peu importe</dd><button type="button" data-goto="1">Modifier</button></div><?php endif; ?>
+                                <div><dt>Quand</dt><dd data-recap-when>—</dd><button type="button" data-goto="<?= $team !== [] ? 2 : 1 ?>">Modifier</button></div>
+                                <div><dt>Prix</dt><dd data-recap-price>—</dd></div>
+                            </dl>
+                        </div>
                         <div class="sl-fields">
-                            <div class="sl-field"><label for="full_name">Votre nom</label><input id="full_name" name="full_name" required maxlength="120" autocomplete="name" value="<?= Html::e($val('full_name')) ?>"<?= isset($errors['full_name']) ? ' aria-invalid="true"' : '' ?>></div>
-                            <div class="sl-field"><label for="phone">Votre téléphone (WhatsApp)</label><input id="phone" name="phone" type="tel" required maxlength="40" autocomplete="tel" placeholder="77 123 45 67" value="<?= Html::e($val('phone')) ?>"<?= isset($errors['phone']) ? ' aria-invalid="true"' : '' ?>></div>
+                            <div class="sl-field"><label for="full_name">Votre nom</label><input id="full_name" name="full_name" required maxlength="120" autocomplete="name" placeholder="Prénom et nom" value="<?= Html::e($val('full_name')) ?>"<?= isset($errors['full_name']) ? ' aria-invalid="true"' : '' ?>></div>
+                            <div class="sl-field"><label for="phone">Votre téléphone (WhatsApp)</label><input id="phone" name="phone" type="tel" required maxlength="40" autocomplete="tel" inputmode="tel" placeholder="77 123 45 67" value="<?= Html::e($val('phone')) ?>"<?= isset($errors['phone']) ? ' aria-invalid="true"' : '' ?>></div>
                             <div class="sl-field"><label for="email">E-mail <span>(facultatif)</span></label><input id="email" name="email" type="email" maxlength="190" autocomplete="email" value="<?= Html::e($val('email')) ?>"></div>
                             <div class="sl-field is-wide"><label for="notes">Un message pour le salon <span>(facultatif)</span></label><textarea id="notes" name="notes" rows="2" maxlength="500"><?= Html::e($val('notes')) ?></textarea></div>
                         </div>
+                        <div class="sl-step-nav sl-step-nav-final" data-step-nav hidden>
+                            <button type="button" class="sl-btn sl-btn-ghost" data-prev>← Retour</button>
+                            <button type="submit" class="sl-btn sl-btn-next sl-btn-confirm" data-submit-final>Confirmer mon rendez-vous</button>
+                        </div>
+                        <p class="sl-step-reassure" data-step-nav hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>Vous recevez la confirmation sur WhatsApp, puis un rappel la veille.<?= $settings->cancellationPolicy() !== '' ? ' ' . Html::e($settings->cancellationPolicy()) : '' ?></p>
                     </section>
                 <?php endif; ?>
             </div>

@@ -111,6 +111,7 @@ foreach ($nav as $item) {
     <?php endif; ?>
     <link rel="stylesheet" href="<?= Html::asset('assets/css/notifications.css') ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/mobile-app.css') ?>">
+    <link rel="stylesheet" href="<?= Html::asset('assets/css/record-detail.css') ?>">
 </head>
 <body class="is-app is-tenant">
 <div class="app-shell tenant-shell">
@@ -205,5 +206,6 @@ foreach ($nav as $item) {
     <script src="<?= Html::asset('assets/js/immo-admin.js') ?>" defer></script>
 <?php endif; ?>
 <?php require dirname(__DIR__) . '/partials/push.php'; ?>
+<?php require dirname(__DIR__) . '/partials/welcome.php'; ?>
 </body>
 </html>

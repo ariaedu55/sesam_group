@@ -32,20 +32,31 @@ $badge = ['paid' => ['success', 'Payé'], 'partial' => ['info', 'Payé en partie
 $percent = (int) $due['amount_minor'] > 0 ? (int) round((int) $due['paid_minor'] * 100 / (int) $due['amount_minor']) : 0;
 $onlineLabels = ['pending' => 'en attente de paiement', 'success' => 'payé', 'cancelled' => 'annulé', 'failed' => 'échoué'];
 
+$heroBackHref = '/immo/loyers';
+$heroBackLabel = 'Loyers';
+$heroTitle = 'Loyer · ' . ucfirst(ImmoCatalog::monthLabel($due['due_date']));
+$heroSubtitle = $due['full_name'] . ' · ' . $due['property_name'] . ' — ' . $due['unit_label'];
+$heroTone = 'emerald';
+$heroInitials = Html::initials((string) $due['full_name']);
+$heroStatusText = $label . ($due['days_late'] > 0 ? ' · ' . (int) $due['days_late'] . ' j' : '');
+$heroStatusTone = $tone;
+$heroBadgesHtml = '';
+$heroStats = [
+    ['label' => 'Montant', 'value' => Money::format((int) $due['amount_minor'])],
+    ['label' => 'Payé', 'value' => Money::format((int) $due['paid_minor'])],
+    ['label' => 'Reste', 'value' => Money::format($remaining), 'alert' => $remaining > 0],
+    ['label' => 'Échéance', 'value' => ImmoCatalog::date($due['due_date'])],
+];
+$heroActions = '';
+
 ?>
-<section class="btq immo">
-    <p><a class="muted" href="<?= Html::url('/immo/loyers') ?>">← Tous les loyers</a></p>
-    <header class="btq-head">
-        <div>
-            <h1>Loyer de <?= Html::e(ImmoCatalog::monthLabel($due['due_date'])) ?></h1>
-            <p class="muted"><a href="<?= Html::url('/immo/locataires/' . $due['client_id']) ?>"><?= Html::e($due['full_name']) ?></a> · <?= Html::e($due['property_name'] . ' — ' . $due['unit_label']) ?> · <a href="<?= Html::url('/immo/baux/' . $due['lease_id']) ?>">voir le contrat de bail</a></p>
-        </div>
-        <span class="btq-status btq-status-<?= Html::e($tone) ?> immo-big-status"><?= Html::e($label) ?><?= $due['days_late'] > 0 ? ' · ' . (int) $due['days_late'] . ' j' : '' ?></span>
-    </header>
+<section class="record-detail btq immo">
+    <?php require dirname(__DIR__, 3) . '/partials/record-hero.php'; ?>
 
     <?php if ($errors !== []): ?><p class="alert alert-danger" role="alert"><?= Html::e(implode(' ', $errors)) ?></p><?php endif; ?>
 
-    <article class="btq-card immo-summary">
+    <article class="btq-card record-panel immo-summary">
+        <?php $panelTitle = 'Synthèse du mois'; $panelIcon = 'coin'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
         <dl>
             <div><dt>Montant du mois</dt><dd><?= Html::e(Money::format((int) $due['amount_minor'])) ?></dd></div>
             <div><dt>Déjà payé</dt><dd><?= Html::e(Money::format((int) $due['paid_minor'])) ?></dd></div>

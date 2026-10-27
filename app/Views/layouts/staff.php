@@ -146,5 +146,6 @@ foreach ($nav as $item) {
 <script src="<?= Html::asset('assets/js/sesam.js') ?>" defer></script>
 <script src="<?= Html::asset('assets/js/boutique-admin.js') ?>" defer></script>
 <?php require dirname(__DIR__) . '/partials/push.php'; ?>
+<?php require dirname(__DIR__) . '/partials/welcome.php'; ?>
 </body>
 </html>

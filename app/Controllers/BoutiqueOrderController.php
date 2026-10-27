@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sesam\Controllers;
 
 use Sesam\Controllers\Concerns\RendersAppArea;
+use Sesam\Controllers\Concerns\RendersListPartial;
 use Sesam\Core\Auth\Permission;
 use Sesam\Core\Boutique\OrderStatus;
 use Sesam\Core\HttpException;
@@ -23,6 +24,7 @@ use Sesam\Services\NotificationService;
 final class BoutiqueOrderController extends Controller
 {
     use RendersAppArea;
+    use RendersListPartial;
 
     public function __construct(
         ViewRenderer $views,
@@ -43,7 +45,7 @@ final class BoutiqueOrderController extends Controller
         $status = OrderStatus::isValid($status) ? $status : '';
         $query = trim((string) $request->input('q', ''));
 
-        return $this->renderAppArea('tenant/boutique/commandes/index', [
+        $data = [
             'title' => 'Commandes',
             'navTitle' => 'Commandes',
             'current' => 'boutique-commandes',
@@ -51,7 +53,13 @@ final class BoutiqueOrderController extends Controller
             'status' => $status,
             'query' => $query,
             'canManage' => $actor->can(Permission::BOUTIQUE_ORDERS),
-        ], $actor);
+        ];
+        $partial = $this->renderListPartial($request, 'tenant/boutique/commandes/_results', $data);
+        if ($partial !== null) {
+            return $partial;
+        }
+
+        return $this->renderAppArea('tenant/boutique/commandes/index', $data, $actor);
     }
 
     public function createForm(Request $request): Response

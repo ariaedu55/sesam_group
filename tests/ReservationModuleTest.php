@@ -140,6 +140,19 @@ final class ReservationModuleTest extends IntegrationTestCase
         $this->assertSame('confirmed', $row['status'], 'Confirmation automatique choisie par le salon');
         $this->assertSame('online', $row['source']);
 
+        // Parcours guidé en 4 étapes, puis page de confirmation aux couleurs du salon (sans jargon technique).
+        foreach (['data-step="service"', 'data-step="staff"', 'data-step="slot"', 'data-step="contact"', 'Prenez rendez-vous en 4 étapes', 'data-recap'] as $marker) {
+            $this->assertStringContainsString($marker, $public);
+        }
+        $location = (string) ($booking->headers()['Location'] ?? '');
+        $this->assertStringStartsWith('/t/' . $slug . '/confirmation?k=', $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $done = html_entity_decode($kernel->handle(new Request('GET', '/t/' . $slug . '/confirmation', $query))->content(), ENT_QUOTES, 'UTF-8');
+        $this->assertStringContainsString('Rendez-vous confirmé', $done);
+        $this->assertStringContainsString('Et maintenant ?', $done);
+        $this->assertStringContainsString('Tresses longues', $done);
+        $this->assertStringNotContainsString('mock', $done);
+
         $again = $kernel->handle($this->post('/t/' . $slug, [
             '_csrf' => $this->csrf($kernel, '/t/' . $slug),
             'service_id' => (string) $service,

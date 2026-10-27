@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sesam\Controllers;
 
 use Sesam\Controllers\Concerns\RendersAppArea;
+use Sesam\Controllers\Concerns\RendersListPartial;
 use Sesam\Controllers\Concerns\RequiresReservationSector;
 use Sesam\Core\Auth\Permission;
 use Sesam\Core\HttpException;
@@ -24,6 +25,7 @@ use Sesam\Services\Reservation\BookingService;
 final class ReservationAppointmentController extends Controller
 {
     use RendersAppArea;
+    use RendersListPartial;
     use RequiresReservationSector;
 
     private const STATUS_MESSAGES = [
@@ -57,7 +59,7 @@ final class ReservationAppointmentController extends Controller
             'staff_id' => (int) $request->input('personne', '0'),
         ];
 
-        return $this->renderAppArea('tenant/reservation/rendez-vous/index', [
+        $data = [
             'title' => 'Rendez-vous',
             'navTitle' => 'Rendez-vous',
             'current' => 'reservation-rdv',
@@ -65,7 +67,13 @@ final class ReservationAppointmentController extends Controller
             'filters' => $filters,
             'team' => $this->booking->listTeam($actor),
             'canManage' => $actor->can(Permission::RESERVATION_APPOINTMENTS),
-        ], $actor);
+        ];
+        $partial = $this->renderListPartial($request, 'tenant/reservation/rendez-vous/_results', $data);
+        if ($partial !== null) {
+            return $partial;
+        }
+
+        return $this->renderAppArea('tenant/reservation/rendez-vous/index', $data, $actor);
     }
 
     public function createForm(Request $request): Response

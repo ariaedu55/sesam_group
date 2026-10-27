@@ -38,25 +38,36 @@ $actions = match ($status) {
 };
 $active = in_array($status, AppointmentStatus::active(), true);
 
+$heroBackHref = '/reservation/rendez-vous';
+$heroBackLabel = 'Rendez-vous';
+$heroTitle = $appointment->clientName();
+$heroSubtitle = $appointment->serviceName() . ' · ' . ucfirst($when) . ($appointment->staffName() !== '' ? ' · avec ' . $appointment->staffName() : '');
+$heroTone = 'coral';
+$heroInitials = Html::initials($appointment->clientName());
+$heroStatusText = AppointmentStatus::label($status);
+$heroStatusTone = AppointmentStatus::tone($status);
+$heroBadgesHtml = $appointment->isPaid() ? '<span class="btq-status btq-status-success">Payé</span>' : '';
+$heroStats = [
+    ['label' => 'Prix', 'value' => BookingService::money($appointment->priceMinor())],
+    ['label' => 'Durée', 'value' => $appointment->durationMinutes() . ' min'],
+    ['label' => 'Acompte', 'value' => $appointment->depositAmountMinor() >= 100 ? BookingService::money($appointment->depositAmountMinor()) : '—'],
+    ['label' => 'Origine', 'value' => $appointment->source() === 'online' ? 'En ligne' : 'Salon'],
+];
+$heroActions = '';
+
 ?>
-<section class="btq">
-    <header class="btq-head">
-        <div>
-            <h1><?= Html::e($appointment->clientName()) ?></h1>
-            <p class="muted"><?= Html::e($appointment->serviceName()) ?> · <?= Html::e(ucfirst($when)) ?><?= $appointment->staffName() !== '' ? ' · avec ' . Html::e($appointment->staffName()) : '' ?></p>
-        </div>
-        <span class="btq-status btq-status-<?= Html::e(AppointmentStatus::tone($status)) ?>"><?= Html::e(AppointmentStatus::label($status)) ?></span>
-    </header>
+<section class="record-detail btq">
+    <?php require dirname(__DIR__, 3) . '/partials/record-hero.php'; ?>
 
     <?php if ($errors !== []): ?>
         <div class="alert alert-danger" role="alert"><?php foreach ($errors as $message): ?><p><?= Html::e((string) $message) ?></p><?php endforeach; ?></div>
     <?php endif; ?>
 
-    <div class="btq-two">
+    <div class="record-body is-two btq-two">
         <div class="btq">
             <?php if ($canManage && ($actions !== [] || $active)): ?>
-                <section class="btq-card">
-                    <h2>Que voulez-vous faire ?</h2>
+                <section class="btq-card record-panel">
+                    <?php $panelTitle = 'Actions'; $panelIcon = 'spark'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                     <div class="btq-big-actions">
                         <?php foreach ($actions as [$next, $label, $class, $iconName]): ?>
                             <form method="post" action="<?= Html::url('/reservation/rendez-vous/' . $appointment->id() . '/statut') ?>">
@@ -72,26 +83,26 @@ $active = in_array($status, AppointmentStatus::active(), true);
                 </section>
             <?php endif; ?>
 
-            <section class="btq-card">
-                <h2>Détails</h2>
-                <dl class="btq-dl">
-                    <dt>Prestation</dt><dd><?= Html::e($appointment->serviceName()) ?></dd>
-                    <dt>Quand</dt><dd><?= Html::e(ucfirst($when)) ?> (<?= Html::e((string) $appointment->durationMinutes()) ?> min)</dd>
-                    <dt>Avec</dt><dd><?= $appointment->staffName() !== '' ? Html::e($appointment->staffName()) : 'Non attribué' ?></dd>
-                    <dt>Prix</dt><dd><?= Html::e(BookingService::money($appointment->priceMinor())) ?></dd>
-                    <?php if ($appointment->depositAmountMinor() >= 100): ?><dt>Acompte</dt><dd><?= Html::e(BookingService::money($appointment->depositAmountMinor())) ?><?php if ($payment !== null): ?> — <a href="<?= Html::url('/paiements/' . $payment->id()) ?>"><?= Html::e($paymentLabels[$payment->status()] ?? $payment->status()) ?><?= $payment->paidAt() !== null ? ' le ' . Html::e(gmdate('d/m à H:i', (int) strtotime($payment->paidAt() . ' UTC'))) : '' ?></a><?php endif; ?></dd><?php endif; ?>
-                    <dt>Origine</dt><dd><?= $appointment->source() === 'online' ? 'Réservé en ligne' : 'Saisi au salon' ?></dd>
-                    <?php if ($appointment->notes() !== ''): ?><dt>Note</dt><dd><?= nl2br(Html::e($appointment->notes())) ?></dd><?php endif; ?>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Détails du rendez-vous'; $panelIcon = 'calendar'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
+                <dl class="record-facts is-grid">
+                    <div><dt>Prestation</dt><dd><?= Html::e($appointment->serviceName()) ?></dd></div>
+                    <div><dt>Quand</dt><dd><?= Html::e(ucfirst($when)) ?> (<?= Html::e((string) $appointment->durationMinutes()) ?> min)</dd></div>
+                    <div><dt>Avec</dt><dd><?= $appointment->staffName() !== '' ? Html::e($appointment->staffName()) : 'Non attribué' ?></dd></div>
+                    <div><dt>Prix</dt><dd><?= Html::e(BookingService::money($appointment->priceMinor())) ?></dd></div>
+                    <?php if ($appointment->depositAmountMinor() >= 100): ?><div><dt>Acompte</dt><dd><?= Html::e(BookingService::money($appointment->depositAmountMinor())) ?><?php if ($payment !== null): ?> — <a href="<?= Html::url('/paiements/' . $payment->id()) ?>"><?= Html::e($paymentLabels[$payment->status()] ?? $payment->status()) ?><?= $payment->paidAt() !== null ? ' le ' . Html::e(gmdate('d/m à H:i', (int) strtotime($payment->paidAt() . ' UTC'))) : '' ?></a><?php endif; ?></dd></div><?php endif; ?>
+                    <div><dt>Origine</dt><dd><?= $appointment->source() === 'online' ? 'Réservé en ligne' : 'Saisi au salon' ?></dd></div>
+                    <?php if ($appointment->notes() !== ''): ?><div><dt>Note</dt><dd><?= nl2br(Html::e($appointment->notes())) ?></dd></div><?php endif; ?>
                 </dl>
             </section>
         </div>
 
         <div class="btq">
-            <section class="btq-card">
-                <h2>Cliente</h2>
-                <dl class="btq-dl">
-                    <dt>Nom</dt><dd><?= Html::e($appointment->clientName()) ?></dd>
-                    <?php if ($appointment->clientPhone() !== ''): ?><dt>Téléphone</dt><dd><a href="tel:<?= Html::e(preg_replace('/[^\d+]/', '', $appointment->clientPhone()) ?? '') ?>"><?= Html::e($appointment->clientPhone()) ?></a></dd><?php endif; ?>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Cliente'; $panelIcon = 'person'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
+                <dl class="record-facts">
+                    <div><dt>Nom</dt><dd><?= Html::e($appointment->clientName()) ?></dd></div>
+                    <?php if ($appointment->clientPhone() !== ''): ?><div><dt>Téléphone</dt><dd><a href="tel:<?= Html::e(preg_replace('/[^\d+]/', '', $appointment->clientPhone()) ?? '') ?>"><?= Html::e($appointment->clientPhone()) ?></a></dd></div><?php endif; ?>
                 </dl>
                 <div class="btq-big-actions">
                     <?php if ($whatsapp !== ''): ?>
@@ -110,8 +121,8 @@ $active = in_array($status, AppointmentStatus::active(), true);
                 <?php endif; ?>
             </section>
 
-            <section class="btq-card">
-                <h2>Paiement</h2>
+            <section class="btq-card record-panel">
+                <?php $panelTitle = 'Paiement'; $panelIcon = 'coin'; $panelActions = ''; require dirname(__DIR__, 3) . '/partials/record-panel-head.php'; ?>
                 <p><span class="btq-status btq-status-<?= $appointment->isPaid() ? 'success' : 'warning' ?>"><?= $appointment->isPaid() ? 'Payé' : 'Pas encore payé' ?></span></p>
                 <div class="btq-big-actions">
                     <?php if ($canManage): ?>
@@ -130,5 +141,4 @@ $active = in_array($status, AppointmentStatus::active(), true);
             </section>
         </div>
     </div>
-    <p><a class="btn btn-ghost" href="<?= Html::url('/reservation/rendez-vous') ?>">← Tous les rendez-vous</a></p>
 </section>

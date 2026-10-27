@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sesam\Controllers;
 
 use Sesam\Controllers\Concerns\RendersAppArea;
+use Sesam\Controllers\Concerns\RendersListPartial;
 use Sesam\Core\Auth\Permission;
 use Sesam\Core\HttpException;
 use Sesam\Core\Request\Request;
@@ -23,6 +24,7 @@ use Sesam\Services\NotificationService;
 final class BoutiqueProductController extends Controller
 {
     use RendersAppArea;
+    use RendersListPartial;
 
     private const FIELDS = ['name', 'description', 'category', 'price_minor', 'compare_price_minor', 'stock_quantity', 'low_stock_threshold'];
 
@@ -45,7 +47,7 @@ final class BoutiqueProductController extends Controller
         $category = trim((string) $request->input('categorie', ''));
         $filter = trim((string) $request->input('filtre', ''));
 
-        return $this->renderAppArea('tenant/boutique/produits/index', [
+        $data = [
             'title' => 'Mes produits',
             'navTitle' => 'Produits',
             'current' => 'boutique-produits',
@@ -54,7 +56,15 @@ final class BoutiqueProductController extends Controller
             'category' => $category,
             'filter' => $filter,
             'canManage' => $actor->can(Permission::BOUTIQUE_PRODUCTS),
-        ], $actor);
+            'tenant' => $this->context->tenant(),
+            'csrf' => $this->csrf->token(),
+        ];
+        $partial = $this->renderListPartial($request, 'tenant/boutique/produits/_results', $data);
+        if ($partial !== null) {
+            return $partial;
+        }
+
+        return $this->renderAppArea('tenant/boutique/produits/index', $data, $actor);
     }
 
     public function createForm(Request $request): Response

@@ -266,6 +266,18 @@ final class PortalController extends Controller
             throw new HttpException(404, 'Page introuvable.');
         }
         $payload = $this->portal->confirmation($tenant, $token);
+        // Salon : confirmation aux couleurs du salon (logo, adresse, WhatsApp).
+        if ($tenant->sector() === Sector::RESERVATION && $this->salon !== null) {
+            $salon = $this->salon->publicSalon($tenant);
+
+            return $this->render('portal/salon/confirmation', $payload + [
+                'settings' => $salon['settings'] ?? null,
+                'whatsapp' => $salon['whatsapp'] ?? '',
+                'title' => (string) ($payload['title'] ?? 'Confirmation') . ' — ' . $tenant->displayName(),
+                'heading' => $payload['title'] ?? 'Demande enregistrée',
+                'tenant' => $tenant,
+            ], 200, 'layouts/salon');
+        }
 
         return $this->screen('portal/confirmation', $tenant, $payload);
     }

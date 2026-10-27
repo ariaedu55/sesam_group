@@ -27,26 +27,36 @@ $active = array_filter($units, static fn (array $u): bool => (int) $u['is_active
 $occupied = count(array_filter($active, static fn (array $u): bool => $u['lease_id'] !== null));
 $monthly = array_sum(array_map(static fn (array $u): int => (int) ($u['rent_minor'] ?? 0) + (int) ($u['charges_minor'] ?? 0), $active));
 
-?>
-<section class="btq immo">
-    <p><a class="muted" href="<?= Html::url('/immo/biens') ?>">← Tous les biens</a></p>
-    <?php if (!empty($property['image_path']) && ($tenant ?? null) instanceof \Sesam\Models\Tenant): ?>
-        <img class="immo-show-photo" src="<?= Html::url('/t/' . $tenant->slug() . '/bien/' . $property['id'] . '/image') ?>?v=<?= Html::e(rawurlencode((string) ($property['updated_at'] ?? ''))) ?>" alt="<?= Html::e($property['name']) ?>" width="960" height="420">
-    <?php endif; ?>
-    <header class="btq-head">
-        <div>
-            <h1><?= Html::e($property['name']) ?></h1>
-            <p class="muted"><?= Html::e(ImmoCatalog::PROPERTY_KINDS[$property['kind']] ?? $property['kind']) ?><?= $property['address'] ? ' · ' . Html::e($property['address']) : '' ?><?= $property['city'] ? ', ' . Html::e($property['city']) : '' ?></p>
-        </div>
-        <?php if ($canManage): ?><a class="btn btn-secondary" href="<?= Html::url('/immo/biens/' . $property['id'] . '/modifier') ?>">Modifier le bien</a><?php endif; ?>
-    </header>
+$heroImageSrc = null;
+if (!empty($property['image_path']) && ($tenant ?? null) instanceof \Sesam\Models\Tenant) {
+    $heroImageSrc = Html::url('/t/' . $tenant->slug() . '/bien/' . $property['id'] . '/image') . '?v=' . rawurlencode((string) ($property['updated_at'] ?? ''));
+}
+ob_start();
+if ($canManage): ?>
+    <a class="btn btn-secondary" href="<?= Html::url('/immo/biens/' . $property['id'] . '/modifier') ?>">Modifier</a>
+<?php endif;
+$heroActions = ob_get_clean() ?: '';
 
-    <div class="btq-kpis">
-        <article class="btq-kpi"><p>Logements</p><strong><?= count($active) ?></strong><span class="muted"><?= $occupied ?> loué(s)</span></article>
-        <article class="btq-kpi<?= count($active) - $occupied > 0 ? ' is-alert' : '' ?>"><p>Libres</p><strong><?= count($active) - $occupied ?></strong></article>
-        <article class="btq-kpi"><p>Loyers par mois</p><strong><?= Html::e(Money::format($monthly)) ?></strong></article>
-        <article class="btq-kpi"><p>Encaissé en <?= gmdate('Y') ?></p><strong><?= Html::e(Money::format((int) $data['collected'])) ?></strong></article>
-    </div>
+$heroBackHref = '/immo/biens';
+$heroBackLabel = 'Biens';
+$heroTitle = (string) $property['name'];
+$heroSubtitle = (ImmoCatalog::PROPERTY_KINDS[$property['kind']] ?? $property['kind']) . ($property['address'] ? ' · ' . $property['address'] : '') . ($property['city'] ? ', ' . $property['city'] : '');
+$heroTone = 'emerald';
+$heroInitials = Html::initials((string) $property['name']);
+$heroImageAlt = (string) $property['name'];
+$heroStatusText = $occupied . ' / ' . count($active) . ' loués';
+$heroStatusTone = count($active) - $occupied > 0 ? 'warning' : 'success';
+$heroBadgesHtml = '';
+$heroStats = [
+    ['label' => 'Logements', 'value' => (string) count($active), 'hint' => $occupied . ' loué(s)'],
+    ['label' => 'Libres', 'value' => (string) (count($active) - $occupied), 'alert' => count($active) - $occupied > 0],
+    ['label' => 'Loyers / mois', 'value' => Money::format($monthly)],
+    ['label' => 'Encaissé ' . gmdate('Y'), 'value' => Money::format((int) $data['collected'])],
+];
+
+?>
+<section class="record-detail btq immo">
+    <?php require dirname(__DIR__, 3) . '/partials/record-hero.php'; ?>
 
     <?php if ($property['owner_name'] || $property['notes']): ?>
         <section class="btq-card">

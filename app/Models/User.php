@@ -11,6 +11,13 @@ final class User extends Model
         return (int) $this->get('id', 0);
     }
 
+    public function lastLoginAt(): ?string
+    {
+        $value = $this->get('last_login_at');
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
     public function fullName(): string
     {
         return (string) $this->get('full_name', '');

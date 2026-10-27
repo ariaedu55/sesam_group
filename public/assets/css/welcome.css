@@ -1,0 +1,1549 @@
+/*
+ * Popup de bienvenue (après la connexion) : trois versions — first, back, team.
+ * Couleurs SESAM en aplats (bleu #0a6cf0, marine #071a3d, cyan #3cc4f5), ni dégradé ni bordure colorée.
+ * Toutes les animations sont coupées si l'appareil demande moins de mouvement.
+ */
+.wl {
+    --wl-blue: #0a6cf0;
+    --wl-navy: #071a3d;
+    --wl-cyan: #3cc4f5;
+    --wl-soft: #e8f1ff;
+    --wl-sun: #ffb340;
+    --wl-green: #3ddc84;
+    --wl-text: #101828;
+    --wl-muted: #5f6b7d;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    font-family: inherit;
+}
+
+.wl[hidden] {
+    display: none;
+}
+
+.wl-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(7, 26, 61, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.wl.is-open .wl-backdrop {
+    opacity: 1;
+}
+
+.wl-card {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    border-radius: 26px;
+    background: #fff;
+    color: var(--wl-text);
+    box-shadow: 0 40px 90px -30px rgba(7, 26, 61, 0.75);
+    opacity: 0;
+    transform: translateY(30px) scale(0.94);
+    transition: opacity 0.4s ease, transform 0.55s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+.wl.is-open .wl-card {
+    opacity: 1;
+    transform: none;
+}
+
+.wl.is-closing .wl-card {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+    transition-duration: 0.25s;
+}
+
+.wl.is-closing .wl-backdrop {
+    opacity: 0;
+}
+
+.wl-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.wl-close:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: rotate(90deg);
+}
+
+.wl-close svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+
+/* ---------- Illustration ---------- */
+.wl-art {
+    position: relative;
+    overflow: hidden;
+    height: 210px;
+    background: var(--wl-navy);
+}
+
+.wl-morning .wl-art {
+    background: #0b3a8c;
+}
+
+.wl-day .wl-art {
+    background: #1257c9;
+}
+
+.wl-dots {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='2' cy='2' r='1.3' fill='%23ffffff' fill-opacity='0.12'/%3E%3C/svg%3E");
+}
+
+.wl-scene {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.wl-stars circle {
+    fill: #fff;
+    animation: wl-twinkle 2.4s ease-in-out infinite;
+}
+
+.wl-stars circle:nth-child(2n) {
+    animation-delay: 0.6s;
+}
+
+.wl-stars circle:nth-child(3n) {
+    animation-delay: 1.3s;
+}
+
+@keyframes wl-twinkle {
+    0%,
+    100% {
+        opacity: 0.25;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Première connexion : planète, orbite, fusée */
+.wl-orbit {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.22);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 8;
+    transform-origin: 200px 112px;
+    animation: wl-spin 18s linear infinite;
+}
+
+.wl-planet {
+    fill: var(--wl-blue);
+}
+
+.wl-ring {
+    fill: none;
+    stroke: var(--wl-cyan);
+    stroke-width: 5;
+    opacity: 0.9;
+}
+
+.wl-moonlet {
+    fill: var(--wl-cyan);
+    transform-origin: 200px 112px;
+    animation: wl-spin 6s linear infinite;
+}
+
+.wl-rocket {
+    animation: wl-launch 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) both, wl-hover 3s ease-in-out 1.2s infinite;
+}
+
+.wl-rocket-body {
+    fill: #fff;
+}
+
+.wl-rocket-window {
+    fill: var(--wl-blue);
+    stroke: var(--wl-soft);
+    stroke-width: 3;
+}
+
+.wl-rocket-fin {
+    fill: var(--wl-cyan);
+}
+
+.wl-flame path {
+    fill: var(--wl-sun);
+    transform-origin: 200px 168px;
+    animation: wl-flame 0.18s ease-in-out infinite alternate;
+}
+
+@keyframes wl-launch {
+    from {
+        transform: translateY(120px);
+    }
+
+    to {
+        transform: none;
+    }
+}
+
+@keyframes wl-hover {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes wl-flame {
+    from {
+        transform: scaleY(0.7);
+    }
+
+    to {
+        transform: scaleY(1.25);
+    }
+}
+
+@keyframes wl-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Cartes qui flottent (toutes les versions) */
+.wl-float rect,
+.wl-float circle:first-child {
+    fill: #fff;
+}
+
+.wl-float-line {
+    fill: none;
+    stroke: var(--wl-soft);
+    stroke-width: 6;
+    stroke-linecap: round;
+}
+
+.wl-float-dot {
+    fill: var(--wl-blue);
+}
+
+.wl-float-check {
+    fill: none;
+    stroke: var(--wl-green);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wl-float-a {
+    animation: wl-bob 4s ease-in-out infinite;
+}
+
+.wl-float-b {
+    animation: wl-bob 4.6s ease-in-out 0.8s infinite;
+}
+
+@keyframes wl-bob {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(-2deg);
+    }
+}
+
+/* Confettis de bienvenue (première connexion) */
+.wl-confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.wl-confetti i {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--wl-cyan);
+    opacity: 0;
+}
+
+.wl.is-open .wl-confetti i {
+    animation: wl-confetti 1.6s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+}
+
+.wl-confetti i:nth-child(3n) { background: #fff; }
+.wl-confetti i:nth-child(3n + 1) { background: var(--wl-sun); }
+.wl-confetti i:nth-child(4n) { background: var(--wl-green); }
+.wl-confetti i:nth-child(1) { left: 8%; animation-delay: 0.05s; }
+.wl-confetti i:nth-child(2) { left: 14%; animation-delay: 0.2s; }
+.wl-confetti i:nth-child(3) { left: 21%; animation-delay: 0.1s; }
+.wl-confetti i:nth-child(4) { left: 28%; animation-delay: 0.3s; }
+.wl-confetti i:nth-child(5) { left: 34%; animation-delay: 0.15s; }
+.wl-confetti i:nth-child(6) { left: 40%; animation-delay: 0.35s; }
+.wl-confetti i:nth-child(7) { left: 46%; animation-delay: 0.05s; }
+.wl-confetti i:nth-child(8) { left: 52%; animation-delay: 0.25s; }
+.wl-confetti i:nth-child(9) { left: 58%; animation-delay: 0.12s; }
+.wl-confetti i:nth-child(10) { left: 64%; animation-delay: 0.32s; }
+.wl-confetti i:nth-child(11) { left: 70%; animation-delay: 0.08s; }
+.wl-confetti i:nth-child(12) { left: 76%; animation-delay: 0.28s; }
+.wl-confetti i:nth-child(13) { left: 82%; animation-delay: 0.18s; }
+.wl-confetti i:nth-child(14) { left: 88%; animation-delay: 0.38s; }
+.wl-confetti i:nth-child(15) { left: 93%; animation-delay: 0.1s; }
+.wl-confetti i:nth-child(16) { left: 4%; animation-delay: 0.42s; }
+.wl-confetti i:nth-child(17) { left: 31%; animation-delay: 0.48s; }
+.wl-confetti i:nth-child(18) { left: 67%; animation-delay: 0.45s; }
+
+@keyframes wl-confetti {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(240px) rotate(540deg);
+    }
+}
+
+/* Retour : soleil, lune, nuages, collines */
+.wl-sun circle {
+    fill: var(--wl-sun);
+}
+
+.wl-sun.is-rising {
+    animation: wl-rise 1.4s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.wl-rays {
+    fill: none;
+    stroke: var(--wl-sun);
+    stroke-width: 5;
+    stroke-linecap: round;
+    transform-origin: 200px 96px;
+    animation: wl-spin 16s linear infinite;
+}
+
+@keyframes wl-rise {
+    from {
+        transform: translateY(70px);
+        opacity: 0;
+    }
+
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+.wl-moon circle {
+    fill: #f4f1e3;
+}
+
+.wl-moon .wl-moon-cut {
+    fill: var(--wl-navy);
+}
+
+.wl-moon {
+    animation: wl-bob 6s ease-in-out infinite;
+}
+
+.wl-cloud path {
+    fill: #fff;
+    opacity: 0.92;
+}
+
+.wl-night .wl-cloud path {
+    opacity: 0.18;
+}
+
+.wl-cloud-a {
+    animation: wl-drift 9s ease-in-out infinite alternate;
+}
+
+.wl-cloud-b {
+    animation: wl-drift 11s ease-in-out 1s infinite alternate-reverse;
+}
+
+@keyframes wl-drift {
+    from {
+        transform: translateX(-14px);
+    }
+
+    to {
+        transform: translateX(18px);
+    }
+}
+
+.wl-hills {
+    fill: var(--wl-navy);
+}
+
+.wl-night .wl-hills {
+    fill: #0f2a5e;
+}
+
+.wl-badge-icon {
+    fill: none;
+    stroke: var(--wl-blue);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Équipe SESAM : console animée */
+.wl-window-frame {
+    fill: #fff;
+}
+
+.wl-window-bar {
+    fill: var(--wl-soft);
+}
+
+.wl-light {
+    fill: var(--wl-blue);
+    opacity: 0.35;
+}
+
+.wl-bars rect {
+    fill: var(--wl-blue);
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation: wl-grow 1s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.wl-bars rect:nth-child(2) { animation-delay: 0.12s; fill: var(--wl-cyan); }
+.wl-bars rect:nth-child(3) { animation-delay: 0.24s; }
+.wl-bars rect:nth-child(4) { animation-delay: 0.36s; fill: var(--wl-navy); }
+
+@keyframes wl-grow {
+    from {
+        transform: scaleY(0);
+    }
+
+    to {
+        transform: scaleY(1);
+    }
+}
+
+.wl-line {
+    fill: none;
+    stroke: var(--wl-green);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 140;
+    stroke-dashoffset: 140;
+    animation: wl-draw 1.4s ease 0.4s forwards;
+}
+
+.wl-window-rule {
+    stroke: var(--wl-soft);
+    stroke-width: 3;
+}
+
+.wl-pulse {
+    fill: var(--wl-green);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wl-pulse 1.6s ease-out 1.6s infinite;
+}
+
+@keyframes wl-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes wl-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(2.6);
+        opacity: 0;
+    }
+}
+
+/* ---------- Popups du site : scènes métier ---------- */
+.wl-card-white {
+    fill: #fff;
+}
+
+.wl-icon-stroke {
+    fill: none;
+    stroke: var(--wl-blue);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wl-float-c {
+    animation: wl-bob 5s ease-in-out 0.4s infinite;
+}
+
+/* Réservation : agenda, horloge, message */
+.wl-cal-head {
+    fill: var(--wl-blue);
+}
+
+.wl-cal-ring {
+    stroke: var(--wl-cyan);
+    stroke-width: 6;
+    stroke-linecap: round;
+}
+
+.wl-cal-cell {
+    fill: var(--wl-soft);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wl-pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.wl-cal-cell.is-booked {
+    fill: var(--wl-blue);
+}
+
+@keyframes wl-pop {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+.wl-clock circle:first-child {
+    fill: #fff;
+}
+
+.wl-clock-hand {
+    stroke: var(--wl-navy);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transform-origin: 300px 78px;
+}
+
+.wl-clock-long {
+    animation: wl-spin 4s linear infinite;
+}
+
+.wl-clock-short {
+    animation: wl-spin 24s linear infinite;
+}
+
+.wl-clock-pin {
+    fill: var(--wl-blue);
+}
+
+.wl-bubble path:first-child {
+    fill: #fff;
+}
+
+.wl-bubble-check {
+    fill: none;
+    stroke: var(--wl-green);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+    animation: wl-draw 0.6s ease 1.2s forwards;
+}
+
+/* Boutique : sac, articles qui tombent, étiquette */
+.wl-bag {
+    animation: wl-squash 2.4s ease-in-out 1.1s infinite;
+    transform-origin: 200px 196px;
+}
+
+.wl-bag-body {
+    fill: #fff;
+}
+
+.wl-bag-handle {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 7;
+    stroke-linecap: round;
+}
+
+.wl-bag-dot {
+    fill: var(--wl-navy);
+}
+
+.wl-bag-smile {
+    fill: none;
+    stroke: var(--wl-blue);
+    stroke-width: 5;
+    stroke-linecap: round;
+}
+
+.wl-drop {
+    animation: wl-fall 2.4s cubic-bezier(0.5, 0, 0.8, 0.6) infinite;
+}
+
+.wl-drop-a rect { fill: var(--wl-cyan); }
+.wl-drop-b circle { fill: var(--wl-sun); }
+.wl-drop-c path { fill: var(--wl-green); }
+.wl-drop-b { animation-delay: 0.8s; }
+.wl-drop-c { animation-delay: 1.6s; }
+
+@keyframes wl-fall {
+    0% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    60% {
+        transform: translateY(70px);
+        opacity: 1;
+    }
+
+    70%,
+    100% {
+        transform: translateY(80px);
+        opacity: 0;
+    }
+}
+
+@keyframes wl-squash {
+    0%,
+    100% {
+        transform: scale(1, 1);
+    }
+
+    50% {
+        transform: scale(1.03, 0.97);
+    }
+}
+
+.wl-tag path:first-child {
+    fill: var(--wl-sun);
+}
+
+.wl-tag-hole {
+    fill: var(--wl-navy);
+}
+
+.wl-tag {
+    transform-origin: 300px 84px;
+    animation: wl-swing 2.6s ease-in-out infinite;
+}
+
+.wl-tag .wl-float-line {
+    stroke: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes wl-swing {
+    0%,
+    100% {
+        transform: rotate(-6deg);
+    }
+
+    50% {
+        transform: rotate(8deg);
+    }
+}
+
+/* Immo : immeuble, fenêtres qui s'allument, clé */
+.wl-roof {
+    fill: var(--wl-cyan);
+}
+
+.wl-door {
+    fill: var(--wl-navy);
+}
+
+.wl-window-light {
+    fill: var(--wl-soft);
+    animation: wl-lights 3.6s ease-in-out infinite;
+}
+
+@keyframes wl-lights {
+    0%,
+    30% {
+        fill: var(--wl-soft);
+    }
+
+    45%,
+    85% {
+        fill: var(--wl-sun);
+    }
+
+    100% {
+        fill: var(--wl-soft);
+    }
+}
+
+.wl-key circle:first-child {
+    fill: var(--wl-sun);
+}
+
+.wl-key .wl-key-hole {
+    fill: var(--wl-navy);
+}
+
+.wl-key path {
+    fill: none;
+    stroke: var(--wl-sun);
+    stroke-width: 7;
+    stroke-linecap: round;
+}
+
+.wl-scene-immo .wl-hills {
+    fill: #0f2a5e;
+}
+
+/* Agence : site qui se construit */
+.wl-build {
+    fill: var(--wl-soft);
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: wl-build 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.wl-build-hero {
+    fill: var(--wl-blue);
+}
+
+.wl-build:nth-of-type(2) { animation-delay: 0.1s; }
+.wl-build:nth-of-type(3) { animation-delay: 0.45s; }
+.wl-build:nth-of-type(4) { animation-delay: 0.6s; }
+.wl-build:nth-of-type(5) { animation-delay: 0.75s; }
+
+@keyframes wl-build {
+    from {
+        transform: scaleX(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+}
+
+.wl-build-text {
+    stroke: #fff;
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: wl-draw 0.8s ease 0.6s forwards;
+}
+
+.wl-cursor path {
+    fill: var(--wl-navy);
+    stroke: #fff;
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+
+/* Corps des popups du site */
+.wl-bullets {
+    display: grid;
+    gap: 8px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wl-bullets li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateX(-8px);
+    animation: wl-tile-in 0.4s ease forwards;
+}
+
+.wl-bullets li:nth-child(1) { animation-delay: 0.3s; }
+.wl-bullets li:nth-child(2) { animation-delay: 0.42s; }
+.wl-bullets li:nth-child(3) { animation-delay: 0.54s; }
+
+.wl-bullets svg {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    padding: 3px;
+    border-radius: 50%;
+    background: #e3f7ea;
+    fill: none;
+    stroke: #1d9a4a;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wl-site-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 22px;
+}
+
+a.wl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+    line-height: 1.2;
+}
+
+.wl-nothanks {
+    display: block;
+    margin: 12px auto 0;
+    padding: 6px;
+    border: 0;
+    background: none;
+    color: var(--wl-muted);
+    font: inherit;
+    font-size: 0.84rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+
+/* ---------- Texte ---------- */
+.wl-body {
+    padding: 22px 24px 22px;
+}
+
+.wl-eyebrow {
+    margin: 0 0 6px;
+    color: var(--wl-blue);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.wl-body h2 {
+    margin: 0;
+    font-size: clamp(1.35rem, 4.5vw, 1.65rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--wl-navy);
+}
+
+.wl-text {
+    margin: 8px 0 0;
+    color: var(--wl-muted);
+    line-height: 1.55;
+}
+
+.wl-wave {
+    display: inline-block;
+    transform-origin: 70% 80%;
+    animation: wl-wave 1.8s ease-in-out 0.6s 2;
+}
+
+@keyframes wl-wave {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    10%, 30% { transform: rotate(16deg); }
+    20%, 40% { transform: rotate(-8deg); }
+}
+
+/* Écrans de la visite guidée */
+.wl-slide {
+    animation: wl-slide-in 0.35s ease;
+}
+
+.wl-slide[hidden] {
+    display: none;
+}
+
+@keyframes wl-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.wl-steps {
+    display: grid;
+    gap: 8px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wl-steps a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #f4f7fc;
+    color: var(--wl-text);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.wl-steps a:hover {
+    background: var(--wl-soft);
+    transform: translateX(4px);
+}
+
+.wl-steps span {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--wl-blue);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.wl-steps svg {
+    width: 18px;
+    height: 18px;
+    margin-left: auto;
+    flex: none;
+    fill: none;
+    stroke: var(--wl-blue);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Chiffres du jour */
+.wl-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wl-tiles a {
+    display: grid;
+    gap: 2px;
+    height: 100%;
+    padding: 12px 10px;
+    border-radius: 16px;
+    background: #f4f7fc;
+    color: var(--wl-text);
+    text-decoration: none;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: wl-tile-in 0.45s ease forwards;
+    transition: background 0.2s ease;
+}
+
+.wl-tiles li:nth-child(1) a { animation-delay: 0.25s; }
+.wl-tiles li:nth-child(2) a { animation-delay: 0.35s; }
+.wl-tiles li:nth-child(3) a { animation-delay: 0.45s; }
+
+.wl-tiles a:hover {
+    background: var(--wl-soft);
+}
+
+.wl-tiles a.has-value b {
+    color: var(--wl-blue);
+}
+
+@keyframes wl-tile-in {
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.wl-tiles svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: var(--wl-blue);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wl-tiles b {
+    font-size: 1.7rem;
+    line-height: 1.1;
+    color: var(--wl-navy);
+    font-variant-numeric: tabular-nums;
+}
+
+.wl-tiles span {
+    color: var(--wl-muted);
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+.wl-unread {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #fff4dc;
+    color: #6b4500;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.wl-unread i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--wl-sun);
+    animation: wl-pulse-dot 1.4s ease-in-out infinite;
+}
+
+@keyframes wl-pulse-dot {
+    50% {
+        transform: scale(1.5);
+        opacity: 0.6;
+    }
+}
+
+/* ---------- Pied : pagination et boutons ---------- */
+.wl-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.wl-pager {
+    display: flex;
+    gap: 6px;
+}
+
+.wl-pager i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(12, 23, 48, 0.15);
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.wl-pager i.is-on {
+    width: 24px;
+    background: var(--wl-blue);
+}
+
+.wl-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.wl-btn {
+    min-height: 46px;
+    padding: 10px 22px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--wl-blue);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.wl-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -12px rgba(10, 108, 240, 0.8);
+}
+
+.wl-btn:focus-visible,
+.wl-close:focus-visible,
+.wl-steps a:focus-visible,
+.wl-tiles a:focus-visible {
+    outline: 3px solid var(--wl-cyan);
+    outline-offset: 2px;
+}
+
+.wl-btn-ghost {
+    background: #f1f4f9;
+    color: var(--wl-text);
+}
+
+.wl-btn-ghost:hover {
+    box-shadow: none;
+}
+
+.wl-btn-wide {
+    min-width: 200px;
+}
+
+.wl-footer:only-child,
+.wl-body > .wl-footer:last-child .wl-actions:only-child {
+    width: 100%;
+}
+
+.wl-back .wl-actions,
+.wl-team .wl-actions {
+    width: 100%;
+}
+
+.wl-back .wl-btn-wide,
+.wl-team .wl-btn-wide {
+    flex: 1;
+}
+
+html.wl-lock,
+html.wl-lock body {
+    overflow: hidden;
+}
+
+/* ---------- Téléphone : feuille qui monte du bas ---------- */
+@media (max-width: 560px) {
+    .wl {
+        place-items: end stretch;
+        padding: 0;
+    }
+
+    .wl-card {
+        max-width: none;
+        max-height: 92vh;
+        border-radius: 26px 26px 0 0;
+        transform: translateY(100%);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .wl.is-closing .wl-card {
+        transform: translateY(100%);
+    }
+
+    .wl-art {
+        height: 180px;
+    }
+
+    .wl-body {
+        padding: 20px 18px 18px;
+    }
+
+    .wl-tiles b {
+        font-size: 1.45rem;
+    }
+
+    .wl-tiles a {
+        padding: 10px 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wl *,
+    .wl *::before,
+    .wl *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .wl-tiles a {
+        opacity: 1;
+        transform: none;
+    }
+
+    .wl-line,
+    .wl-bubble-check,
+    .wl-build-text {
+        stroke-dashoffset: 0;
+    }
+
+    .wl-bullets li {
+        opacity: 1;
+        transform: none;
+    }
+
+    .wl-confetti {
+        display: none;
+    }
+}
+
+/* ---------- Scènes « cadeau » et « téléphone » ---------- */
+.wl-gift-box {
+    fill: #fff;
+}
+
+.wl-gift-ribbon {
+    fill: var(--wl-blue);
+}
+
+.wl-gift-bow {
+    fill: var(--wl-cyan);
+}
+
+.wl-gift {
+    animation: wl-squash 2.2s ease-in-out 1s infinite;
+    transform-origin: 200px 192px;
+}
+
+.wl-gift-lid {
+    animation: wl-lid 2.2s cubic-bezier(0.3, 1.4, 0.5, 1) 0.4s infinite;
+}
+
+@keyframes wl-lid {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    25% {
+        transform: translateY(-26px) rotate(-6deg);
+    }
+
+    45% {
+        transform: translateY(0) rotate(0deg);
+    }
+}
+
+.wl-burst path {
+    fill: none;
+    stroke: var(--wl-sun);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+    animation: wl-burst 2.2s ease-out 0.5s infinite;
+}
+
+@keyframes wl-burst {
+    0%,
+    15% {
+        stroke-dashoffset: 30;
+        opacity: 0;
+    }
+
+    30% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+
+    55%,
+    100% {
+        stroke-dashoffset: -30;
+        opacity: 0;
+    }
+}
+
+.wl-badge-month circle {
+    fill: var(--wl-sun);
+}
+
+.wl-badge-month text {
+    fill: var(--wl-navy);
+    font-size: 15px;
+    font-weight: 800;
+    font-family: inherit;
+}
+
+.wl-badge-month .wl-badge-small {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.wl-phone-body {
+    fill: #fff;
+}
+
+.wl-phone-screen {
+    fill: var(--wl-soft);
+}
+
+.wl-notif {
+    fill: #fff;
+}
+
+.wl-notif-dot {
+    fill: var(--wl-blue);
+}
+
+.wl-notif-b.wl-notif-dot {
+    fill: var(--wl-green);
+}
+
+.wl-notif-c.wl-notif-dot {
+    fill: var(--wl-sun);
+}
+
+.wl-notif-a,
+.wl-notif-b,
+.wl-notif-c {
+    animation: wl-notif 3.6s ease-in-out infinite;
+}
+
+.wl-notif-b {
+    animation-delay: 0.5s;
+}
+
+.wl-notif-c {
+    animation-delay: 1s;
+}
+
+@keyframes wl-notif {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    12%,
+    80% {
+        opacity: 1;
+        transform: none;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.wl-tap circle {
+    fill: var(--wl-navy);
+    opacity: 0.85;
+}
+
+.wl-tap .wl-tap-wave {
+    fill: none;
+    stroke: var(--wl-cyan);
+    stroke-width: 3;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: wl-pulse 1.6s ease-out infinite;
+}
+
+/* ---------- Format compact : les popups ne prennent pas tout l'écran ---------- */
+.wl-site .wl-card {
+    max-width: 430px;
+}
+
+.wl-site .wl-art {
+    height: 170px;
+}
+
+.wl-site .wl-body {
+    padding: 18px 22px 16px;
+}
+
+.wl-site .wl-text {
+    font-size: 0.93rem;
+}
+
+.wl-site .wl-bullets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-top: 12px;
+}
+
+.wl-site .wl-bullets li {
+    gap: 6px;
+    font-size: 0.84rem;
+}
+
+.wl-site .wl-bullets svg {
+    width: 18px;
+    height: 18px;
+    padding: 2px;
+}
+
+.wl-site .wl-site-actions {
+    margin-top: 16px;
+}
+
+.wl-site .wl-site-actions .wl-btn {
+    min-height: 42px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+.wl-site .wl-nothanks {
+    margin-top: 8px;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 560px) {
+    .wl-card {
+        max-height: 86vh;
+    }
+
+    .wl-art {
+        height: 150px;
+    }
+
+    .wl-site .wl-art {
+        height: 140px;
+    }
+
+    .wl-close {
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .wl-body {
+        padding: 16px 16px 14px;
+    }
+
+    .wl-site .wl-body {
+        padding: 14px 16px 12px;
+    }
+
+    .wl-eyebrow {
+        font-size: 0.7rem;
+        margin-bottom: 4px;
+    }
+
+    .wl-body h2 {
+        font-size: 1.18rem;
+    }
+
+    .wl-text {
+        margin-top: 6px;
+        font-size: 0.86rem;
+        line-height: 1.45;
+    }
+
+    .wl-site .wl-text {
+        font-size: 0.86rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .wl-site .wl-bullets {
+        margin-top: 10px;
+    }
+
+    .wl-site .wl-bullets li {
+        font-size: 0.78rem;
+    }
+
+    .wl-site .wl-site-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 12px;
+    }
+
+    .wl-site .wl-site-actions .wl-btn {
+        min-height: 40px;
+        padding: 6px 8px;
+        font-size: 0.82rem;
+        border-radius: 10px;
+    }
+
+    .wl-tiles {
+        margin-top: 12px;
+        gap: 6px;
+    }
+
+    .wl-tiles b {
+        font-size: 1.3rem;
+    }
+
+    .wl-tiles span {
+        font-size: 0.7rem;
+    }
+
+    .wl-steps {
+        margin-top: 12px;
+        gap: 6px;
+    }
+
+    .wl-steps a {
+        padding: 9px 12px;
+        font-size: 0.86rem;
+    }
+
+    .wl-footer {
+        margin-top: 14px;
+    }
+
+    .wl-btn {
+        min-height: 42px;
+        padding: 8px 16px;
+    }
+
+    .wl-unread {
+        margin-top: 10px;
+        font-size: 0.78rem;
+    }
+}
+
+/* Très petits écrans : on garde l'essentiel. */
+@media (max-width: 360px) {
+    .wl-site .wl-bullets li:nth-child(3) {
+        display: none;
+    }
+
+    .wl-site .wl-site-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wl-notif-a,
+    .wl-notif-b,
+    .wl-notif-c {
+        opacity: 1;
+    }
+
+    .wl-burst path {
+        stroke-dashoffset: 0;
+    }
+}

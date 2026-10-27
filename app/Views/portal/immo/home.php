@@ -76,7 +76,7 @@ $err = static function (string $key) use ($errors): void {
     <div class="im-hero-inner">
         <p class="im-kicker">Sesam Immo</p>
         <h1><?= Html::e($name) ?></h1>
-        <p class="im-lead"><?= Html::e($lead !== '' ? $lead : 'Parcourez les biens disponibles et laissez vos coordonnées. Aucun loyer n’est encaissé ici.') ?></p>
+        <p class="im-lead"><?= Html::e($lead !== '' ? $lead : 'Parcourez les biens disponibles, puis laissez vos coordonnées : nous vous recontactons vite pour organiser une visite.') ?></p>
         <ul class="im-facts">
             <li><b><?= count($listings) ?></b><span>bien<?= count($listings) > 1 ? 's' : '' ?></span></li>
             <li><b><?= $available ?></b><span>logement<?= $available > 1 ? 's' : '' ?> proposé<?= $available > 1 ? 's' : '' ?></span></li>

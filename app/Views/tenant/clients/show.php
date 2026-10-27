@@ -22,64 +22,109 @@ $isBoutique = (bool) ($showBoutiqueNav ?? false);
 $appointments = is_array($appointments ?? null) ? $appointments : [];
 $canBook = (bool) ($canBook ?? false);
 $isSalon = (bool) ($showReservationNav ?? false);
+$icon = dirname(__DIR__, 2) . '/partials/ui-icon.php';
 
 if ($client === null) {
     return;
 }
 
-?>
-<section class="crm-detail">
-    <header class="row staff-toolbar">
-        <div>
-            <h1><?= Html::e($client->fullName()) ?></h1>
-            <p class="muted">
-                <?= $client->isArchived() ? 'Archivé' : 'Actif' ?>
-                · Créé le <?= Html::e($client->createdAt()) ?>
-            </p>
-        </div>
-        <div class="row">
-            <?php if ($canUpdate): ?>
-                <a class="btn btn-secondary" href="<?= Html::url('/clients/' . $client->id() . '/modifier') ?>" data-modal="Clients">Modifier</a>
-            <?php endif; ?>
-            <?php if ($canArchive && !$client->isArchived()): ?>
-                <form method="post" action="<?= Html::url('/clients/' . $client->id() . '/archiver') ?>">
-                    <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
-                    <button class="btn btn-ghost" type="submit">Archiver</button>
-                </form>
-            <?php elseif ($canArchive && $client->isArchived()): ?>
-                <form method="post" action="<?= Html::url('/clients/' . $client->id() . '/restaurer') ?>">
-                    <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
-                    <button class="btn btn-primary" type="submit">Restaurer</button>
-                </form>
-            <?php endif; ?>
-        </div>
-    </header>
+$spent = 0;
+foreach ($boutiqueOrders as $order) {
+    if ($order instanceof BoutiqueOrder && OrderStatus::consumesStock($order->status())) {
+        $spent += $order->totalMinor();
+    }
+}
+$visits = count(array_filter($appointments, static fn ($a): bool => $a instanceof \Sesam\Models\ReservationAppointment && $a->status() === \Sesam\Core\Reservation\AppointmentStatus::COMPLETED));
 
-    <div class="crm-detail-grid">
-        <article class="card">
-            <h2>Coordonnées</h2>
-            <dl class="crm-dl">
-                <dt>E-mail</dt>
-                <dd><?= $client->email() !== null ? Html::e($client->email()) : '—' ?></dd>
-                <dt>Téléphone</dt>
-                <dd><?= $client->phone() !== null ? Html::e($client->phone()) : '—' ?></dd>
-                <dt>Tags</dt>
-                <dd>
-                    <?php if ($client->tags() === []): ?>
-                        <span class="muted">Aucun tag</span>
-                    <?php else: ?>
-                        <?php foreach ($client->tags() as $tag): ?>
-                            <span class="badge"><?= Html::e($tag->name()) ?></span>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </dd>
+ob_start();
+if ($canUpdate): ?>
+    <a class="btn btn-secondary" href="<?= Html::url('/clients/' . $client->id() . '/modifier') ?>" data-modal="Clients"><?php $name = 'edit'; include $icon; ?>Modifier</a>
+<?php endif;
+if ($canArchive && !$client->isArchived()): ?>
+    <form method="post" action="<?= Html::url('/clients/' . $client->id() . '/archiver') ?>">
+        <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+        <button class="btn btn-ghost" type="submit">Archiver</button>
+    </form>
+<?php elseif ($canArchive && $client->isArchived()): ?>
+    <form method="post" action="<?= Html::url('/clients/' . $client->id() . '/restaurer') ?>">
+        <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+        <button class="btn btn-primary" type="submit">Restaurer</button>
+    </form>
+<?php endif;
+$heroActions = ob_get_clean() ?: '';
+
+$heroStats = [
+    ['label' => 'Notes', 'value' => (string) count($notes)],
+    ['label' => 'Activités', 'value' => (string) count($activities)],
+];
+if ($isBoutique) {
+    $heroStats[] = ['label' => 'Commandes', 'value' => (string) count($boutiqueOrders), 'hint' => $spent > 0 ? Money::format($spent) . ' confirmés' : ''];
+}
+if ($isSalon) {
+    $heroStats[] = ['label' => 'Visites', 'value' => (string) $visits, 'hint' => count($appointments) . ' RDV au total'];
+}
+
+$contact = array_filter([
+    $client->phone(),
+    $client->email(),
+], static fn ($v) => $v !== null && $v !== '');
+$createdLabel = $client->createdAt() !== '' ? gmdate('d/m/Y', (int) strtotime($client->createdAt()) ?: time()) : '—';
+$heroSubtitle = ($contact !== [] ? implode(' · ', $contact) : 'Coordonnées à compléter') . ' — Client depuis le ' . $createdLabel;
+$heroSubtitle = Html::e($heroSubtitle);
+
+ob_start();
+foreach ($client->tags() as $tag) {
+    echo '<span class="badge">' . Html::e($tag->name()) . '</span>';
+}
+$heroBadgesHtml = ob_get_clean() ?: '';
+
+$heroBackHref = '/clients';
+$heroBackLabel = 'Clients';
+$heroTitle = $client->fullName();
+$heroTone = $isBoutique ? 'electric' : ($isSalon ? 'coral' : 'teal');
+$heroInitials = Html::initials($client->fullName());
+$heroStatusText = $client->isArchived() ? 'Archivé' : 'Actif';
+$heroStatusTone = $client->isArchived() ? 'muted' : 'success';
+
+?>
+<section class="record-detail crm-detail">
+    <?php require dirname(__DIR__, 2) . '/partials/record-hero.php'; ?>
+
+    <div class="record-body is-split">
+        <article class="card record-panel">
+            <?php $panelTitle = 'Coordonnées'; $panelIcon = 'person'; require dirname(__DIR__, 2) . '/partials/record-panel-head.php'; ?>
+            <dl class="record-facts is-grid">
+                <div>
+                    <dt>E-mail</dt>
+                    <dd><?= $client->email() !== null ? Html::e($client->email()) : '—' ?></dd>
+                </div>
+                <div>
+                    <dt>Téléphone</dt>
+                    <dd><?= $client->phone() !== null ? Html::e($client->phone()) : '—' ?></dd>
+                </div>
+                <div>
+                    <dt>Tags</dt>
+                    <dd>
+                        <?php if ($client->tags() === []): ?>
+                            <span class="muted">Aucun tag</span>
+                        <?php else: ?>
+                            <?php foreach ($client->tags() as $tag): ?>
+                                <span class="badge"><?= Html::e($tag->name()) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </dd>
+                </div>
+                <div>
+                    <dt>Statut</dt>
+                    <dd><?= $client->isArchived() ? 'Archivé' : 'Actif' ?></dd>
+                </div>
             </dl>
         </article>
 
-        <article class="card">
-            <h2>Notes</h2>
+        <article class="card record-panel">
+            <?php $panelTitle = 'Notes'; $panelIcon = 'chat'; require dirname(__DIR__, 2) . '/partials/record-panel-head.php'; ?>
             <?php if ($notes === []): ?>
-                <p class="muted">Aucune note pour l'instant.</p>
+                <p class="muted">Aucune note pour l'instant. Notez préférences, tailles ou relances importantes.</p>
             <?php else: ?>
                 <ul class="crm-notes">
                     <?php foreach ($notes as $note): ?>
@@ -96,7 +141,7 @@ if ($client === null) {
                     <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
                     <div class="field">
                         <label for="body"><span>Ajouter une note</span></label>
-                        <textarea class="input" id="body" name="body" rows="4" maxlength="5000" required></textarea>
+                        <textarea class="input" id="body" name="body" rows="4" maxlength="5000" required placeholder="Ex. préfère être contactée le matin…"></textarea>
                     </div>
                     <button class="btn btn-primary" type="submit">Publier</button>
                 </form>
@@ -105,19 +150,21 @@ if ($client === null) {
     </div>
 
     <?php if ($isBoutique): ?>
-        <article class="card">
-            <div class="row staff-toolbar">
-                <h2>Commandes de la boutique</h2>
-                <?php if ($canOrder): ?>
-                    <a class="btn btn-secondary" href="<?= Html::url('/boutique/commandes/nouveau?client=' . $client->id()) ?>">Noter une vente</a>
-                <?php endif; ?>
-            </div>
+        <article class="card record-panel">
+            <?php
+            ob_start();
+            if ($canOrder): ?>
+                <a class="btn btn-secondary btn-sm" href="<?= Html::url('/boutique/commandes/nouveau?client=' . $client->id()) ?>"><?php $name = 'plus'; include $icon; ?>Noter une vente</a>
+            <?php endif;
+            $panelActions = ob_get_clean() ?: '';
+            $panelTitle = 'Commandes boutique';
+            $panelIcon = 'bag';
+            require dirname(__DIR__, 2) . '/partials/record-panel-head.php';
+            ?>
             <?php if ($boutiqueOrders === []): ?>
-                <p class="muted">Aucune commande pour ce client.</p>
+                <p class="muted">Aucune commande. Partagez votre lien boutique pour recevoir des commandes en ligne.</p>
             <?php else: ?>
-                <?php $spent = 0; foreach ($boutiqueOrders as $order) { if ($order instanceof BoutiqueOrder && OrderStatus::consumesStock($order->status())) { $spent += $order->totalMinor(); } } ?>
-                <p class="muted"><?= Html::e((string) count($boutiqueOrders)) ?> commande(s) · <?= Html::e(Money::format($spent)) ?> d'achats confirmés</p>
-                <ul class="crm-timeline">
+                <ul class="record-timeline">
                     <?php foreach ($boutiqueOrders as $order): ?>
                         <?php if (!$order instanceof BoutiqueOrder) { continue; } ?>
                         <li>
@@ -131,22 +178,21 @@ if ($client === null) {
     <?php endif; ?>
 
     <?php if ($isSalon): ?>
-        <article class="card">
-            <div class="row staff-toolbar">
-                <h2>Rendez-vous</h2>
-                <?php if ($canBook): ?>
-                    <a class="btn btn-secondary" href="<?= Html::url('/reservation/rendez-vous/nouveau?client=' . $client->id()) ?>">Nouveau rendez-vous</a>
-                <?php endif; ?>
-            </div>
+        <article class="card record-panel">
+            <?php
+            ob_start();
+            if ($canBook): ?>
+                <a class="btn btn-secondary btn-sm" href="<?= Html::url('/reservation/rendez-vous/nouveau?client=' . $client->id()) ?>"><?php $name = 'plus'; include $icon; ?>Nouveau RDV</a>
+            <?php endif;
+            $panelActions = ob_get_clean() ?: '';
+            $panelTitle = 'Rendez-vous';
+            $panelIcon = 'calendar';
+            require dirname(__DIR__, 2) . '/partials/record-panel-head.php';
+            ?>
             <?php if ($appointments === []): ?>
-                <p class="muted">Aucun rendez-vous pour cette cliente.</p>
+                <p class="muted">Aucun rendez-vous enregistré pour cette cliente.</p>
             <?php else: ?>
-                <?php
-                $visits = count(array_filter($appointments, static fn ($a): bool => $a instanceof \Sesam\Models\ReservationAppointment && $a->status() === \Sesam\Core\Reservation\AppointmentStatus::COMPLETED));
-                $absent = count(array_filter($appointments, static fn ($a): bool => $a instanceof \Sesam\Models\ReservationAppointment && $a->status() === \Sesam\Core\Reservation\AppointmentStatus::NO_SHOW));
-                ?>
-                <p class="muted"><?= Html::e((string) $visits) ?> visite(s) réalisée(s)<?= $absent > 0 ? ' · ' . Html::e((string) $absent) . ' absence(s)' : '' ?></p>
-                <ul class="crm-timeline">
+                <ul class="record-timeline">
                     <?php foreach ($appointments as $item): ?>
                         <?php if (!$item instanceof \Sesam\Models\ReservationAppointment) { continue; } ?>
                         <li>
@@ -158,12 +204,12 @@ if ($client === null) {
         </article>
     <?php endif; ?>
 
-    <article class="card">
-        <h2>Historique</h2>
+    <article class="card record-panel">
+        <?php $panelTitle = 'Historique'; $panelIcon = 'clock'; $panelActions = ''; require dirname(__DIR__, 2) . '/partials/record-panel-head.php'; ?>
         <?php if ($activities === []): ?>
             <p class="muted">Aucune activité enregistrée.</p>
         <?php else: ?>
-            <ul class="crm-timeline">
+            <ul class="record-timeline">
                 <?php foreach ($activities as $activity): ?>
                     <?php if (!$activity instanceof ClientActivity) { continue; } ?>
                     <li>
@@ -179,6 +225,4 @@ if ($client === null) {
             </ul>
         <?php endif; ?>
     </article>
-
-    <p><a class="btn btn-ghost" href="<?= Html::url('/clients') ?>">← Retour à la liste</a></p>
 </section>
