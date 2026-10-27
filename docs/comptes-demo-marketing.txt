@@ -22,3 +22,11 @@ Immo / loyers
   E-mail   : maquette.immo@sesam-tech.com
   Espace   : https://sesam-tech.com/espace
   Portail  : https://sesam-tech.com/t/maquette-residence-keur
+------------------------------------------------------------------------
+
+Personnel SESAM — administrateur principal
+  Nom      : Administrateur SESAM
+  E-mail   : admin@sesam-tech.com
+  Mot de passe : SesamAdmin-2026!
+  Connexion : http://localhost:8080/connexion
+  Console  : http://localhost:8080/espace (tableau de bord SESAM, commerces, revenus)

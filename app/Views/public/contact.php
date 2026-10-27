@@ -7,6 +7,8 @@ use Sesam\Helpers\Html;
 /** @var array<string, mixed> $catalog */
 $catalog = require __DIR__ . '/home-catalog.php';
 $landing = $catalog['landing'];
+/** @var array{phones: list<array{label: string, display: string, tel: string}>, address: string, map_embed: string} $contactInfo */
+$contactInfo = $catalog['contact'];
 $icon = dirname(__DIR__) . '/partials/ui-icon.php';
 $notes = [
     ['file', 'Décrivez votre besoin', "Vous décrivez le site, ou l'outil : Réservation, Boutique en ligne, Immo."],
@@ -23,7 +25,7 @@ $notes = [
                 <h1 class="s-display" style="margin-top: 1rem">Une question&nbsp;? <span class="s-mark">On vous répond.</span></h1>
             </div>
             <div style="display: grid; gap: 1.4rem">
-                <p class="s-lead">Aucune adresse, aucun téléphone et aucun e-mail ne sont affichés. La demande est enregistrée pour l'équipe SESAM, à Dakar pour le marché, avec un suivi depuis New York.</p>
+                <p class="s-lead">L'équipe SESAM est joignable à Dakar et depuis New York. Appelez-nous, passez au bureau ou lancez votre essai en ligne — nous revenons vers vous rapidement.</p>
                 <div class="s-actions">
                     <a class="s-btn" href="<?= Html::url('/commencer') ?>">Commencer gratuitement <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span></a>
                     <a class="s-btn s-btn--ghost s-btn--plain" href="<?= Html::url('/devis') ?>">Projet de site web : demander un devis</a>
@@ -32,8 +34,42 @@ $notes = [
         </div>
     </header>
 
+    <section class="s-wrap contact-coords" aria-labelledby="contact-reach">
+        <h2 class="s-section-title" id="contact-reach">Nous joindre</h2>
+        <div class="contact-coords-grid">
+            <div class="contact-coords-card">
+                <h3>Téléphone</h3>
+                <ul class="contact-phone-list">
+                    <?php foreach ($contactInfo['phones'] as $phone): ?>
+                        <li>
+                            <span class="contact-phone-label"><?= Html::e($phone['label']) ?></span>
+                            <a class="contact-phone-link" href="tel:<?= Html::e($phone['tel']) ?>"><?= Html::e($phone['display']) ?></a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <p class="contact-address">
+                    <span class="contact-phone-label">Adresse</span>
+                    <?= Html::e($contactInfo['address']) ?>
+                </p>
+            </div>
+            <div class="contact-map-wrap">
+                <iframe
+                    class="contact-map"
+                    title="Carte — <?= Html::e($contactInfo['address']) ?>"
+                    src="<?= Html::e($contactInfo['map_embed']) ?>"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allowfullscreen
+                ></iframe>
+                <p class="contact-map-caption">
+                    <a href="https://www.google.com/maps/search/?api=1&amp;query=<?= rawurlencode($contactInfo['address']) ?>" rel="noopener noreferrer" target="_blank">Ouvrir dans Google Maps</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
     <section class="s-wrap" style="padding-block: 24px 16px" aria-labelledby="contact-how">
-        <h2 class="sr-only" id="contact-how">Un formulaire, une réponse</h2>
+        <h2 class="sr-only" id="contact-how">Comment nous contactons</h2>
         <div class="cards">
             <?php foreach ($notes as $index => [$noteIcon, $noteTitle, $noteText]): ?>
                 <article class="card" data-reveal data-reveal-delay="<?= $index ?>">

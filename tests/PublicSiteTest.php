@@ -62,9 +62,13 @@ final class PublicSiteTest extends TestCase
         $this->assertStringContainsString('New York', $about);
         $this->assertStringContainsString('page-sheet', $about);
 
-        $contact = $kernel->handle(new Request('GET', '/contact'))->content();
+        $contact = html_entity_decode($kernel->handle(new Request('GET', '/contact'))->content(), ENT_QUOTES, 'UTF-8');
         $this->assertStringNotContainsString('mailto:', $contact);
         $this->assertStringContainsString('Commencer gratuitement', $contact);
+        $this->assertStringContainsString('+1 (917) 569-6871', $contact);
+        $this->assertStringContainsString('+221 71 097 45 45', $contact);
+        $this->assertStringContainsString('183 West Foire', $contact);
+        $this->assertStringContainsString('contact-map', $contact);
 
         $quote = html_entity_decode($kernel->handle(new Request('GET', '/devis'))->content(), ENT_QUOTES, 'UTF-8');
         $this->assertStringContainsString('Propriétaire ou immeuble', $quote);

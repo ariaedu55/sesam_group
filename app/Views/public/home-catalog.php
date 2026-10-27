@@ -270,4 +270,12 @@ return [
             ],
         ],
     ],
+    'contact' => [
+        'phones' => [
+            ['label' => 'États-Unis', 'display' => '+1 (917) 569-6871', 'tel' => '+19175696871'],
+            ['label' => 'Sénégal', 'display' => '+221 71 097 45 45', 'tel' => '+221710974545'],
+        ],
+        'address' => '183 West Foire, Dakar',
+        'map_embed' => 'https://maps.google.com/maps?q=183+West+Foire,+Dakar,+S%C3%A9n%C3%A9gal&z=16&output=embed',
+    ],
 ];
