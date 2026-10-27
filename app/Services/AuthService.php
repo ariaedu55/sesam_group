@@ -69,11 +69,17 @@ final class AuthService extends Service
         $hash = $user !== null ? $user->passwordHash() : $this->dummyHash();
         $valid = password_verify((string) $data['password'], $hash);
 
-        if ($user === null || !$valid || !$user->isActive() || !$this->tenantAllowsLogin($user)) {
+        if ($user === null || !$valid || !$user->isActive()) {
             $this->attempts->record('login', $ip);
             $this->alertIfBlocked($user, $email, $ip);
             throw new ValidationException([
                 'email' => 'E-mail ou mot de passe incorrect.',
+            ]);
+        }
+        if (!$this->tenantAllowsLogin($user)) {
+            $this->attempts->record('login', $ip);
+            throw new ValidationException([
+                'email' => 'L\'accès de ce commerce est suspendu. Contactez SESAM ou utilisez « Mot de passe oublié » si vous devez vous reconnecter après réactivation.',
             ]);
         }
 
@@ -117,7 +123,7 @@ final class AuthService extends Service
         if ($user === null || !$user->isActive()) {
             return;
         }
-
+        // Même flux pour l'équipe SESAM (sans commerce) et les comptes rattachés à un commerce.
         $this->sendResetLink($user, $this->createResetToken($user->id()));
     }
 
@@ -136,7 +142,7 @@ final class AuthService extends Service
                 'Réinitialiser votre mot de passe SESAM',
                 'Bonjour ' . $user->fullName() . ',',
                 [
-                    'Vous avez demandé à changer le mot de passe de votre compte SESAM.',
+                    'Vous avez demandé à changer le mot de passe de votre compte SESAM (équipe interne ou espace commerce).',
                     'Cliquez sur le bouton ci-dessous pour en choisir un nouveau. Le lien est valable une heure et ne fonctionne qu\'une fois.',
                 ],
                 'Choisir un nouveau mot de passe',

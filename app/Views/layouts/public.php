@@ -116,7 +116,7 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
                         <li>Wave et Orange Money</li>
                         <li>Commandes et rappels WhatsApp</li>
                         <li>Lien public, sans application</li>
-                        <li><a href="<?= Html::url('/connexion') ?>">Espace SESAM</a></li>
+                        <li><a href="<?= Html::url('/connexion') ?>">Connexion</a></li>
                     </ul>
                 </div>
             </div>

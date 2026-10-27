@@ -23,5 +23,6 @@ use Sesam\Helpers\Html;
     <?= $content ?>
     <p class="auth-back"><a href="<?= Html::url('/') ?>">Retour au site</a></p>
 </main>
+<script src="<?= Html::asset('assets/js/auth.js') ?>" defer></script>
 </body>
 </html>

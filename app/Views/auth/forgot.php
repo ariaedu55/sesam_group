@@ -11,9 +11,9 @@ $status = is_string($status ?? null) ? $status : '';
 
 ?>
 <section class="auth-card card">
-    <p class="eyebrow">Espace SESAM</p>
+    <p class="eyebrow">Connexion SESAM</p>
     <h1>Mot de passe oublié</h1>
-    <p class="muted">Saisissez l'e-mail de votre compte : vous recevrez un lien pour choisir un nouveau mot de passe, valable une heure.</p>
+    <p class="muted">Équipe SESAM ou responsable d'un commerce : saisissez l'e-mail de votre compte. Vous recevrez un lien pour choisir un nouveau mot de passe (valable une heure).</p>
     <?php if ($status !== ''): ?>
         <p class="alert" role="status"><?= Html::e($status) ?></p>
     <?php endif; ?>

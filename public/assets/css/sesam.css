@@ -411,6 +411,49 @@ p {
     text-align: center;
 }
 
+.auth-help-secondary {
+    font-size: 0.92rem;
+}
+
+.password-field {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.password-field .input {
+    flex: 1;
+    padding-right: 2.75rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--sesam-muted);
+    cursor: pointer;
+    border-radius: 0 var(--sesam-radius-sm) var(--sesam-radius-sm) 0;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+    color: var(--sesam-blue);
+    outline: none;
+}
+
+.password-toggle .ui-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
 .staff-logo {
     display: inline-block;
     margin-bottom: var(--sesam-space-5);

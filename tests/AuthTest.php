@@ -51,7 +51,9 @@ final class AuthTest extends TestCase
 
         $this->assertSame(200, $response->status());
         $this->assertStringContainsString('Connexion', $html);
-        $this->assertStringContainsString('pas une inscription publique', $html);
+        $this->assertStringContainsString('Une seule page', $html);
+        $this->assertStringContainsString('data-password-toggle', $html);
+        $this->assertStringContainsString('/mot-de-passe', $html);
         $this->assertStringNotContainsString('Créer un compte', $html);
         $this->assertSame(404, $kernel->handle(new Request('GET', '/inscription-compte'))->status());
         $this->assertSame(404, $kernel->handle(new Request('GET', '/register'))->status());
