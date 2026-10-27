@@ -8,10 +8,12 @@ $errors = is_array($errors ?? null) ? $errors : [];
 $token = is_string($token ?? null) ? $token : '';
 
 ?>
-<section class="auth-card card">
-    <p class="eyebrow">Connexion SESAM</p>
-    <h1>Nouveau mot de passe</h1>
-    <p class="muted">Choisissez un mot de passe d'au moins 12 caractères pour votre compte (équipe SESAM ou commerce).</p>
+<section class="auth-card">
+    <header class="auth-card-head">
+        <p class="auth-card-eyebrow">Compte SESAM</p>
+        <h1>Nouveau mot de passe</h1>
+        <p class="auth-card-lead">Au moins 12 caractères, lettres et chiffres recommandés.</p>
+    </header>
     <form method="post" action="<?= Html::url('/mot-de-passe/reinitialiser/' . $token) ?>">
         <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
         <?php

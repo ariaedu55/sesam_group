@@ -10,10 +10,12 @@ $email = Html::e(is_scalar($old['email'] ?? null) ? (string) $old['email'] : '')
 $status = is_string($status ?? null) ? $status : '';
 
 ?>
-<section class="auth-card card">
-    <p class="eyebrow">Connexion SESAM</p>
-    <h1>Mot de passe oublié</h1>
-    <p class="muted">Équipe SESAM ou responsable d'un commerce : saisissez l'e-mail de votre compte. Vous recevrez un lien pour choisir un nouveau mot de passe (valable une heure).</p>
+<section class="auth-card">
+    <header class="auth-card-head">
+        <p class="auth-card-eyebrow">Compte SESAM</p>
+        <h1>Mot de passe oublié</h1>
+        <p class="auth-card-lead">Saisissez l'e-mail de votre compte : un lien vous sera envoyé (valable une heure).</p>
+    </header>
     <?php if ($status !== ''): ?>
         <p class="alert" role="status"><?= Html::e($status) ?></p>
     <?php endif; ?>

@@ -13,8 +13,10 @@ final class SecurityHeaders
      * Les attributs style="" (barres de progression) imposent 'unsafe-inline' sur les styles ;
      * aucun script en ligne n'est autorisé. form-action est absent : le paiement redirige vers le prestataire.
      */
-    public const CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-        . "img-src 'self' data:; font-src 'self'; connect-src 'self' https://fcmregistrations.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+    public const CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self' https://cdn.jotfor.ms https://js.jotform.com; style-src 'self' 'unsafe-inline' https://cdn.jotfor.ms; "
+        . "img-src 'self' data: https://cdn.jotfor.ms https://www.jotform.com https://form.jotform.com; font-src 'self' https://cdn.jotfor.ms; "
+        . "connect-src 'self' https://fcmregistrations.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://api.jotform.com https://www.jotform.com https://form.jotform.com https://cdn.jotfor.ms; "
+        . "frame-src https://www.jotform.com https://form.jotform.com https://cdn.jotfor.ms; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
     public function apply(Request $request, Response $response): Response
     {
