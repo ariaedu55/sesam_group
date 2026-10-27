@@ -27,12 +27,34 @@ L'heure du serveur doit être celle de Dakar (UTC, sans heure d'été).
 | `*/10` | `*` | `*` | `*` | `*` | `cd CHEMIN && /opt/cpanel/ea-php83/root/usr/bin/php bin/rappels-clients.php >> storage/logs/taches.log 2>&1` |
 | `0` | `8` | `*` | `*` | `*` | `cd CHEMIN && /opt/cpanel/ea-php83/root/usr/bin/php bin/immo-relances.php >> storage/logs/taches.log 2>&1` |
 
+## Production : sesam-tech.com (Webuzo, VPS)
+
+Application : `/home/jomas/sesam-tech.com` · PHP 8.4 : `/usr/local/apps/php84/bin/php` · crons sous l’utilisateur **jomas** (lecture du `.env`).
+
+Installation ou réparation des crons (en root) :
+
+```bash
+ssh root@62.171.190.193 -p 22
+bash /home/jomas/sesam-tech.com/bin/install-vps-cron.sh
+```
+
+Ou copier le script depuis le dépôt (`bin/install-vps-cron.sh`). Fuseau **`TZ=Africa/Dakar`** dans le crontab (7 h et 8 h = heure Sénégal).
+
+| Minute | Heure | Commande |
+|---|---|---|
+| `0` | `7` | `notifications-quotidiennes.php` |
+| `*/10` | `*` | `rappels-clients.php` |
+| `0` | `8` | `immo-relances.php` |
+
+Journal : `storage/logs/taches.log`.
+
 ## Production : serveur Linux classique (crontab)
 
 `crontab -e`, puis :
 
 ```
 # SESAM — rappels et alertes automatiques
+TZ=Africa/Dakar
 0 7 * * *     cd /var/www/sesam && php bin/notifications-quotidiennes.php >> storage/logs/taches.log 2>&1
 */10 * * * *  cd /var/www/sesam && php bin/rappels-clients.php >> storage/logs/taches.log 2>&1
 0 8 * * *     cd /var/www/sesam && php bin/immo-relances.php >> storage/logs/taches.log 2>&1

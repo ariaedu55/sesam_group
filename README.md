@@ -6,13 +6,20 @@ Dépôt : https://github.com/ariaedu55/sesam_group
 
 ### Mise à jour production (VPS)
 
-Sur le serveur, à la racine de l’app (`/home/jomas/sesam-tech.com`) :
+Connexion SSH (clé déjà enregistrée sur la machine de dev) :
 
 ```
-./bin/update-production.sh
+ssh root@62.171.190.193 -p 22
 ```
 
-Le script fait `git pull` sur `main`, `composer install --no-dev`, tente les migrations SQL, puis ajuste les permissions. Le fichier `.env` n’est jamais versionné.
+Puis, à la racine de l’app (`/home/jomas/sesam-tech.com`) :
+
+```
+cd /home/jomas/sesam-tech.com
+bash ./bin/update-production.sh
+```
+
+Le script fait `git pull` sur `main`, `composer install --no-dev`, tente les migrations SQL, puis ajuste les permissions (`chown jomas:jomas`). Le fichier `.env` n’est jamais versionné. Exécuter en **root** : le dépôt git et la clé `github.com-sesam` sont sous `/root/.ssh/`.
 
 ---
 
