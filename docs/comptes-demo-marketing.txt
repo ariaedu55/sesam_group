@@ -1,0 +1,24 @@
+SESAM — comptes maquette marketing
+Connexion : https://sesam-tech.com/connexion
+Mot de passe commun : SesamMaquette-2026!
+
+Données fictives (numéros 77 00x, e-mails @exemple.sn). Usage démo / vidéos / présentation commerciale.
+------------------------------------------------------------------------
+
+Réservation (salon)
+  Commerce : Salon Teranga
+  E-mail   : maquette.salon@sesam-tech.com
+  Espace   : https://sesam-tech.com/espace
+  Portail  : https://sesam-tech.com/t/maquette-salon-teranga
+
+Boutique
+  Commerce : Maison Wax & Co
+  E-mail   : maquette.boutique@sesam-tech.com
+  Espace   : https://sesam-tech.com/espace
+  Portail  : https://sesam-tech.com/t/maquette-boutique-wax
+
+Immo / loyers
+  Commerce : Résidence Keur — Gestion locative
+  E-mail   : maquette.immo@sesam-tech.com
+  Espace   : https://sesam-tech.com/espace
+  Portail  : https://sesam-tech.com/t/maquette-residence-keur
