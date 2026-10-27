@@ -22,86 +22,117 @@ $services = [
 $icon = dirname(__DIR__) . '/partials/ui-icon.php';
 
 ?>
-<main class="page-sheet">
-    <header class="ph">
-        <div class="s-wrap ph-grid">
-            <div>
-                <p class="s-kicker">Essai gratuit 1 mois · sans carte bancaire</p>
-                <h1 class="s-display" style="margin-top: 1rem">Créez votre espace. <span class="s-mark">En 1 minute.</span></h1>
-            </div>
-            <p class="s-lead">Choisissez votre outil, créez votre compte : vous entrez directement dans votre espace. À la fin de l'essai, vous continuez avec l'abonnement mensuel, payé par Wave ou Orange Money.</p>
+<main class="page-sheet page-commencer">
+    <header class="signup-hero">
+        <div class="s-wrap signup-hero-inner">
+            <p class="signup-hero-badge">Essai gratuit 1 mois · sans carte bancaire</p>
+            <h1 class="signup-hero-title">Créez votre espace <span class="s-mark">en une minute</span></h1>
+            <p class="signup-hero-lead">Choisissez votre outil, remplissez le formulaire : vous accédez tout de suite à votre tableau de bord. Après l'essai, continuez en abonnement mensuel (Wave ou Orange Money).</p>
         </div>
     </header>
 
-    <section class="s-wrap quote signup" style="padding-top: 16px">
-        <form class="quote-form" method="post" action="<?= Html::url('/commencer') ?>" novalidate>
+    <section class="s-wrap signup-layout quote">
+        <form class="signup-form quote-form" method="post" action="<?= Html::url('/commencer') ?>" novalidate>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
 
-            <fieldset class="signup-services">
-                <legend>1. Votre service</legend>
-                <?php foreach ($services as $key => [$label, $hint, $iconName]): ?>
-                    <label class="signup-service">
-                        <input type="radio" name="sector" value="<?= Html::e($key) ?>"<?= $sector === $key ? ' checked' : '' ?> required>
-                        <span class="signup-service-icon" aria-hidden="true"><?php $name = $iconName; include $icon; ?></span>
-                        <span><strong><?= Html::e($label) ?></strong><small><?= Html::e($hint) ?></small></span>
-                    </label>
-                <?php endforeach; ?>
+            <ol class="signup-steps-nav" aria-label="Étapes du formulaire">
+                <li><span>1</span> Service</li>
+                <li><span>2</span> Vous</li>
+                <li><span>3</span> Connexion</li>
+            </ol>
+
+            <fieldset class="signup-step signup-services">
+                <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">1</span> Votre service</legend>
+                <div class="signup-service-grid">
+                    <?php foreach ($services as $key => [$label, $hint, $iconName]): ?>
+                        <label class="signup-service">
+                            <input type="radio" name="sector" value="<?= Html::e($key) ?>"<?= $sector === $key ? ' checked' : '' ?> required>
+                            <span class="signup-service-icon" aria-hidden="true"><?php $name = $iconName; include $icon; ?></span>
+                            <span class="signup-service-copy">
+                                <strong><?= Html::e($label) ?></strong>
+                                <small><?= Html::e($hint) ?></small>
+                            </span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
                 <?php $err('sector'); ?>
             </fieldset>
 
-            <fieldset>
-                <legend>2. Vous</legend>
-                <div class="field">
-                    <label for="full_name">Votre nom</label>
-                    <input class="input<?= $invalid('full_name') ?>" id="full_name" name="full_name" type="text" required maxlength="120" autocomplete="name" value="<?= $value('full_name') ?>">
-                    <?php $err('full_name'); ?>
-                </div>
-                <div class="field">
-                    <label for="business_name">Nom de votre commerce <small>(facultatif)</small></label>
-                    <input class="input" id="business_name" name="business_name" type="text" maxlength="120" autocomplete="organization" placeholder="Ex. Salon Awa, Boutique Teranga…" value="<?= $value('business_name') ?>">
-                </div>
-                <div class="field">
-                    <label for="phone">Numéro WhatsApp</label>
-                    <input class="input<?= $invalid('phone') ?>" id="phone" name="phone" type="tel" required maxlength="40" autocomplete="tel" placeholder="77 123 45 67" value="<?= $value('phone') ?>">
-                    <?php $err('phone'); ?>
+            <fieldset class="signup-step">
+                <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">2</span> Vous</legend>
+                <div class="signup-fields">
+                    <div class="field">
+                        <label for="full_name">Votre nom</label>
+                        <input class="input signup-input<?= $invalid('full_name') ?>" id="full_name" name="full_name" type="text" required maxlength="120" autocomplete="name" value="<?= $value('full_name') ?>">
+                        <?php $err('full_name'); ?>
+                    </div>
+                    <div class="field">
+                        <label for="business_name">Nom de votre commerce <small>(facultatif)</small></label>
+                        <input class="input signup-input" id="business_name" name="business_name" type="text" maxlength="120" autocomplete="organization" placeholder="Ex. Salon Awa, Boutique Teranga…" value="<?= $value('business_name') ?>">
+                    </div>
+                    <div class="field">
+                        <label for="phone">Numéro WhatsApp</label>
+                        <input class="input signup-input<?= $invalid('phone') ?>" id="phone" name="phone" type="tel" required maxlength="40" autocomplete="tel" placeholder="77 123 45 67" value="<?= $value('phone') ?>">
+                        <?php $err('phone'); ?>
+                    </div>
                 </div>
             </fieldset>
 
-            <fieldset>
-                <legend>3. Votre connexion</legend>
-                <div class="field">
-                    <label for="email">E-mail</label>
-                    <input class="input<?= $invalid('email') ?>" id="email" name="email" type="email" required maxlength="190" autocomplete="email" value="<?= $value('email') ?>">
-                    <?php $err('email'); ?>
+            <fieldset class="signup-step">
+                <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">3</span> Votre connexion</legend>
+                <div class="signup-fields">
+                    <div class="field">
+                        <label for="email">E-mail</label>
+                        <input class="input signup-input<?= $invalid('email') ?>" id="email" name="email" type="email" required maxlength="190" autocomplete="email" placeholder="vous@exemple.com" value="<?= $value('email') ?>">
+                        <?php $err('email'); ?>
+                    </div>
+                    <?php
+                    $id = 'password';
+                    $name = 'password';
+                    $label = 'Mot de passe';
+                    $error = $errors['password'] ?? null;
+                    $errorId = 'password-error';
+                    $autocomplete = 'new-password';
+                    $minlength = 12;
+                    include dirname(__DIR__) . '/partials/password-field.php';
+                    ?>
+                    <?php
+                    $id = 'password_confirm';
+                    $name = 'password_confirm';
+                    $label = 'Confirmer le mot de passe';
+                    $error = $errors['password_confirm'] ?? null;
+                    $errorId = 'password_confirm-error';
+                    $autocomplete = 'new-password';
+                    $minlength = 12;
+                    include dirname(__DIR__) . '/partials/password-field.php';
+                    ?>
+                    <label class="signup-terms">
+                        <input type="checkbox" name="terms" value="1"<?= ($old['terms'] ?? '') !== '' ? ' checked' : '' ?> required>
+                        <span>J'accepte que SESAM crée mon espace et me contacte pour m'aider à démarrer.</span>
+                    </label>
+                    <?php $err('terms'); ?>
                 </div>
-                <div class="field">
-                    <label for="password">Mot de passe <small>(12 caractères minimum)</small></label>
-                    <input class="input<?= $invalid('password') ?>" id="password" name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password">
-                    <?php $err('password'); ?>
-                </div>
-                <div class="field">
-                    <label for="password_confirm">Confirmer le mot de passe</label>
-                    <input class="input<?= $invalid('password_confirm') ?>" id="password_confirm" name="password_confirm" type="password" required minlength="12" maxlength="255" autocomplete="new-password">
-                    <?php $err('password_confirm'); ?>
-                </div>
-                <label class="signup-terms"><input type="checkbox" name="terms" value="1"<?= ($old['terms'] ?? '') !== '' ? ' checked' : '' ?> required> <span>J'accepte que SESAM crée mon espace et me contacte pour m'aider à démarrer.</span></label>
-                <?php $err('terms'); ?>
             </fieldset>
 
-            <button class="s-btn" type="submit" style="justify-self: start">Créer mon espace gratuitement <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span></button>
-            <p class="signup-login">Déjà un compte&nbsp;? <a href="<?= Html::url('/connexion') ?>">Se connecter</a></p>
+            <div class="signup-submit">
+                <button class="s-btn signup-submit-btn" type="submit">
+                    Créer mon espace gratuitement
+                    <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span>
+                </button>
+                <p class="signup-login">Déjà un compte&nbsp;? <a href="<?= Html::url('/connexion') ?>">Se connecter</a></p>
+            </div>
         </form>
 
-        <aside class="quote-side">
-            <div class="panel panel--ink">
+        <aside class="quote-side signup-aside">
+            <div class="panel panel--ink signup-aside-panel">
                 <p class="s-kicker" style="color: var(--accent)">Ce qui se passe ensuite</p>
-                <ul class="ticks">
+                <ul class="ticks signup-ticks">
                     <li><span>1</span><span><strong>Votre espace s'ouvre tout de suite</strong><small>Vous êtes connecté dès l'inscription.</small></span></li>
                     <li><span>2</span><span><strong>1 mois pour tout essayer</strong><small>Toutes les fonctions, sans engagement.</small></span></li>
                     <li><span>3</span><span><strong>Vous continuez si ça vous plaît</strong><small>Réabonnement en 2 clics depuis la page Abonnement.</small></span></li>
                 </ul>
             </div>
-            <div class="panel">
+            <div class="panel signup-aside-panel signup-aside-secondary">
                 <p class="s-kicker" style="color: var(--blue)">Un site web aussi&nbsp;?</p>
                 <p class="s-h3">Sesam Digital crée votre site sur devis.</p>
                 <p><a class="s-link" href="<?= Html::url('/devis') ?>">Demander un devis site web</a></p>
@@ -109,3 +140,4 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
         </aside>
     </section>
 </main>
+<script src="<?= Html::asset('assets/js/auth.js') ?>" defer></script>

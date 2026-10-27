@@ -24,7 +24,7 @@ $invalid = $error !== null;
     <label for="<?= Html::e($id) ?>"><span><?= Html::e($label) ?></span></label>
     <div class="password-field">
         <input
-            class="input input--auth<?= $invalid ? ' is-invalid' : '' ?>"
+            class="input input--auth signup-input<?= $invalid ? ' is-invalid' : '' ?>"
             id="<?= Html::e($id) ?>"
             name="<?= Html::e($name) ?>"
             type="password"
