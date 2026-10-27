@@ -46,7 +46,7 @@ $jotformSrc = trim($jotform['agent_embed_src'] ?? '');
 </div>
 <script src="<?= Html::asset('assets/js/auth.js') ?>" defer></script>
 <?php if ($jotformSrc !== ''): ?>
-<script src="<?= Html::e($jotformSrc) ?>" defer></script>
+<script src="<?= Html::e($jotformSrc) ?>"></script>
 <?php endif; ?>
 </body>
 </html>
