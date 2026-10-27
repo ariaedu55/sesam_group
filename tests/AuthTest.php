@@ -52,7 +52,8 @@ final class AuthTest extends TestCase
         $this->assertSame(200, $response->status());
         $this->assertStringContainsString('Connexion', $html);
         $this->assertStringContainsString('auth-page', $html);
-        $this->assertStringContainsString('Bon retour', $html);
+        $this->assertStringContainsString('auth-card-logo', $html);
+        $this->assertStringNotContainsString('Bon retour', $html);
         $this->assertStringNotContainsString('Une seule page', $html);
         $this->assertStringContainsString('data-password-toggle', $html);
         $this->assertStringContainsString('/mot-de-passe', $html);

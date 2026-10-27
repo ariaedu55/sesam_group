@@ -41,11 +41,6 @@ $jotformSrc = trim($jotform['agent_embed_src'] ?? '');
             <p class="auth-back auth-back--top">
                 <a href="<?= Html::url('/') ?>">← Retour au site</a>
             </p>
-            <a class="auth-mobile-brand" href="<?= Html::url('/') ?>">
-                <img src="<?= Html::asset('assets/images/sesam-logo-360.jpg') ?>" alt="SESAM" width="88" height="88">
-                <span class="auth-mobile-brand-name">SESAM</span>
-                <span class="auth-mobile-brand-tag">L'innovation à portée de clic</span>
-            </a>
             <div class="auth-sheet">
 <?php // $content est le HTML déjà produit par une vue du projet. Chaque vue échappe ses propres données. ?>
                 <?= $content ?>

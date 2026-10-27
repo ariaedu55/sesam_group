@@ -11,10 +11,11 @@ $status = is_string($status ?? null) ? $status : '';
 
 ?>
 <section class="auth-card auth-card--login">
-    <header class="auth-card-head">
-        <p class="auth-card-eyebrow">Espace sécurisé</p>
-        <h1>Bon retour</h1>
-        <p class="auth-card-lead">Entrez vos identifiants pour accéder à votre tableau de bord.</p>
+    <header class="auth-card-logo">
+        <a class="auth-card-logo-link" href="<?= Html::url('/') ?>">
+            <img src="<?= Html::asset('assets/images/sesam-logo-360.jpg') ?>" alt="SESAM" width="88" height="88">
+            <span class="auth-card-logo-name">SESAM</span>
+        </a>
     </header>
     <?php if ($status !== ''): ?>
         <p class="alert" role="status"><?= Html::e($status) ?></p>

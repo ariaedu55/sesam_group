@@ -709,16 +709,23 @@ body.is-app::after {
     font-size: 0.9rem;
 }
 
-.auth-mobile-brand {
+.auth-card-logo {
+    display: flex;
+    justify-content: center;
+    margin: 0 0 0.25rem;
+    padding: 0;
+    border: 0;
+}
+
+.auth-card-logo-link {
     display: grid;
     justify-items: center;
-    gap: 0.35rem;
-    padding: 0.25rem 0 0.5rem;
+    gap: 0.5rem;
     text-decoration: none;
     color: inherit;
 }
 
-.auth-mobile-brand img {
+.auth-card-logo-link img {
     width: 4.75rem;
     height: 4.75rem;
     border-radius: 1.2rem;
@@ -729,26 +736,15 @@ body.is-app::after {
         inset 0 0 0 1px rgba(7, 26, 61, 0.06);
 }
 
-.auth-mobile-brand-name {
-    font-size: 1.35rem;
+.auth-card-logo-name {
+    font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.03em;
     color: var(--sesam-navy);
 }
 
-.auth-mobile-brand-tag {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--sesam-blue);
-    text-align: center;
-    max-width: 16rem;
-    line-height: 1.35;
-}
-
 @media (min-width: 960px) {
-    .auth-mobile-brand {
+    .auth-card--login .auth-card-logo {
         display: none;
     }
 }
