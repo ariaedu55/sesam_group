@@ -26,7 +26,7 @@ Immo / loyers
 
 Personnel SESAM — administrateur principal
   Nom      : Administrateur SESAM
-  E-mail   : admin@sesam-tech.com
+  E-mail   : sesam@sesam-tech.com
   Mot de passe : SesamAdmin-2026!
   Connexion : https://sesam-tech.com/connexion
   Console  : https://sesam-tech.com/espace (tableau de bord SESAM, commerces, revenus)
