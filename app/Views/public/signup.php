@@ -14,6 +14,8 @@ $err = static function (string $key) use ($errors): void {
 };
 $invalid = static fn (string $key): string => isset($errors[$key]) ? ' is-invalid" aria-invalid="true" aria-describedby="' . $key . '-error' : '';
 $sector = (string) ($old['sector'] ?? '');
+$googleEnabled = !empty($googleEnabled);
+$googlePending = is_array($googlePending ?? null) ? $googlePending : null;
 $services = [
     'reservation' => ['Sesam Réservation', 'Salon, institut, coiffure : agenda, rendez-vous en ligne, rappels WhatsApp.', 'calendar'],
     'boutique' => ['Sesam Boutique', 'Catalogue, stock, commandes WhatsApp et clients.', 'bag'],
@@ -32,8 +34,11 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
     </header>
 
     <section class="s-wrap signup-layout quote">
-        <form class="signup-form quote-form" method="post" action="<?= Html::url('/commencer') ?>" data-signup-form novalidate>
+        <form class="signup-form quote-form" method="post" action="<?= Html::url('/commencer') ?>" data-signup-form<?= $googlePending !== null ? ' data-google-pending="1"' : '' ?> novalidate>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+            <?php if ($googleEnabled && $googlePending === null): ?>
+                <?php $googleFrom = 'signup'; $googleService = $sector; include dirname(__DIR__) . '/partials/google-button.php'; ?>
+            <?php endif; ?>
 
             <ol class="signup-steps-nav" data-signup-nav aria-label="Étapes du formulaire">
                 <li data-step="1"><span>1</span> Service</li>
@@ -81,11 +86,15 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
             <fieldset class="signup-step" data-signup-step="3">
                 <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">3</span> Votre connexion</legend>
                 <div class="signup-fields">
+                    <?php if ($googlePending !== null): ?>
+                        <p class="signup-google-ok" role="status">Compte Google : <?= Html::e((string) ($googlePending['email'] ?? '')) ?></p>
+                    <?php endif; ?>
                     <div class="field">
                         <label for="email">E-mail</label>
-                        <input class="input signup-input<?= $invalid('email') ?>" id="email" name="email" type="email" required maxlength="190" autocomplete="email" placeholder="vous@exemple.com" value="<?= $value('email') ?>">
+                        <input class="input signup-input<?= $invalid('email') ?>" id="email" name="email" type="email" required maxlength="190" autocomplete="email" placeholder="vous@exemple.com" value="<?= $value('email') ?>"<?= $googlePending !== null ? ' readonly' : '' ?>>
                         <?php $err('email'); ?>
                     </div>
+                    <?php if ($googlePending === null): ?>
                     <?php
                     $id = 'password';
                     $name = 'password';
@@ -106,6 +115,7 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
                     $minlength = 12;
                     include dirname(__DIR__) . '/partials/password-field.php';
                     ?>
+                    <?php endif; ?>
                     <label class="signup-terms">
                         <input type="checkbox" name="terms" value="1"<?= ($old['terms'] ?? '') !== '' ? ' checked' : '' ?> required>
                         <span>J'accepte que SESAM crée mon espace et me contacte pour m'aider à démarrer.</span>

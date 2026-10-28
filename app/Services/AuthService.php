@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Sesam\Services;
 
+use Sesam\Core\Auth\GoogleIdentityClient;
 use Sesam\Core\Database\Connection;
 use Sesam\Core\HttpException;
 use Sesam\Core\Security\Csrf;
 use Sesam\Core\Session\Session;
+use Sesam\Core\Tenant\Sector;
 use Sesam\Core\Validation\ValidationException;
 use Sesam\Core\Validation\Validator;
 use Sesam\Models\User;
@@ -23,6 +25,7 @@ final class AuthService extends Service
     private const RESET_TTL_SECONDS = 3600;
     private const SESSION_USER = 'auth_user_id';
     public const SESSION_WELCOME = 'welcome_popup';
+    private const SESSION_GOOGLE_PENDING = 'google_oauth_pending';
 
     private readonly UserRepository $users;
     private readonly PasswordResetRepository $resets;
@@ -45,6 +48,7 @@ final class AuthService extends Service
         array $database,
         private readonly Session $session,
         private readonly Validator $validator = new Validator(),
+        private readonly ?GoogleIdentityClient $google = null,
     ) {
         $pdo = Connection::make($database);
         $this->users = new UserRepository($pdo);
@@ -106,6 +110,103 @@ final class AuthService extends Service
     public function logout(): void
     {
         $this->session->invalidate();
+    }
+
+    public function googleEnabled(): bool
+    {
+        return $this->google !== null && $this->google->isConfigured();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function googleWebConfig(): array
+    {
+        return $this->googleEnabled() ? ($this->google?->webConfig() ?? []) : [];
+    }
+
+    /**
+     * @return '/espace'|'/commencer'|string
+     */
+    public function completeGoogleIdToken(string $idToken, string $sector, string $ip): string
+    {
+        if (!$this->googleEnabled()) {
+            throw new HttpException(503, 'La connexion Google n\'est pas encore configurée.');
+        }
+        if (trim($idToken) === '') {
+            throw new ValidationException(['email' => 'Connexion Google incomplète. Réessayez.']);
+        }
+        $this->guardRate('google', $ip);
+        $google = $this->google;
+        if ($google === null) {
+            throw new HttpException(503, 'La connexion Google n\'est pas encore configurée.');
+        }
+        $profile = $google->profileFromIdToken($idToken);
+        $user = $this->users->findByGoogleSub($profile->sub) ?? $this->users->findByEmail($profile->email);
+        if ($user !== null) {
+            if (!$user->isActive()) {
+                $this->attempts->record('google', $ip);
+                throw new ValidationException(['email' => 'E-mail ou mot de passe incorrect.']);
+            }
+            if (!$this->tenantAllowsLogin($user)) {
+                $this->attempts->record('google', $ip);
+                throw new ValidationException([
+                    'email' => 'L\'accès de ce commerce est suspendu. Contactez SESAM ou utilisez « Mot de passe oublié » si vous devez vous reconnecter après réactivation.',
+                ]);
+            }
+            if ($user->googleSub() === null) {
+                $this->users->linkGoogleSub($user->id(), $profile->sub);
+            }
+            $this->session->forget(self::SESSION_GOOGLE_PENDING);
+            $this->startSessionForExisting($user);
+
+            return '/espace';
+        }
+
+        $this->session->put(self::SESSION_GOOGLE_PENDING, [
+            'sub' => $profile->sub,
+            'email' => $profile->email,
+            'name' => $profile->name,
+        ]);
+        $commencer = '/commencer';
+        if (is_string($sector) && in_array($sector, Sector::ALL, true)) {
+            $commencer .= '?service=' . rawurlencode($sector);
+        }
+
+        return $commencer;
+    }
+
+    /**
+     * @return array{sub: string, email: string, name: string}|null
+     */
+    public function pendingGoogle(): ?array
+    {
+        $pending = $this->session->get(self::SESSION_GOOGLE_PENDING);
+        if (!is_array($pending)) {
+            return null;
+        }
+        $sub = trim((string) ($pending['sub'] ?? ''));
+        $email = strtolower(trim((string) ($pending['email'] ?? '')));
+        $name = trim((string) ($pending['name'] ?? ''));
+        if ($sub === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return null;
+        }
+
+        return ['sub' => $sub, 'email' => $email, 'name' => $name];
+    }
+
+    public function clearPendingGoogle(): void
+    {
+        $this->session->forget(self::SESSION_GOOGLE_PENDING);
+    }
+
+    private function startSessionForExisting(\Sesam\Models\User $user): void
+    {
+        $this->session->regenerate();
+        $this->session->forget(Csrf::SESSION_KEY);
+        $this->session->put(self::SESSION_USER, $user->id());
+        $this->session->put(self::SESSION_WELCOME, ['first' => $user->lastLoginAt() === null]);
+        $this->users->touchLastLogin($user->id());
     }
 
     /**

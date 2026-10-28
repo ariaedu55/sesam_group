@@ -2193,6 +2193,63 @@ textarea.input {
     font-weight: 700;
 }
 
+.signup-form .google-auth-form {
+    display: none;
+}
+
+.signup-form .btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    width: 100%;
+    min-height: 3rem;
+    margin-bottom: 0.35rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgba(12, 23, 48, 0.14);
+    border-radius: 0.85rem;
+    background: #fff;
+    color: #1f1f1f;
+    font: inherit;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.signup-form .btn-google:hover {
+    background: #f7f8fa;
+}
+
+.signup-form .auth-or {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.15rem 0 1rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.signup-form .auth-or::before,
+.signup-form .auth-or::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(7, 26, 61, 0.1);
+}
+
+.signup-google-ok {
+    margin: 0 0 0.35rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.75rem;
+    background: rgba(31, 122, 80, 0.08);
+    color: #1f4a32;
+    font-size: 0.92rem;
+    font-weight: 650;
+}
+
 /* ---------- Inscription « Commencer » (page dédiée) ---------- */
 
 .page-commencer {

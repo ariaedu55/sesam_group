@@ -20,6 +20,9 @@ $status = is_string($status ?? null) ? $status : '';
     <?php if ($status !== ''): ?>
         <p class="alert" role="status"><?= Html::e($status) ?></p>
     <?php endif; ?>
+    <?php if (!empty($googleEnabled)): ?>
+        <?php $googleFrom = 'login'; include dirname(__DIR__) . '/partials/google-button.php'; ?>
+    <?php endif; ?>
     <form class="auth-form" method="post" action="<?= Html::url('/connexion') ?>">
         <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
         <div class="field">

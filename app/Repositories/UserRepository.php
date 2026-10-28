@@ -8,10 +8,12 @@ use Sesam\Models\User;
 
 final class UserRepository extends Repository
 {
+    private const COLUMNS = 'id, tenant_id, full_name, email, google_sub, password_hash, is_active, last_login_at, created_at, updated_at';
+
     public function findById(int $id): ?User
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, tenant_id, full_name, email, password_hash, is_active, last_login_at, created_at, updated_at
+            'SELECT ' . self::COLUMNS . '
              FROM users
              WHERE id = :id
              LIMIT 1'
@@ -25,7 +27,7 @@ final class UserRepository extends Repository
     public function findByEmail(string $email): ?User
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, tenant_id, full_name, email, password_hash, is_active, last_login_at, created_at, updated_at
+            'SELECT ' . self::COLUMNS . '
              FROM users
              WHERE email = :email
              LIMIT 1'
@@ -36,12 +38,26 @@ final class UserRepository extends Repository
         return is_array($row) ? $this->hydrate($row) : null;
     }
 
+    public function findByGoogleSub(string $sub): ?User
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT ' . self::COLUMNS . '
+             FROM users
+             WHERE google_sub = :google_sub
+             LIMIT 1'
+        );
+        $statement->execute(['google_sub' => $sub]);
+        $row = $statement->fetch();
+
+        return is_array($row) ? $this->hydrate($row) : null;
+    }
+
     /**
      * @return list<User>
      */
     public function search(string $query, int $limit, int $offset, ?int $tenantId = null, bool $sesamOnly = false): array
     {
-        $sql = 'SELECT id, tenant_id, full_name, email, password_hash, is_active, last_login_at, created_at, updated_at
+        $sql = 'SELECT ' . self::COLUMNS . '
                 FROM users';
         [$where, $params] = $this->searchClause($query, $tenantId, $sesamOnly);
         $sql .= $where;
@@ -69,19 +85,22 @@ final class UserRepository extends Repository
     }
 
     /**
-     * @param array{full_name: string, email: string, password_hash: string, is_active: int, tenant_id: ?int} $data
+     * @param array{full_name: string, email: string, password_hash: string, is_active: int, tenant_id: ?int, google_sub?: ?string} $data
      */
     public function insert(array $data): int
     {
         $now = gmdate('Y-m-d H:i:s');
         $statement = $this->pdo->prepare(
-            'INSERT INTO users (tenant_id, full_name, email, password_hash, is_active, created_at, updated_at)
-             VALUES (:tenant_id, :full_name, :email, :password_hash, :is_active, :created_at, :updated_at)'
+            'INSERT INTO users (tenant_id, full_name, email, google_sub, password_hash, is_active, created_at, updated_at)
+             VALUES (:tenant_id, :full_name, :email, :google_sub, :password_hash, :is_active, :created_at, :updated_at)'
         );
         $statement->execute([
             'tenant_id' => $data['tenant_id'] ?? null,
             'full_name' => $data['full_name'],
             'email' => $data['email'],
+            'google_sub' => isset($data['google_sub']) && is_string($data['google_sub']) && $data['google_sub'] !== ''
+                ? $data['google_sub']
+                : null,
             'password_hash' => $data['password_hash'],
             'is_active' => $data['is_active'],
             'created_at' => $now,
@@ -122,6 +141,19 @@ final class UserRepository extends Repository
             'id' => $id,
             'last_login_at' => $now,
             'updated_at' => $now,
+        ]);
+    }
+
+    public function linkGoogleSub(int $id, string $sub): void
+    {
+        $statement = $this->pdo->prepare(
+            'UPDATE users SET google_sub = :google_sub, updated_at = :updated_at
+             WHERE id = :id AND (google_sub IS NULL OR google_sub = :google_sub)'
+        );
+        $statement->execute([
+            'id' => $id,
+            'google_sub' => $sub,
+            'updated_at' => gmdate('Y-m-d H:i:s'),
         ]);
     }
 

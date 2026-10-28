@@ -100,10 +100,13 @@ final class SaasService extends Service
         } elseif ($this->users->findByEmail($email) !== null) {
             $errors['email'] = 'Un compte existe déjà avec cet e-mail. Connectez-vous.';
         }
-        if (mb_strlen($password) < 12) {
-            $errors['password'] = '12 caractères minimum.';
-        } elseif ($password !== (string) ($input['password_confirm'] ?? '')) {
-            $errors['password_confirm'] = 'Les deux mots de passe ne sont pas identiques.';
+        $googleSub = trim((string) ($input['google_sub'] ?? ''));
+        if ($googleSub === '') {
+            if (mb_strlen($password) < 12) {
+                $errors['password'] = '12 caractères minimum.';
+            } elseif ($password !== (string) ($input['password_confirm'] ?? '')) {
+                $errors['password_confirm'] = 'Les deux mots de passe ne sont pas identiques.';
+            }
         }
         if (empty($input['terms'])) {
             $errors['terms'] = 'Acceptez les conditions pour créer votre compte.';
@@ -131,7 +134,11 @@ final class SaasService extends Service
                 'tenant_id' => $tenantId,
                 'full_name' => $name,
                 'email' => $email,
-                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                'google_sub' => $googleSub !== '' ? $googleSub : null,
+                'password_hash' => password_hash(
+                    $googleSub !== '' ? bin2hex(random_bytes(32)) : $password,
+                    PASSWORD_DEFAULT
+                ),
                 'is_active' => 1,
             ]);
             $this->pdo->prepare('UPDATE users SET phone = ? WHERE id = ?')->execute([$normalized, $userId]);
@@ -151,7 +158,9 @@ final class SaasService extends Service
                 'Bienvenue ' . $name . ' !',
                 [
                     'Votre espace Sesam ' . Sector::label($sector) . ' « ' . $display . ' » est créé. Vous profitez d\'un mois d\'essai gratuit, avec toutes les fonctions.',
-                    'Connectez-vous avec cette adresse e-mail et le mot de passe choisi à l\'inscription. L\'équipe SESAM vous appelle très vite pour vous aider à démarrer.',
+                    $googleSub !== ''
+                        ? 'Connectez-vous ensuite avec Google (le même compte) ou via « Mot de passe oublié » si vous préférez un mot de passe. L\'équipe SESAM vous appelle très vite pour vous aider à démarrer.'
+                        : 'Connectez-vous avec cette adresse e-mail et le mot de passe choisi à l\'inscription. L\'équipe SESAM vous appelle très vite pour vous aider à démarrer.',
                 ],
                 'Ouvrir mon espace',
                 rtrim(\Sesam\Core\Env::get('APP_URL', ''), '/') . '/connexion',

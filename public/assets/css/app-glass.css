@@ -841,6 +841,56 @@ body.is-app::after {
     text-decoration: underline;
 }
 
+.google-auth-form {
+    display: none;
+}
+
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgba(12, 23, 48, 0.14);
+    border-radius: 0.85rem;
+    background: #fff;
+    color: #1f1f1f;
+    font: inherit;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-google:hover {
+    background: #f7f8fa;
+}
+
+.btn-google-icon {
+    flex: 0 0 auto;
+}
+
+.auth-or {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.15rem 0 0.35rem;
+    color: var(--sesam-muted);
+    font-size: 0.82rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.auth-or::before,
+.auth-or::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(7, 26, 61, 0.1);
+}
+
 .btn-auth-submit {
     width: 100%;
     min-height: 3rem;

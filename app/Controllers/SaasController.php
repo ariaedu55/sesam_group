@@ -48,8 +48,14 @@ final class SaasController extends Controller
             return Response::redirect('/espace');
         }
         $sector = (string) $request->input('service', '');
+        $old = ['sector' => in_array($sector, Sector::ALL, true) ? $sector : ''];
+        $pending = $this->auth->pendingGoogle();
+        if ($pending !== null) {
+            $old['full_name'] = $pending['name'];
+            $old['email'] = $pending['email'];
+        }
 
-        return $this->signupView(['sector' => in_array($sector, Sector::ALL, true) ? $sector : ''], []);
+        return $this->signupView($old, []);
     }
 
     public function signup(Request $request): Response
@@ -62,6 +68,14 @@ final class SaasController extends Controller
             $value = $request->input($key);
             $input[$key] = is_scalar($value) ? (string) $value : '';
         }
+        $pending = $this->auth->pendingGoogle();
+        if ($pending !== null) {
+            $input['email'] = $pending['email'];
+            $input['google_sub'] = $pending['sub'];
+            if (trim($input['full_name']) === '') {
+                $input['full_name'] = $pending['name'];
+            }
+        }
         try {
             $userId = $this->saas->signup($input, $request->ip());
         } catch (ValidationException $exception) {
@@ -69,6 +83,7 @@ final class SaasController extends Controller
 
             return $this->signupView($input, $exception->errors(), 422);
         }
+        $this->auth->clearPendingGoogle();
         $this->auth->startSessionFor($userId);
         $this->session->put('status', 'Bienvenue sur SESAM ! Votre espace est prêt et votre essai gratuit d\'un mois commence aujourd\'hui.');
 
@@ -87,6 +102,9 @@ final class SaasController extends Controller
             'csrf' => $this->csrf->token(),
             'old' => $old,
             'errors' => $errors,
+            'googleEnabled' => $this->auth->googleEnabled(),
+            'googlePending' => $this->auth->pendingGoogle(),
+            'googleConfig' => $this->auth->googleWebConfig(),
         ], $status, 'layouts/public');
     }
 
@@ -123,6 +141,9 @@ final class SaasController extends Controller
                 'page' => $this->saas->page($actor), 'errors' => $exception->errors(),
             ], $actor, 422);
         } catch (HttpException $exception) {
+            if ($exception->status() === 403) {
+                throw $exception;
+            }
             $this->session->put('status', $exception->getMessage());
 
             return Response::redirect('/abonnement');

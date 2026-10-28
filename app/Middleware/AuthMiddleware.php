@@ -48,6 +48,7 @@ final class AuthMiddleware implements Middleware
     private function isGuestOnly(string $path): bool
     {
         return $path === '/connexion'
+            || $path === '/connexion/google'
             || $path === '/mot-de-passe'
             || str_starts_with($path, '/mot-de-passe/reinitialiser/');
     }

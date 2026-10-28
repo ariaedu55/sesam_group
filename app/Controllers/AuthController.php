@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sesam\Controllers;
 
+use Sesam\Core\HttpException;
 use Sesam\Core\Request\Request;
 use Sesam\Core\Response\Response;
 use Sesam\Core\Response\ViewRenderer;
@@ -42,6 +43,29 @@ final class AuthController extends Controller
         }
 
         return Response::redirect('/espace');
+    }
+
+    public function googleLogin(Request $request): Response
+    {
+        $from = (string) $request->input('from', 'login');
+        $token = $request->input('id_token');
+        try {
+            $target = $this->auth->completeGoogleIdToken(
+                is_string($token) ? $token : '',
+                (string) $request->input('service', ''),
+                $request->ip(),
+            );
+        } catch (ValidationException $exception) {
+            $this->session->put('status', (string) array_values($exception->errors())[0]);
+
+            return Response::redirect($from === 'signup' ? '/commencer' : '/connexion');
+        } catch (HttpException $exception) {
+            $this->session->put('status', $exception->getMessage());
+
+            return Response::redirect($from === 'signup' ? '/commencer' : '/connexion');
+        }
+
+        return Response::redirect($target);
     }
 
     public function logout(Request $request): Response
@@ -107,6 +131,8 @@ final class AuthController extends Controller
             'old' => $old,
             'errors' => $errors,
             'status' => $this->pullStatus(),
+            'googleEnabled' => $this->auth->googleEnabled(),
+            'googleConfig' => $this->auth->googleWebConfig(),
         ], $status, 'layouts/auth');
     }
 

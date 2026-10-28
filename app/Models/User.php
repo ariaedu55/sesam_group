@@ -28,6 +28,16 @@ final class User extends Model
         return (string) $this->get('email', '');
     }
 
+    public function googleSub(): ?string
+    {
+        $value = $this->get('google_sub');
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+
+        return $value;
+    }
+
     public function tenantId(): ?int
     {
         $value = $this->get('tenant_id');

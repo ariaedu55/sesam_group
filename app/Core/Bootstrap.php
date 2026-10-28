@@ -81,7 +81,9 @@ final class Bootstrap
         /** @var array{mode: string, mail: array{from: string, smtp_host: string, smtp_port: string, smtp_user: string, smtp_password: string}, whatsapp: array{api_url: string, api_token: string}} $notificationConfig */
         $notificationConfig = require $root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'notifications.php';
         $tenantContext = new TenantContext();
-        $auth = new AuthService($config['db'], $session);
+        /** @var array{api_key: string, project_id: string, auth_domain: string, web: array<string, string>} $googleConfig */
+        $googleConfig = require $root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'google.php';
+        $auth = new AuthService($config['db'], $session, new \Sesam\Core\Validation\Validator(), new \Sesam\Core\Auth\GoogleOAuthClient($googleConfig));
         $mailer = new \Sesam\Core\Mail\Mailer(require $root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'mail.php', $logger);
         \Sesam\Core\Mail\Mailer::setCurrent($mailer);
         \Sesam\Services\WelcomeService::setCurrent(new \Sesam\Services\WelcomeService($config['db']));
@@ -195,6 +197,7 @@ final class Bootstrap
         $router->get('/design-system', [new DesignController($views), 'index']);
         $router->get('/connexion', [$authController, 'loginForm']);
         $router->post('/connexion', [$authController, 'login']);
+        $router->post('/connexion/google', [$authController, 'googleLogin']);
         $router->post('/deconnexion', [$authController, 'logout']);
         $router->get('/mot-de-passe', [$authController, 'forgotForm']);
         $router->post('/mot-de-passe', [$authController, 'forgot']);

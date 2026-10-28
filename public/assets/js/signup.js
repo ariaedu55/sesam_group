@@ -130,11 +130,13 @@
             if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
                 fail(email, "E-mail invalide.", state);
             }
-            if (password && password.value.length < 12) {
-                fail(password, "12 caractères minimum.", state);
-            }
-            if (password && confirm && password.value !== confirm.value) {
-                fail(confirm, "Les deux mots de passe ne sont pas identiques.", state);
+            if (form.getAttribute("data-google-pending") !== "1") {
+                if (password && password.value.length < 12) {
+                    fail(password, "12 caractères minimum.", state);
+                }
+                if (password && confirm && password.value !== confirm.value) {
+                    fail(confirm, "Les deux mots de passe ne sont pas identiques.", state);
+                }
             }
             if (terms && !terms.checked) {
                 fail(terms, "Acceptez les conditions pour créer votre compte.", state);
