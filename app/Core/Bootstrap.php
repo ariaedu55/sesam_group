@@ -131,7 +131,7 @@ final class Bootstrap
         $authController = new AuthController($views, $csrf, $session, $auth);
         $adminService = new AdminService($config['db']);
         $account = new AccountController($views, $csrf, $session, $auth, $tenantContext, $dashboard, $clients, $notifications, $boutique, $salon, $adminService, $immo);
-        $adminController = new AdminController($views, $csrf, $session, $auth, $adminService);
+        $adminController = new AdminController($views, $csrf, $session, $auth, $adminService, $saas);
         $clientController = new ClientController($views, $csrf, $session, $auth, $clients, $tenantContext, $notifications, $boutique, $booking);
         $userController = new UserController($views, $csrf, $session, $auth, $users, $tenantContext, $notifications);
         $tenantController = new TenantController($views, $csrf, $session, $auth, $tenants, $tenantContext, $notifications, new TenantConsoleService($config['db'], $logger), $adminService, $saas);
@@ -225,6 +225,7 @@ final class Bootstrap
         $router->get('/finance/statistiques', [$adminController, 'statistics']);
         $router->get('/tarifs', [$adminController, 'prices']);
         $router->post('/tarifs', [$adminController, 'savePrices']);
+        $router->post('/tarifs/essai', [$adminController, 'saveTrial']);
         $router->get('/agence', [$agencyController, 'dashboard']);
         $router->get('/agence/prospects', [$agencyController, 'prospects']);
         $router->get('/agence/prospects/nouveau', [$agencyController, 'prospectForm']);

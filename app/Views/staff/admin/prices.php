@@ -8,17 +8,44 @@ $prices = is_array($prices ?? null) ? $prices : [];
 $old = is_array($old ?? null) ? $old : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $canManage = (bool) ($canManage ?? false);
+$trial = is_array($trial ?? null) ? $trial : ['enabled' => true, 'updated_at' => null, 'updated_by_name' => null];
+$trialOn = !empty($trial['enabled']);
 $ro = $canManage ? '' : ' disabled';
 
 ?>
 <section class="btq">
     <header class="btq-head">
         <div>
-            <h1>Tarifs des modules</h1>
+            <h1>Tarifs et essai gratuit</h1>
             <p class="muted">Mensualité proposée par défaut à l'activation d'un abonnement. Chaque commerce peut avoir un montant négocié dans sa fiche.</p>
         </div>
     </header>
     <?php if ($errors !== []): ?><p class="alert alert-danger" role="alert"><?= Html::e(implode(' ', $errors)) ?></p><?php endif; ?>
+
+    <section class="btq-card trial-card<?= $trialOn ? ' is-on' : ' is-off' ?>" id="essai" aria-labelledby="trial-title">
+        <div class="trial-card-head">
+            <span class="trial-card-icon" aria-hidden="true">🎁</span>
+            <div>
+                <h2 id="trial-title">Essai gratuit d'un mois à l'inscription</h2>
+                <p class="trial-card-state"><span class="btq-status btq-status-<?= $trialOn ? 'success' : 'muted' ?>"><?= $trialOn ? 'Activé' : 'Désactivé' ?></span>
+                    <?php if (!empty($trial['updated_at'])): ?><small class="muted">Modifié le <?= Html::e(gmdate('d/m/Y à H:i', (int) strtotime((string) $trial['updated_at'] . ' UTC'))) ?><?= !empty($trial['updated_by_name']) ? ' par ' . Html::e((string) $trial['updated_by_name']) : '' ?></small><?php endif; ?></p>
+            </div>
+        </div>
+        <ul class="trial-card-rules">
+            <li><strong>Activé</strong> : chaque nouveau commerce ouvre son espace tout de suite et l'utilise gratuitement pendant 1 mois, puis s'abonne.</li>
+            <li><strong>Désactivé</strong> : le compte est créé, mais l'espace ne s'ouvre qu'après le paiement du premier mois (mensualité ci-dessous, plus les frais de mise en place s'ils sont définis), par Wave ou Orange Money.</li>
+            <li>Le changement s'applique aux <strong>prochaines</strong> inscriptions : les essais en cours continuent jusqu'à leur terme. La page « Commencer » s'adapte toute seule.</li>
+        </ul>
+        <?php if ($canManage): ?>
+            <form method="post" action="<?= Html::url('/tarifs/essai') ?>" class="trial-card-form">
+                <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+                <input type="hidden" name="trial_enabled" value="<?= $trialOn ? '0' : '1' ?>">
+                <button class="btn <?= $trialOn ? 'btn-ghost' : 'btn-primary' ?>" type="submit"><?= $trialOn ? 'Désactiver l\'essai gratuit' : 'Activer l\'essai gratuit' ?></button>
+            </form>
+        <?php else: ?>
+            <p class="muted">Seuls les responsables des abonnements peuvent modifier ce réglage.</p>
+        <?php endif; ?>
+    </section>
     <form class="btq-form" method="post" action="<?= Html::url('/tarifs') ?>">
         <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
         <?php foreach ($prices as $sector => $price): ?>

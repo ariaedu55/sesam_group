@@ -12,6 +12,7 @@ $months = is_array($page['months'] ?? null) ? $page['months'] : [];
 $methods = is_array($page['methods'] ?? null) ? $page['methods'] : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $price = (int) ($page['price'] ?? 0);
+$setupFee = (int) ($page['setupFee'] ?? 0);
 $state = (string) ($access['state'] ?? 'none');
 $daysLeft = $access['days_left'] ?? null;
 $end = $access['period_end'] ?? null;
@@ -25,6 +26,7 @@ $tone = match ($state) {
 $headline = match ($state) {
     'trial' => 'Essai gratuit : ' . max(0, (int) $daysLeft) . ' jour(s) restant(s)',
     'trial_over' => 'Votre essai gratuit est terminé',
+    'pending' => 'Activez votre espace',
     'active' => 'Abonnement actif jusqu\'au ' . $date($end),
     'overdue' => 'Abonnement échu depuis le ' . $date($end),
     'suspended' => 'Abonnement suspendu',
@@ -41,7 +43,9 @@ $methodLabels = ['wave' => 'Wave', 'orange-money' => 'Orange Money', 'especes' =
         </div>
     </header>
 
-    <?php if (!empty($access['blocked'])): ?>
+    <?php if ($state === 'pending'): ?>
+        <p class="alert" role="status">Votre compte est créé. Réglez votre premier mois par Wave ou Orange Money : votre espace s'ouvre aussitôt le paiement confirmé.</p>
+    <?php elseif (!empty($access['blocked'])): ?>
         <p class="alert alert-strong" role="alert">Votre espace est en pause : réglez l'abonnement pour retrouver toutes vos données, intactes.</p>
     <?php endif; ?>
 
@@ -50,6 +54,8 @@ $methodLabels = ['wave' => 'Wave', 'orange-money' => 'Orange Money', 'especes' =
         <h2><?= Html::e($headline) ?></h2>
         <?php if ($state === 'trial'): ?>
             <p class="muted">Toutes les fonctions sont ouvertes jusqu'au <?= Html::e($date($end)) ?>. Abonnez-vous dès maintenant : votre abonnement démarrera aujourd'hui, sans rien perdre.</p>
+        <?php elseif ($state === 'pending'): ?>
+            <p class="muted"><?= Html::e(Money::format($price)) ?> par mois<?= $setupFee > 0 ? ', plus ' . Html::e(Money::format($setupFee)) . ' de frais de mise en place payés une seule fois' : '' ?>. Toutes les fonctions sont incluses, sans engagement.</p>
         <?php elseif ($state === 'active'): ?>
             <p class="muted">Réabonnez-vous à l'avance : les mois payés s'ajoutent après le <?= Html::e($date($end)) ?>.</p>
         <?php endif; ?>
@@ -57,7 +63,7 @@ $methodLabels = ['wave' => 'Wave', 'orange-money' => 'Orange Money', 'especes' =
 
     <div class="btq-two">
         <section class="btq-card">
-            <h2><?= $state === 'active' ? 'Prolonger mon abonnement' : 'M\'abonner' ?></h2>
+            <h2><?= $state === 'active' ? 'Prolonger mon abonnement' : ($state === 'pending' ? 'Activer mon espace' : 'M\'abonner') ?></h2>
             <?php if (empty($page['canPay'])): ?>
                 <p class="muted">Seul le responsable du commerce peut régler l'abonnement.</p>
             <?php else: ?>
@@ -68,7 +74,7 @@ $methodLabels = ['wave' => 'Wave', 'orange-money' => 'Orange Money', 'especes' =
                         <?php foreach ($months as $count => $label): ?>
                             <label class="sub-choice">
                                 <input type="radio" name="months" value="<?= (int) $count ?>"<?= (int) $count === 1 ? ' checked' : '' ?>>
-                                <span><strong><?= Html::e($label) ?></strong><small><?= Html::e(Money::format($price * (int) $count)) ?></small></span>
+                                <span><strong><?= Html::e($label) ?></strong><small><?= Html::e(Money::format($price * (int) $count + $setupFee)) ?></small></span>
                             </label>
                         <?php endforeach; ?>
                     </fieldset>

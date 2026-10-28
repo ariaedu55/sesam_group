@@ -919,3 +919,58 @@
     font-size: 0.62rem;
     vertical-align: middle;
 }
+
+/* Console SESAM : réglage de l'essai gratuit (page Tarifs) */
+.trial-card {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.trial-card.is-on {
+    background: #f0f6ff;
+}
+
+.trial-card-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.trial-card-head h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.trial-card-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: 14px;
+    background: #fff;
+    font-size: 1.5rem;
+    box-shadow: 0 0 0 1px rgba(12, 23, 48, 0.1);
+}
+
+.trial-card-state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0 0;
+}
+
+.trial-card-rules {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 18px;
+    color: #4b5567;
+    font-size: 0.9rem;
+}
+
+.trial-card-form {
+    margin: 0;
+}

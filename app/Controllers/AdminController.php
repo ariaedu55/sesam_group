@@ -27,6 +27,7 @@ final class AdminController extends Controller
         private readonly Session $session,
         private readonly AuthService $auth,
         private readonly AdminService $admin,
+        private readonly ?\Sesam\Services\SaasService $saas = null,
     ) {
         parent::__construct($views);
     }
@@ -93,6 +94,19 @@ final class AdminController extends Controller
         return Response::redirect('/tarifs');
     }
 
+    /** Essai gratuit d'un mois à l'inscription : activé ou désactivé à tout moment. */
+    public function saveTrial(Request $request): Response
+    {
+        $actor = $this->auth->requirePermission(Permission::SUBSCRIPTIONS_MANAGE);
+        if ($this->saas === null) {
+            return Response::redirect('/tarifs');
+        }
+        $message = $this->saas->setTrialEnabled($actor, $request->input('trial_enabled') === '1');
+        $this->session->put('status', $message);
+
+        return Response::redirect('/tarifs#essai');
+    }
+
     /**
      * @param array<string, string> $old
      * @param array<string, string> $errors
@@ -103,6 +117,7 @@ final class AdminController extends Controller
             'title' => 'Tarifs — Console SESAM',
             'current' => 'tarifs',
             'prices' => $this->admin->prices($actor),
+            'trial' => $this->saas?->trialSetting() ?? ['enabled' => true, 'updated_at' => null, 'updated_by_name' => null],
             'old' => $old,
             'errors' => $errors,
             'canManage' => $actor->can(Permission::SUBSCRIPTIONS_MANAGE),

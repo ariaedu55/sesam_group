@@ -85,6 +85,12 @@ final class SaasController extends Controller
         }
         $this->auth->clearPendingGoogle();
         $this->auth->startSessionFor($userId);
+        if (!$this->saas->trialEnabled()) {
+            // Sans essai gratuit : le compte est créé, l'espace s'ouvre au paiement du premier mois.
+            $this->session->put('status', 'Bienvenue sur SESAM ! Votre compte est créé : réglez votre premier mois pour ouvrir votre espace.');
+
+            return Response::redirect('/abonnement');
+        }
         $this->session->put('status', 'Bienvenue sur SESAM ! Votre espace est prêt et votre essai gratuit d\'un mois commence aujourd\'hui.');
 
         return Response::redirect('/espace');
@@ -97,7 +103,7 @@ final class SaasController extends Controller
     private function signupView(array $old, array $errors, int $status = 200): Response
     {
         return $this->render('public/signup', [
-            'title' => 'Commencer gratuitement — SESAM',
+            'title' => $this->saas->trialEnabled() ? 'Commencer gratuitement — 1 mois offert — SESAM' : 'Commencer — SESAM',
             'current' => 'commencer',
             'csrf' => $this->csrf->token(),
             'old' => $old,
@@ -105,6 +111,7 @@ final class SaasController extends Controller
             'googleEnabled' => $this->auth->googleEnabled(),
             'googlePending' => $this->auth->pendingGoogle(),
             'googleConfig' => $this->auth->googleWebConfig(),
+            'offer' => $this->saas->publicOffer(),
         ], $status, 'layouts/public');
     }
 

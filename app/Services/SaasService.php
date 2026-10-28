@@ -58,6 +58,66 @@ final class SaasService extends Service
         $this->attempts = new AuthAttemptRepository($this->pdo);
     }
 
+    // ================================================================ Essai gratuit (réglage de la console)
+
+    public function trialEnabled(): bool
+    {
+        return (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->get('trial_enabled', '1') === '1';
+    }
+
+    /**
+     * @return array{enabled: bool, updated_at: ?string, updated_by_name: ?string}
+     */
+    public function trialSetting(): array
+    {
+        $details = (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->details('trial_enabled', '1');
+
+        return ['enabled' => $details['value'] === '1', 'updated_at' => $details['updated_at'], 'updated_by_name' => $details['updated_by_name']];
+    }
+
+    /**
+     * Active ou coupe l'essai gratuit d'un mois pour les prochaines inscriptions (les essais en cours continuent).
+     */
+    public function setTrialEnabled(User $actor, bool $enabled): string
+    {
+        if ($actor->tenantId() !== null || !$actor->can(Permission::SUBSCRIPTIONS_MANAGE)) {
+            throw new HttpException(403, 'Vous n\'avez pas l\'autorisation d\'accéder à cette page.');
+        }
+        (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->set('trial_enabled', $enabled ? '1' : '0', $actor->id());
+        Notifier::staff(
+            'sesam.security',
+            $enabled ? 'Essai gratuit réactivé' : 'Essai gratuit désactivé',
+            ($enabled ? 'Les nouvelles inscriptions profitent de nouveau d\'un mois offert.' : 'Les nouvelles inscriptions doivent payer leur premier mois pour ouvrir leur espace.') . ' Modifié par ' . $actor->fullName() . '.',
+            '/tarifs',
+            'info',
+            null,
+            $actor->id(),
+        );
+
+        return $enabled
+            ? 'Essai gratuit activé : chaque nouvelle inscription profite d\'un mois offert.'
+            : 'Essai gratuit désactivé : les nouveaux inscrits paient leur premier mois pour ouvrir leur espace. Les essais en cours ne changent pas.';
+    }
+
+    /**
+     * Offre affichée sur la page « Commencer » : essai gratuit ou non, et tarifs de chaque module.
+     *
+     * @return array{trial: bool, prices: array<string, array{monthly: int, setup: int}>}
+     */
+    public function publicOffer(): array
+    {
+        $prices = [];
+        try {
+            foreach ($this->pdo->query('SELECT sector, monthly_amount, setup_fee FROM saas_prices') ?: [] as $row) {
+                $prices[(string) $row['sector']] = ['monthly' => (int) $row['monthly_amount'], 'setup' => (int) $row['setup_fee']];
+            }
+        } catch (\PDOException) {
+            $prices = [];
+        }
+
+        return ['trial' => $this->trialEnabled(), 'prices' => $prices];
+    }
+
     public function usePayments(PaymentService $payments): void
     {
         $this->payments = $payments;
@@ -144,7 +204,14 @@ final class SaasService extends Service
             $this->pdo->prepare('UPDATE users SET phone = ? WHERE id = ?')->execute([$normalized, $userId]);
             $this->roles->replaceUserRoles($userId, $this->roles->idsForSlugs([Role::TENANT_OWNER]));
             $this->prepareModule($tenantId, $sector, $display, $normalized, $email);
-            $this->startTrial($tenantId, self::SIGNUP_TRIAL_DAYS, null, 'Inscription depuis le site');
+            $withTrial = $this->trialEnabled();
+            if ($withTrial) {
+                $this->startTrial($tenantId, self::SIGNUP_TRIAL_DAYS, null, 'Inscription depuis le site');
+            } else {
+                // Essai gratuit désactivé dans la console : l'espace s'ouvre au paiement du premier mois.
+                $this->subscriptions->save($tenantId, TenantSubscription::PENDING, $this->monthlyPrice($tenantId), gmdate('Y-m-d'), null);
+                $this->subscriptions->addEvent($tenantId, 'pending', null, TenantSubscription::PENDING, null, 'Inscription depuis le site, sans essai : activation au premier paiement', null);
+            }
             $this->pdo->commit();
         } catch (\Throwable $exception) {
             $this->pdo->rollBack();
@@ -157,7 +224,9 @@ final class SaasService extends Service
                 'Bienvenue sur SESAM — votre espace ' . $display . ' est prêt',
                 'Bienvenue ' . $name . ' !',
                 [
-                    'Votre espace Sesam ' . Sector::label($sector) . ' « ' . $display . ' » est créé. Vous profitez d\'un mois d\'essai gratuit, avec toutes les fonctions.',
+                    'Votre espace Sesam ' . Sector::label($sector) . ' « ' . $display . ' » est créé. ' . ($withTrial
+                        ? 'Vous profitez d\'un mois d\'essai gratuit, avec toutes les fonctions.'
+                        : 'Il s\'ouvre dès le paiement de votre premier mois (' . Money::format($this->monthlyPrice($tenantId)) . '), par Wave ou Orange Money, depuis la page Abonnement.'),
                     $googleSub !== ''
                         ? 'Connectez-vous ensuite avec Google (le même compte) ou via « Mot de passe oublié » si vous préférez un mot de passe. L\'équipe SESAM vous appelle très vite pour vous aider à démarrer.'
                         : 'Connectez-vous avec cette adresse e-mail et le mot de passe choisi à l\'inscription. L\'équipe SESAM vous appelle très vite pour vous aider à démarrer.',
@@ -172,7 +241,7 @@ final class SaasService extends Service
         Notifier::staff(
             'sesam.signup',
             'Nouvelle inscription : ' . $display,
-            'Sesam ' . Sector::label($sector) . ' · ' . $name . ' · ' . WhatsApp::display($normalized) . ' · essai d\'un mois',
+            'Sesam ' . Sector::label($sector) . ' · ' . $name . ' · ' . WhatsApp::display($normalized) . ($withTrial ? ' · essai d\'un mois' : ' · activation en attente de paiement'),
             '/commerces/' . $tenantId,
             'success',
         );
@@ -248,6 +317,21 @@ final class SaasService extends Service
         return $slug;
     }
 
+    /**
+     * Frais de mise en place (tarifs de la console) : dus une seule fois, à l'activation d'un compte inscrit sans essai.
+     */
+    public function setupFeeDue(int $tenantId, ?TenantSubscription $subscription = null): int
+    {
+        $subscription ??= $this->subscriptions->find($tenantId);
+        if ($subscription?->status() !== TenantSubscription::PENDING) {
+            return 0;
+        }
+        $statement = $this->pdo->prepare('SELECT p.setup_fee FROM tenants t LEFT JOIN saas_prices p ON p.sector = t.sector WHERE t.id = ?');
+        $statement->execute([$tenantId]);
+
+        return (int) ($statement->fetchColumn() ?: 0);
+    }
+
     private function monthlyPrice(int $tenantId): int
     {
         $statement = $this->pdo->prepare('SELECT p.monthly_amount FROM tenants t LEFT JOIN saas_prices p ON p.sector = t.sector WHERE t.id = ?');
@@ -268,10 +352,11 @@ final class SaasService extends Service
         $state = $subscription?->state($today) ?? 'none';
         $end = $subscription?->periodEnd();
         $daysLeft = $end !== null ? (int) floor((strtotime($end . ' UTC') - strtotime($today . ' UTC')) / 86400) : null;
-        $blocked = $state === 'trial_over' || ($state === 'overdue' && $daysLeft !== null && $daysLeft < -self::GRACE_DAYS);
+        $blocked = $state === 'trial_over' || $state === 'pending' || ($state === 'overdue' && $daysLeft !== null && $daysLeft < -self::GRACE_DAYS);
         [$banner, $tone] = match (true) {
             $state === 'trial' => ['Essai gratuit : ' . max(0, (int) $daysLeft) . ' jour(s) restant(s).', $daysLeft !== null && $daysLeft <= 7 ? 'warning' : 'info'],
             $state === 'trial_over' => ['Votre essai gratuit est terminé. Abonnez-vous pour retrouver votre espace.', 'danger'],
+            $state === 'pending' => ['Bienvenue ! Réglez votre premier mois pour ouvrir votre espace.', 'info'],
             $state === 'overdue' && $blocked => ['Votre abonnement est échu. Réglez-le pour retrouver votre espace.', 'danger'],
             $state === 'overdue' => ['Votre abonnement est échu depuis le ' . gmdate('d/m/Y', (int) strtotime((string) $end . ' UTC')) . '. Pensez à le renouveler.', 'warning'],
             $state === 'active' && $daysLeft !== null && $daysLeft <= 5 => ['Votre abonnement se termine dans ' . $daysLeft . ' jour(s).', 'warning'],
@@ -310,6 +395,7 @@ final class SaasService extends Service
             'periodStart' => $subscription?->periodStart(),
             'payments' => $payments->fetchAll(\PDO::FETCH_ASSOC),
             'canPay' => $actor->can(Permission::SUBSCRIPTION_PAY),
+            'setupFee' => $this->setupFeeDue($tenantId, $subscription),
             'months' => self::RENEW_MONTHS,
             'methods' => self::RENEW_METHODS,
         ];
@@ -336,11 +422,14 @@ final class SaasService extends Service
             throw new ValidationException(['months' => 'Le tarif de votre module n\'est pas encore défini. Contactez SESAM.']);
         }
 
+        $setupFee = $this->setupFeeDue($tenantId, $subscription);
+
         return [
             'months' => $months,
             'method' => $method,
             'methodLabel' => self::RENEW_METHODS[$method],
-            'amount' => $price * $months,
+            'amount' => $price * $months + $setupFee,
+            'setupFee' => $setupFee,
             'newEnd' => $this->renewedEnd($subscription, $months),
         ];
     }
@@ -367,6 +456,7 @@ final class SaasService extends Service
                 'months' => $months,
                 'method' => $method,
                 'actor_user_id' => $actor->id(),
+                'setup_fee' => (int) $checkout['setupFee'],
             ],
             [$nabooMethod],
         );
@@ -424,7 +514,8 @@ final class SaasService extends Service
         $start = $state === 'active' ? ($subscription?->periodStart() ?? $today) : $today;
         $end = $this->renewedEnd($subscription, $months);
         $amount = $payment->amountMinor();
-        $monthly = intdiv($amount, $months);
+        $setupFee = max(0, (int) ($meta['setup_fee'] ?? 0));
+        $monthly = intdiv(max(0, $amount - $setupFee), $months);
         $actorId = (int) $meta['actor_user_id'];
         $actorId = $actorId > 0 ? $actorId : null;
         $this->pdo->beginTransaction();

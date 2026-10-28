@@ -9,12 +9,15 @@ final class TenantSubscription extends Model
     public const ACTIVE = 'active';
     public const SUSPENDED = 'suspended';
     public const TRIAL = 'trial';
+    /** Inscription sans essai gratuit : l'espace s'ouvre au premier paiement. */
+    public const PENDING = 'pending';
 
     /** @var array<string, string> */
     public const LABELS = [
         'none' => 'Non configuré',
         'trial' => 'Essai gratuit',
         'trial_over' => 'Essai terminé',
+        'pending' => 'Activation en attente',
         'active' => 'Actif',
         'overdue' => 'Échu',
         'suspended' => 'Suspendu',
@@ -63,6 +66,9 @@ final class TenantSubscription extends Model
         }
         if ($status === self::SUSPENDED) {
             return 'suspended';
+        }
+        if ($status === self::PENDING) {
+            return 'pending';
         }
         if ($status === self::TRIAL) {
             return $periodEnd !== null && $periodEnd < $today ? 'trial_over' : 'trial';

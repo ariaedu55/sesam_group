@@ -1,5 +1,12 @@
 # Journal des changements
 
+## 2026-10-29 — Page « Commencer » refaite, essai gratuit pilotable depuis la console
+
+- Page `/commencer` refaite : bannière avec cadeau animé (couvercle qui saute, ticket « 1 mois offert », confettis), « Comment ça marche » en 3 étapes, cartes d'outils avec prix et « 1 mois offert », récapitulatif de l'offre qui suit l'outil choisi (aujourd'hui, pendant 30 jours, ensuite), « Ce qui se passe ensuite », aide, questions fréquentes. Même formulaire et mêmes champs (`signup.js`), connexion Google conservée.
+- Trois popups propres à la page (`partials/commencer-popups.php`, `commencer.js`) : inscription guidée dans le popup (accueil cadeau puis 4 étapes : outil, vous, connexion, récapitulatif modifiable, création du compte) ouverte 5 s après l'arrivée ou par « Inscription guidée » ; « Attendez ! » quand le visiteur s'apprête à partir ; aide quand il bloque sur le formulaire. Chacun une fois par visite.
+- Console SESAM, page Tarifs : interrupteur « Essai gratuit d'un mois à l'inscription » (table `platform_settings`, migration `202610290900_platform_settings.sql`). Désactivé : le compte est créé en « activation en attente », l'inscrit arrive sur la page Abonnement et son espace s'ouvre au paiement du premier mois (mensualité + frais de mise en place définis dans les tarifs, une seule fois). La page Commencer, l'e-mail de bienvenue et l'alerte de l'équipe s'adaptent.
+- Tests `TrialSettingTest`.
+
 ## 2026-10-28 — Audit de production (sesam-tech.com) et corrections
 
 - Push FCM sans l'extension cURL (absente du PHP 8.4 du serveur) : repli sur les flux HTTPS natifs. Les notifications push et les rappels du matin, qui plantaient sur `curl_init()`, fonctionnent de nouveau.
