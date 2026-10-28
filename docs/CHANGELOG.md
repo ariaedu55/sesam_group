@@ -1,5 +1,16 @@
 # Journal des changements
 
+## 2026-10-28 — Audit de production (sesam-tech.com) et corrections
+
+- Push FCM sans l'extension cURL (absente du PHP 8.4 du serveur) : repli sur les flux HTTPS natifs. Les notifications push et les rappels du matin, qui plantaient sur `curl_init()`, fonctionnent de nouveau.
+- Statistiques : l'alias SQL `returning` est un mot réservé de MariaDB 10.11 (production) ; renommé `returning_clients`.
+- Connexion Google d'un compte existant : le paramètre `:google_sub` était utilisé deux fois dans la même requête (erreur HY093).
+- Rappels du matin (7 h) et relances de loyer (8 h) à l'heure de Dakar quel que soit le fuseau du serveur (Europe/Berlin) : option `--heure`, crons horaires, une fois par jour.
+- `www.sesam-tech.com` redirigé (301) vers `sesam-tech.com`, seul domaine autorisé par Firebase Auth.
+- Adresses de démonstration `exemple.*` jamais envoyées en SMTP.
+- Serveur : `session.gc_divisor = 1000` et `gc_probability = 1` dans le `php.ini` de PHP 8.4 (sauvegarde `php.ini.bak-audit-20261028`).
+- Vérifié en production : API NabooPay (transactions), webhook protégé (401 sans signature), domaines Firebase, push FCM, statistiques, redirection www, tâches planifiées.
+
 ## 2026-10-27 — Popups de bienvenue animés (espace connecté et site public)
 
 - À la connexion, un popup animé accueille l'utilisateur, une seule fois par connexion (`WelcomeService`, `partials/welcome.php`, `welcome.css`, `welcome.js`) :

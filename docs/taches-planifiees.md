@@ -38,15 +38,17 @@ ssh root@62.171.190.193 -p 22
 bash /home/jomas/sesam-tech.com/bin/install-vps-cron.sh
 ```
 
-Ou copier le script depuis le dépôt (`bin/install-vps-cron.sh`). Fuseau **`TZ=Africa/Dakar`** dans le crontab (7 h et 8 h = heure Sénégal).
+Ou copier le script depuis le dépôt (`bin/install-vps-cron.sh`). Le serveur est à l'heure de Berlin et cron ignore `TZ=` pour le planning : les tâches du matin tournent donc **chaque heure** avec `--heure=7` / `--heure=8` ; le script n'agit qu'à partir de cette heure **à Dakar (UTC)** et une seule fois par jour (fichiers `storage/cache/daily-notifications.txt` et `immo-relances.txt`).
 
 | Minute | Heure | Commande |
 |---|---|---|
-| `0` | `7` | `notifications-quotidiennes.php` |
+| `5` | `*` | `notifications-quotidiennes.php --heure=7` |
 | `*/10` | `*` | `rappels-clients.php` |
-| `0` | `8` | `immo-relances.php` |
+| `15` | `*` | `immo-relances.php --heure=8` |
 
 Journal : `storage/logs/taches.log`.
+
+Le PHP 8.4 de Webuzo n'a pas d'extension cURL fonctionnelle (bibliothèque `libldap-2.4` manquante) : SESAM s'en passe (push, NabooPay et Google utilisent les flux HTTPS natifs de PHP). Réinstaller PHP 8.4 depuis Webuzo réglera l'avertissement « curl.so ».
 
 ## Production : serveur Linux classique (crontab)
 
