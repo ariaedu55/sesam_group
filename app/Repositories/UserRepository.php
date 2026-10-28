@@ -147,12 +147,14 @@ final class UserRepository extends Repository
     public function linkGoogleSub(int $id, string $sub): void
     {
         $statement = $this->pdo->prepare(
+            // Un nom de paramètre ne peut servir qu'une fois (requêtes préparées natives) : :google_sub et :current_sub.
             'UPDATE users SET google_sub = :google_sub, updated_at = :updated_at
-             WHERE id = :id AND (google_sub IS NULL OR google_sub = :google_sub)'
+             WHERE id = :id AND (google_sub IS NULL OR google_sub = :current_sub)'
         );
         $statement->execute([
             'id' => $id,
             'google_sub' => $sub,
+            'current_sub' => $sub,
             'updated_at' => gmdate('Y-m-d H:i:s'),
         ]);
     }

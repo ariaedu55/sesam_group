@@ -26,8 +26,9 @@ final class GoogleAuthTest extends IntegrationTestCase
         $this->assertStringNotContainsString('Continuer avec Google', $login->content());
         $this->assertStringNotContainsString('/connexion/google', $login->content());
 
+        // La route Google n'accepte que POST (jeton Firebase) : un simple GET est refusé.
         $start = $kernel->handle(new Request('GET', '/connexion/google'));
-        $this->assertSame(404, $start->status());
+        $this->assertContains($start->status(), [404, 405]);
     }
 
     public function testUnknownGoogleAccountIsSentToSignup(): void

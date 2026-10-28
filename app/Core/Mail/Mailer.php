@@ -99,8 +99,10 @@ final class Mailer
     {
         $domain = strtolower(substr((string) strrchr($email, '@'), 1));
 
+        // Données de démonstration en français : exemple.sn, exemple.com, example.fr…
         return in_array($domain, ['example.com', 'example.org', 'example.net'], true)
-            || preg_match('/\.(test|example|invalid|localhost|local)$/', $domain) === 1;
+            || preg_match('/^(example|exemple)\./', $domain) === 1
+            || preg_match('/\.(test|example|exemple|invalid|localhost|local)$/', $domain) === 1;
     }
 
     /**

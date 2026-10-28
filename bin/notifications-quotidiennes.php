@@ -24,12 +24,25 @@ $config = require $root . '/config/app.php';
 $firebase = require $root . '/config/firebase.php';
 $logger = new Sesam\Core\Logger\Logger($root . '/storage/logs/app.log');
 
+// --heure=7 : tâche lancée chaque heure ; elle n'agit qu'à partir de 7 h à Dakar (UTC, sans heure d'été)
+// et une seule fois par jour. Le planning ne dépend plus du fuseau horaire du serveur.
+$stamp = $firebase['cache_dir'] . DIRECTORY_SEPARATOR . 'daily-notifications.txt';
+foreach (array_slice($argv, 1) as $arg) {
+    if (preg_match('/^--heure=(\d{1,2})$/', $arg, $m) === 1) {
+        if ((int) gmdate('G') < (int) $m[1] || (is_file($stamp) && trim((string) file_get_contents($stamp)) === gmdate('Y-m-d'))) {
+            exit(0);
+        }
+    }
+}
+echo '[' . gmdate('Y-m-d H:i') . ' Dakar] rappels du matin' . "
+";
+
 $notifier = new Notifier($config['db'], $firebase, $logger);
 Notifier::setCurrent($notifier);
 $jobs = new DailyNotifications($config['db'], $notifier, $firebase['cache_dir'] . DIRECTORY_SEPARATOR . 'daily-notifications.txt');
 $today = gmdate('Y-m-d');
 $counts = $jobs->run($today);
-@file_put_contents($firebase['cache_dir'] . DIRECTORY_SEPARATOR . 'daily-notifications.txt', $today);
+@file_put_contents($stamp, $today);
 
 foreach ($counts as $name => $count) {
     echo str_pad($name, 20) . ' : ' . $count . " notification(s)\n";

@@ -151,6 +151,10 @@ final class FcmClient
      */
     private function request(string $url, string $body, array $headers): array
     {
+        // Sans l'extension cURL (cas du serveur de production), on passe par les flux HTTP natifs de PHP.
+        if (!function_exists('curl_init')) {
+            return $this->streamRequest($url, $body, $headers);
+        }
         $curl = curl_init($url);
         if ($curl === false) {
             throw new PushException('cURL indisponible.');
@@ -172,6 +176,50 @@ final class FcmClient
         curl_close($curl);
 
         return ['status' => $status, 'body' => is_string($result) ? $result : '', 'error' => $error];
+    }
+
+    /**
+     * Même requête POST que cURL, via file_get_contents et un contexte HTTPS (certificats vérifiés).
+     *
+     * @param list<string> $headers
+     * @return array{status: int, body: string, error: string}
+     */
+    private function streamRequest(string $url, string $body, array $headers): array
+    {
+        $ssl = ['verify_peer' => true, 'verify_peer_name' => true];
+        if ($this->caBundle !== '' && is_file($this->caBundle)) {
+            $ssl['cafile'] = $this->caBundle;
+        }
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => implode("\r\n", $headers),
+                'content' => $body,
+                'timeout' => 10,
+                'ignore_errors' => true,
+            ],
+            'ssl' => $ssl,
+        ]);
+        $error = '';
+        set_error_handler(static function (int $level, string $message) use (&$error): bool {
+            $error = $message;
+
+            return true;
+        });
+        try {
+            $result = file_get_contents($url, false, $context);
+        } finally {
+            restore_error_handler();
+        }
+        $responseHeaders = function_exists('http_get_last_response_headers')
+            ? (http_get_last_response_headers() ?? [])
+            : ($http_response_header ?? []);
+        $status = 0;
+        if (isset($responseHeaders[0]) && preg_match('#\s(\d{3})\s#', (string) $responseHeaders[0], $matches) === 1) {
+            $status = (int) $matches[1];
+        }
+
+        return ['status' => $status, 'body' => is_string($result) ? $result : '', 'error' => $result === false ? ($error !== '' ? $error : 'Requête HTTP impossible.') : ''];
     }
 
     private function base64Url(string $value): string

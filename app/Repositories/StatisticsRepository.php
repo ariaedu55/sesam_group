@@ -83,7 +83,8 @@ final class StatisticsRepository extends Repository
     public function payingClients(int $tenantId, string $from, string $to): array
     {
         $row = $this->row(
-            'SELECT COUNT(*) AS paying, COALESCE(SUM(payments_count >= 2), 0) AS returning
+            // « returning » est un mot réservé de MariaDB (clause RETURNING) : alias returning_clients.
+            'SELECT COUNT(*) AS paying, COALESCE(SUM(payments_count >= 2), 0) AS returning_clients
              FROM (
                  SELECT client_id, COUNT(*) AS payments_count
                  FROM payments
@@ -94,7 +95,7 @@ final class StatisticsRepository extends Repository
             ['tenant_id' => $tenantId, 'status' => PaymentStatus::SUCCESS, 'from' => $from, 'to' => $to]
         );
 
-        return ['paying' => (int) $row['paying'], 'returning' => (int) $row['returning']];
+        return ['paying' => (int) $row['paying'], 'returning' => (int) $row['returning_clients']];
     }
 
     /**

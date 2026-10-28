@@ -22,6 +22,16 @@ require $root . '/vendor/autoload.php';
 Env::load($root . '/.env');
 /** @var array{db: array{host: string, port: string, name: string, user: string, password: string}} $config */
 $config = require $root . '/config/app.php';
+// --heure=8 : tâche lancée chaque heure ; elle n'agit qu'à partir de 8 h à Dakar (UTC) et une fois par jour.
+$stamp = $root . '/storage/cache/immo-relances.txt';
+foreach (array_slice($argv, 1) as $arg) {
+    if (preg_match('/^--heure=(\d{1,2})$/', $arg, $m) === 1) {
+        if ((int) gmdate('G') < (int) $m[1] || (is_file($stamp) && trim((string) file_get_contents($stamp)) === gmdate('Y-m-d'))) {
+            exit(0);
+        }
+    }
+}
+echo '[' . gmdate('Y-m-d H:i') . ' Dakar] relances des loyers' . "\n";
 $notificationConfig = require $root . '/config/notifications.php';
 
 $context = new TenantContext();
@@ -48,3 +58,4 @@ foreach ($tenants->all() as $tenant) {
     echo $tenant->displayName() . ' : ' . $sent . " relance(s)\n";
 }
 echo 'Total : ' . $total . " relance(s) envoyée(s)\n";
+@file_put_contents($stamp, gmdate('Y-m-d'));
