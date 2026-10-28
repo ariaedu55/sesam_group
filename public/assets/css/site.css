@@ -2193,8 +2193,9 @@ textarea.input {
     font-weight: 700;
 }
 
-.signup-form .google-auth-form {
-    display: none;
+.signup-form .google-signin {
+    display: grid;
+    gap: 0.15rem;
 }
 
 .signup-form .btn-google {

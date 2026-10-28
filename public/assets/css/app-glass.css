@@ -841,8 +841,9 @@ body.is-app::after {
     text-decoration: underline;
 }
 
-.google-auth-form {
-    display: none;
+.google-signin {
+    display: grid;
+    gap: 0.15rem;
 }
 
 .btn-google {

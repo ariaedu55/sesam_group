@@ -1,8 +1,7 @@
 (function () {
     var btn = document.querySelector("[data-google-signin]");
-    var form = document.querySelector("[data-google-form]");
     var cfgEl = document.querySelector("[data-firebase-auth]");
-    if (!btn || !form || !cfgEl) {
+    if (!btn || !cfgEl) {
         return;
     }
 
@@ -17,6 +16,27 @@
     function fail(message) {
         window.alert(message);
         btn.disabled = false;
+    }
+
+    function postToken(token) {
+        var form = document.createElement("form");
+        form.method = "post";
+        form.action = cfgEl.getAttribute("data-google-action") || "/connexion/google";
+        form.style.display = "none";
+        [
+            ["_csrf", cfgEl.getAttribute("data-csrf") || ""],
+            ["id_token", token],
+            ["from", cfgEl.getAttribute("data-from") || "login"],
+            ["service", cfgEl.getAttribute("data-service") || ""],
+        ].forEach(function (pair) {
+            var input = document.createElement("input");
+            input.type = "hidden";
+            input.name = pair[0];
+            input.value = pair[1];
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
     }
 
     btn.addEventListener("click", function () {
@@ -39,12 +59,7 @@
             }
             return result.user.getIdToken();
         }).then(function (token) {
-            var field = form.querySelector("[name=id_token]");
-            if (!field) {
-                throw new Error("empty");
-            }
-            field.value = token;
-            form.submit();
+            postToken(token);
         }).catch(function (err) {
             btn.disabled = false;
             if (err && (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request")) {
