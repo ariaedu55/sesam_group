@@ -65,7 +65,16 @@
             if (err && (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request")) {
                 return;
             }
-            fail("Connexion Google impossible. Vérifiez que le fournisseur Google est activé dans Firebase.");
+            var code = err && err.code ? err.code : "inconnu";
+            var messages = {
+                "auth/popup-blocked": "Votre navigateur a bloqué la fenêtre Google. Autorisez les fenêtres pop-up pour sesam-tech.com, puis réessayez.",
+                "auth/network-request-failed": "Connexion Internet interrompue. Vérifiez votre réseau, puis réessayez.",
+                "auth/web-storage-unsupported": "Votre navigateur bloque la connexion Google (navigation privée ou protection contre le suivi stricte). Essayez en navigation normale ou utilisez votre e-mail.",
+                "auth/unauthorized-domain": "Ce domaine n'est pas autorisé pour la connexion Google. Utilisez l'adresse https://sesam-tech.com.",
+                "auth/operation-not-allowed": "La connexion Google n'est pas activée pour le moment. Utilisez votre e-mail et votre mot de passe.",
+                "auth/account-exists-with-different-credential": "Un compte existe déjà avec cet e-mail. Connectez-vous avec votre mot de passe.",
+            };
+            fail((messages[code] || "Connexion Google impossible pour le moment. Réessayez, ou utilisez votre e-mail et votre mot de passe.") + " (code : " + code + ")");
         });
     });
 })();
