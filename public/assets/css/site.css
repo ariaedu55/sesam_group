@@ -399,6 +399,13 @@ p {
     color: var(--blue);
 }
 
+/* Desktop : Connexion une seule fois, à droite. Mobile/tablette : dans le menu hamburger. */
+@media (min-width: 1081px) {
+    .sh-links .is-login {
+        display: none;
+    }
+}
+
 /* Sur petit écran, la connexion passe dans le menu ; « Commencer » reste visible. */
 @media (max-width: 560px) {
     .sh-login {

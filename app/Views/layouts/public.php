@@ -54,7 +54,7 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
                     </li>
                 <?php endforeach; ?>
                 <?php foreach ($links as $key => [$path, $label, $linkIcon]): ?>
-                    <li>
+                    <li<?= $key === 'connexion' ? ' class="is-login"' : '' ?>>
                         <a href="<?= Html::url($path) ?>"<?= $current === $key ? ' aria-current="page"' : '' ?>>
                             <span class="sh-ico" aria-hidden="true"><?php $name = $linkIcon; include $icon; ?></span>
                             <span><?= Html::e($label) ?></span>
@@ -64,7 +64,7 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
             </ul>
         </nav>
         <div class="sh-end">
-            <a class="sh-login" href="<?= Html::url('/connexion') ?>">Connexion</a>
+            <a class="sh-login" href="<?= Html::url('/connexion') ?>"<?= $current === 'connexion' ? ' aria-current="page"' : '' ?>>Connexion</a>
             <a class="s-btn s-btn--plain sh-cta" href="<?= Html::url('/commencer') ?>"<?= $current === 'commencer' ? ' aria-current="page"' : '' ?>>Commencer</a>
             <button class="sh-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav" aria-label="Menu">
                 <?php $name = 'menu'; include $icon; ?>

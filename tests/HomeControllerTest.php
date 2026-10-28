@@ -62,6 +62,8 @@ final class HomeControllerTest extends TestCase
         $this->assertStringContainsString('/commencer', $headerHtml);
         $this->assertStringContainsString('>Commencer</a>', $headerHtml);
         $this->assertStringContainsString('/connexion', $headerHtml);
+        $this->assertStringContainsString('sh-login', $headerHtml);
+        $this->assertStringContainsString('class="is-login"', $headerHtml);
         $this->assertStringNotContainsString('Demander un devis', $headerHtml);
         $this->assertStringNotContainsString('href="/devis"', $html);
         $this->assertStringContainsString('site-footer', $html);
@@ -71,6 +73,7 @@ final class HomeControllerTest extends TestCase
         $css = (string) file_get_contents(dirname(__DIR__) . '/public/assets/css/site.css');
         $this->assertStringNotContainsString('gradient(', $css);
         $this->assertDoesNotMatchRegularExpression('/border[\w-]*\s*:[^;]*(#1f4dff|#d4f35a|var\(--(blue|lime|lilac|coral|mint|sun)\))/', $css);
+        $this->assertStringContainsString('.sh-links .is-login', $css);
         $this->assertStringContainsString('prefers-reduced-motion', $css);
         foreach (['sesam.css', 'app-glass.css', 'boutique.css', 'boutique-admin.css', 'immo.css', 'console.css', 'mobile-app.css', 'print-doc.css'] as $sheet) {
             $this->assertStringNotContainsString('gradient(', (string) file_get_contents(dirname(__DIR__) . '/public/assets/css/' . $sheet), $sheet);
