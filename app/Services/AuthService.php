@@ -62,28 +62,42 @@ final class AuthService extends Service
      */
     public function login(array $input, string $ip): void
     {
+        // Connexion par numéro de téléphone (comptes inscrits par téléphone) ou par e-mail.
+        $byPhone = ($input['mode'] ?? '') === 'phone';
+        $field = $byPhone ? 'phone' : 'email';
         $data = $this->validator->validate($input, [
-            'email' => 'required|email|max:190',
+            $field => $byPhone ? 'required|string|max:40' : 'required|email|max:190',
             'password' => 'required|string|max:255',
         ]);
         $this->guardRate('login', $ip);
 
-        $email = strtolower((string) $data['email']);
-        $user = $this->users->findByEmail($email);
+        $password = (string) $data['password'];
+        if ($byPhone) {
+            $identifier = \Sesam\Core\Boutique\WhatsApp::normalize((string) $data['phone']);
+            $user = null;
+            // Un même numéro peut appartenir à plusieurs comptes (équipe d'un commerce) : le mot de passe les départage.
+            foreach ($this->users->findAllByPhone($identifier) as $candidate) {
+                if ($user === null || password_verify($password, $candidate->passwordHash())) {
+                    $user = $candidate;
+                }
+            }
+        } else {
+            $identifier = strtolower((string) $data['email']);
+            $user = $this->users->findByEmail($identifier);
+        }
         $hash = $user !== null ? $user->passwordHash() : $this->dummyHash();
-        $valid = password_verify((string) $data['password'], $hash);
+        $valid = password_verify($password, $hash);
+        $wrong = $byPhone ? 'Numéro ou mot de passe incorrect.' : 'E-mail ou mot de passe incorrect.';
 
         if ($user === null || !$valid || !$user->isActive()) {
             $this->attempts->record('login', $ip);
-            $this->alertIfBlocked($user, $email, $ip);
-            throw new ValidationException([
-                'email' => 'E-mail ou mot de passe incorrect.',
-            ]);
+            $this->alertIfBlocked($user, $identifier, $ip);
+            throw new ValidationException([$field => $wrong]);
         }
         if (!$this->tenantAllowsLogin($user)) {
             $this->attempts->record('login', $ip);
             throw new ValidationException([
-                'email' => 'L\'accès de ce commerce est suspendu. Contactez SESAM ou utilisez « Mot de passe oublié » si vous devez vous reconnecter après réactivation.',
+                $field => 'L\'accès de ce commerce est suspendu. Contactez SESAM ou utilisez « Mot de passe oublié » si vous devez vous reconnecter après réactivation.',
             ]);
         }
 

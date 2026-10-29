@@ -25,6 +25,7 @@ $lead = is_string($lead ?? null) ? $lead : 'Parcourez les biens et laissez vos c
     <meta property="og:type" content="website">
     <meta name="theme-color" content="#071a3d">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/immo-portal.css') ?>">
+<?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
 </head>
 <body class="im">
 <?= $content ?>

@@ -26,6 +26,7 @@ $description = $settings->tagline() !== '' ? $settings->tagline() : 'Réservez v
     <meta property="og:type" content="website">
     <meta name="theme-color" content="<?= Html::e($palette['accent']) ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/salon.css') ?>">
+<?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
 </head>
 <body class="salon" style="--shop-accent: <?= Html::e($palette['accent']) ?>; --shop-soft: <?= Html::e($palette['soft']) ?>; --shop-ink: <?= Html::e($palette['ink']) ?>;">
 <?= $content ?>

@@ -33,12 +33,16 @@ final class AuthController extends Controller
     {
         try {
             $this->auth->login([
+                'mode' => $request->input('mode'),
                 'email' => $request->input('email'),
+                'phone' => $request->input('phone'),
                 'password' => $request->input('password'),
             ], $request->ip());
         } catch (ValidationException $exception) {
             return $this->loginView([
+                'mode' => $request->input('mode') === 'phone' ? 'phone' : 'email',
                 'email' => $request->input('email'),
+                'phone' => $request->input('phone'),
             ], $exception->errors(), 422);
         }
 

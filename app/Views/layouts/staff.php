@@ -69,6 +69,7 @@ foreach ($nav as $item) {
     <link rel="stylesheet" href="<?= Html::asset('assets/css/console.css') ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/notifications.css') ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/mobile-app.css') ?>">
+<?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
 </head>
 <body class="is-app is-staff">
 <div class="app-shell tenant-shell">

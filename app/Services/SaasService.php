@@ -147,23 +147,33 @@ final class SaasService extends Service
         $email = strtolower($text('email', 190));
         $password = (string) ($input['password'] ?? '');
         $sector = (string) ($input['sector'] ?? '');
+        $googleSub = trim((string) ($input['google_sub'] ?? ''));
+        // Trois façons de s'inscrire : téléphone (l'identifiant est le numéro), e-mail, ou Google.
+        // Le numéro WhatsApp est obligatoire dans les trois cas ; l'e-mail seulement en mode e-mail.
+        $mode = $googleSub !== '' ? 'google' : ((string) ($input['mode'] ?? '') === 'phone' ? 'phone' : 'email');
         $errors = [];
         if (mb_strlen($name) < 2) {
             $errors['full_name'] = 'Écrivez votre nom.';
         }
+        if (mb_strlen($business) < 2) {
+            $errors['business_name'] = 'Écrivez le nom de votre commerce.';
+        }
         $normalized = WhatsApp::normalize($phone);
         if (!WhatsApp::isValid($normalized)) {
-            $errors['phone'] = 'Numéro invalide. Exemple : 77 123 45 67.';
+            $errors['phone'] = 'Numéro invalide. Choisissez l\'indicatif du pays puis le numéro, par exemple 77 123 45 67.';
+        } elseif ($this->users->findAllByPhone($normalized) !== []) {
+            $errors['phone'] = 'Un compte existe déjà avec ce numéro. Connectez-vous.';
         }
         if (!in_array($sector, Sector::ALL, true)) {
             $errors['sector'] = 'Choisissez votre service.';
         }
-        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            $errors['email'] = 'E-mail invalide.';
-        } elseif ($this->users->findByEmail($email) !== null) {
-            $errors['email'] = 'Un compte existe déjà avec cet e-mail. Connectez-vous.';
+        if ($email !== '' || $mode === 'email') {
+            if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                $errors['email'] = 'E-mail invalide.';
+            } elseif ($this->users->findByEmail($email) !== null) {
+                $errors['email'] = 'Un compte existe déjà avec cet e-mail. Connectez-vous.';
+            }
         }
-        $googleSub = trim((string) ($input['google_sub'] ?? ''));
         if ($googleSub === '') {
             if (mb_strlen($password) < 12) {
                 $errors['password'] = '12 caractères minimum.';
@@ -222,6 +232,9 @@ final class SaasService extends Service
         }
         // E-mail de bienvenue (jamais bloquant : l'inscription est faite même si l'e-mail ne part pas).
         try {
+            if ($email === '') {
+                throw new \RuntimeException('Inscription par téléphone : pas d\'e-mail de bienvenue.');
+            }
             \Sesam\Core\Mail\Mailer::current()?->sendTemplate(
                 $email,
                 'Bienvenue sur SESAM — votre espace ' . $display . ' est prêt',

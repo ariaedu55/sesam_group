@@ -51,7 +51,7 @@ final class TrialSettingTest extends IntegrationTestCase
         $kernel = $this->kernel();
         $withTrial = html_entity_decode($kernel->handle(new Request('GET', '/commencer'))->content(), ENT_QUOTES, 'UTF-8');
         $this->assertStringContainsString('1 mois offert', $withTrial);
-        $this->assertStringContainsString('data-cm-modal="guided"', $withTrial);
+        $this->assertStringContainsString('data-cm-modal="signup"', $withTrial);
         $this->assertStringContainsString('data-cm-modal="wait"', $withTrial);
         $this->assertStringContainsString('data-cm-modal="help"', $withTrial);
         $this->assertStringContainsString('Créer mon espace gratuitement', $withTrial);

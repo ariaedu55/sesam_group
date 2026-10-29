@@ -38,6 +38,22 @@ final class UserRepository extends Repository
         return is_array($row) ? $this->hydrate($row) : null;
     }
 
+    /**
+     * Comptes rattachés à un numéro (format international sans « + », comme à l'inscription) : connexion par téléphone.
+     *
+     * @return list<User>
+     */
+    public function findAllByPhone(string $phone): array
+    {
+        if ($phone === '') {
+            return [];
+        }
+        $statement = $this->pdo->prepare('SELECT ' . self::COLUMNS . ' FROM users WHERE phone = :phone ORDER BY is_active DESC, id ASC LIMIT 5');
+        $statement->execute(['phone' => $phone]);
+
+        return array_values(array_map(fn (array $row): User => $this->hydrate($row), array_filter($statement->fetchAll(), 'is_array')));
+    }
+
     public function findByGoogleSub(string $sub): ?User
     {
         $statement = $this->pdo->prepare(
@@ -97,7 +113,7 @@ final class UserRepository extends Repository
         $statement->execute([
             'tenant_id' => $data['tenant_id'] ?? null,
             'full_name' => $data['full_name'],
-            'email' => $data['email'],
+            'email' => isset($data['email']) && $data['email'] !== '' ? $data['email'] : null,
             'google_sub' => isset($data['google_sub']) && is_string($data['google_sub']) && $data['google_sub'] !== ''
                 ? $data['google_sub']
                 : null,
