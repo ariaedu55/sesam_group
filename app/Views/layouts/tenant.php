@@ -105,6 +105,7 @@ foreach ($nav as $item) {
     <link rel="stylesheet" href="<?= Html::asset('assets/css/boutique-admin.css') ?>">
     <?php if ($showReservationNav): ?>
         <link rel="stylesheet" href="<?= Html::asset('assets/css/reservation-admin.css') ?>">
+        <link rel="stylesheet" href="<?= Html::asset('assets/css/reservation-dashboard.css') ?>">
     <?php endif; ?>
     <?php if ($showLoyerNav): ?>
         <link rel="stylesheet" href="<?= Html::asset('assets/css/immo.css') ?>">

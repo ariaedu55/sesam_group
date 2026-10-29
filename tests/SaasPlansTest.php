@@ -109,6 +109,11 @@ final class SaasPlansTest extends IntegrationTestCase
         $this->assertStringContainsString('6 mois · -10 %', $page);
         $this->assertStringContainsString('Vous économisez 6 000 FCFA', $page);
         $this->assertStringNotContainsString('1 an', $page);
+        $this->assertStringContainsString('Renouveler mon abonnement', $page, 'Un abonnement en cours se renouvelle depuis le bandeau.');
+        $this->assertStringContainsString('Échéance', $page);
+        $this->assertStringContainsString('assets/images/paiement/wave.png', $page);
+        $this->assertStringContainsString('assets/images/paiement/orange-money.png', $page);
+        $this->assertStringContainsString('Le plus avantageux', $page);
 
         $checkout = html_entity_decode($this->submit($kernel, '/abonnement/payer', ['months' => '6', 'method' => 'wave'], '/abonnement')->content(), ENT_QUOTES, 'UTF-8');
         $this->assertStringContainsString('54 000 FCFA', $checkout);

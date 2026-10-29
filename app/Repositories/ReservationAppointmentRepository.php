@@ -127,6 +127,63 @@ final class ReservationAppointmentRepository extends Repository
         return (int) $statement->fetchColumn();
     }
 
+    /**
+     * Rendez-vous actifs ou réalisés par jour (clé Y-m-d) sur une période : barres de la semaine de l'accueil.
+     *
+     * @return array<string, int>
+     */
+    public function countPerDay(int $tenantId, string $from, string $to): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT DATE(starts_at) AS day, COUNT(*) AS total FROM reservation_appointments
+             WHERE tenant_id = :tenant_id AND starts_at >= :from AND starts_at < :to AND status IN (:s1, :s2, :s3)
+             GROUP BY DATE(starts_at)'
+        );
+        $statement->execute([
+            'tenant_id' => $tenantId, 'from' => $from, 'to' => $to,
+            's1' => AppointmentStatus::PENDING, 's2' => AppointmentStatus::CONFIRMED, 's3' => AppointmentStatus::COMPLETED,
+        ]);
+        $days = [];
+        foreach ($statement->fetchAll() as $row) {
+            $days[(string) $row['day']] = (int) $row['total'];
+        }
+
+        return $days;
+    }
+
+    /**
+     * Prestations les plus demandées sur une période.
+     *
+     * @return list<array{name: string, total: int}>
+     */
+    public function topServices(int $tenantId, string $from, string $to, int $limit = 3): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT s.name, COUNT(*) AS total FROM reservation_appointments a
+             INNER JOIN reservation_services s ON s.id = a.service_id AND s.tenant_id = a.tenant_id
+             WHERE a.tenant_id = :tenant_id AND a.starts_at >= :from AND a.starts_at < :to AND a.status IN (:s1, :s2)
+             GROUP BY s.id, s.name ORDER BY total DESC, s.name ASC LIMIT ' . max(1, $limit)
+        );
+        $statement->execute(['tenant_id' => $tenantId, 'from' => $from, 'to' => $to, 's1' => AppointmentStatus::CONFIRMED, 's2' => AppointmentStatus::COMPLETED]);
+
+        return array_map(static fn (array $row): array => ['name' => (string) $row['name'], 'total' => (int) $row['total']], $statement->fetchAll(\PDO::FETCH_ASSOC));
+    }
+
+    /**
+     * Acomptes encaissés en ligne (paiements réussis liés aux rendez-vous) sur une période de paiement.
+     */
+    public function depositsPaidBetween(int $tenantId, string $from, string $to): int
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(p.amount_minor), 0) FROM reservation_appointments a
+             INNER JOIN payments p ON p.id = a.payment_id AND p.tenant_id = a.tenant_id
+             WHERE a.tenant_id = :tenant_id AND p.status = 'success' AND p.paid_at >= :from AND p.paid_at < :to"
+        );
+        $statement->execute(['tenant_id' => $tenantId, 'from' => $from, 'to' => $to]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function countPending(int $tenantId, string $after): int
     {
         $statement = $this->pdo->prepare(

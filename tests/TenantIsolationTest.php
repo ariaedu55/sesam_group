@@ -177,6 +177,11 @@ final class TenantIsolationTest extends TestCase
         $this->assertStringContainsString("Rendez-vous aujourd'hui", $html);
         $this->assertStringContainsString('Votre lien de réservation', $html);
         $this->assertStringContainsString('/reservation/agenda', $html);
+        $this->assertStringContainsString('Prochain rendez-vous', $html);
+        $this->assertStringContainsString('Programme du jour', $html);
+        $this->assertStringContainsString('Votre semaine', $html);
+        $this->assertStringContainsString('Acomptes reçus ce mois', $html);
+        $this->assertDoesNotMatchRegularExpression('#href="[^"]*/paiements"#', $html, 'Un salon n\'a plus d\'entrée Paiements dans le menu.');
         $this->assertStringNotContainsString('Gérer les commerces', $home->content());
     }
 
