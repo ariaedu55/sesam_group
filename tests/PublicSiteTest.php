@@ -102,7 +102,7 @@ final class PublicSiteTest extends TestCase
         $expected = [
             'agence' => ['Sesam Digital — Agence', 'data-scene="agence"', 'Deux chemins', 'Site vitrine simple', 'mk-browser'],
             'reservation' => ['Sesam Réservation', 'data-scene="reservation"', 'Rendez-vous confirmé', 'De votre côté', 'Prestation'],
-            'boutique' => ['Vendez en ligne', 'Commander sur WhatsApp', 'Suivi du stock', 'Gestion des commandes', 'Fichier clients', 'Plus besoin d\'un site complet', 'Essayer gratuitement 1 mois', '/commencer?service=boutique'],
+            'boutique' => ['Vendez en ligne', 'Commander sur WhatsApp', 'Suivi du stock', 'Gestion des commandes', 'Fichier clients', 'Plus besoin d\'un site complet', 'Essayer gratuitement 1 mois', '/commencer?service=boutique', 'data-bx-shop', 'Électronique', 'Épicerie', 'Café Touba 500 g', 'Robe wax Teranga'],
             'immo' => ['Sesam Immo', 'data-scene="immo"', 'De votre côté', 'Paiements partiels', '/commencer?service=loyer'],
         ];
 
