@@ -14,8 +14,10 @@ $method = (string) ($checkout['method'] ?? 'wave');
     <p class="alert" role="status"><strong>Simulation de démonstration</strong> : cet écran imite le paiement NabooPay. Aucun appel à Wave ni à Orange Money, aucun débit.</p>
     <article class="btq-card pay-checkout">
         <p class="pay-checkout-brand">NabooPay · paiement sécurisé</p>
-        <p class="pay-checkout-label">Abonnement SESAM · <?= (int) ($checkout['months'] ?? 1) ?> mois</p>
+        <p class="pay-checkout-label">Abonnement SESAM · <?= Html::e((string) ($checkout['planLabel'] ?? (($checkout['months'] ?? 1) . ' mois'))) ?><?= (int) ($checkout['discount'] ?? 0) > 0 ? ' · -' . (int) $checkout['discount'] . ' %' : '' ?></p>
         <p class="pay-checkout-amount"><?= Html::e(Money::format($amount)) ?></p>
+        <?php if ((int) ($checkout['saving'] ?? 0) > 0): ?><p class="muted">Réduction de <?= Html::e(Money::format((int) $checkout['saving'])) ?> incluse.</p><?php endif; ?>
+        <?php if ((int) ($checkout['setupFee'] ?? 0) > 0): ?><p class="muted">Dont <?= Html::e(Money::format((int) $checkout['setupFee'])) ?> de frais de mise en place (une seule fois).</p><?php endif; ?>
         <p class="muted">Payé avec <span class="pay-method-logo is-<?= $method === 'wave' ? 'wave' : 'om' ?> sub-inline-logo" aria-hidden="true"><?= $method === 'wave' ? 'W' : 'OM' ?></span> <?= Html::e((string) ($checkout['methodLabel'] ?? '')) ?></p>
         <p>Votre abonnement sera actif jusqu'au <strong><?= Html::e(gmdate('d/m/Y', (int) strtotime((string) ($checkout['newEnd'] ?? 'now') . ' UTC'))) ?></strong>.</p>
         <form method="post" action="<?= Html::url('/abonnement/payer/confirmer') ?>">

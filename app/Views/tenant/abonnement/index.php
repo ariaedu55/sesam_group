@@ -8,7 +8,7 @@ use Sesam\Helpers\Html;
 $page = is_array($page ?? null) ? $page : [];
 $access = is_array($page['access'] ?? null) ? $page['access'] : [];
 $payments = is_array($page['payments'] ?? null) ? $page['payments'] : [];
-$months = is_array($page['months'] ?? null) ? $page['months'] : [];
+$plans = is_array($page['plans'] ?? null) ? $page['plans'] : [];
 $methods = is_array($page['methods'] ?? null) ? $page['methods'] : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $price = (int) ($page['price'] ?? 0);
@@ -71,10 +71,14 @@ $methodLabels = ['wave' => 'Wave', 'orange-money' => 'Orange Money', 'especes' =
                     <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
                     <fieldset class="sub-choices">
                         <legend>Durée</legend>
-                        <?php foreach ($months as $count => $label): ?>
+                        <?php foreach ($plans as $count => $plan): ?>
                             <label class="sub-choice">
                                 <input type="radio" name="months" value="<?= (int) $count ?>"<?= (int) $count === 1 ? ' checked' : '' ?>>
-                                <span><strong><?= Html::e($label) ?></strong><small><?= Html::e(Money::format($price * (int) $count + $setupFee)) ?></small></span>
+                                <span>
+                                    <strong><?= Html::e((string) $plan['label']) ?><?= (int) $plan['discount'] > 0 ? ' · -' . (int) $plan['discount'] . ' %' : '' ?></strong>
+                                    <small><?= Html::e(Money::format((int) $plan['amount'] + $setupFee)) ?><?php if ((int) $plan['discount'] > 0): ?> <s><?= Html::e(Money::format((int) $plan['base'] + $setupFee)) ?></s><?php endif; ?></small>
+                                    <?php if ((int) $plan['saving'] > 0): ?><small class="sub-choice-save">Vous économisez <?= Html::e(Money::format((int) $plan['saving'])) ?></small><?php elseif ((int) $count > 1): ?><small><?= Html::e(Money::format((int) $plan['per_month'])) ?> / mois</small><?php endif; ?>
+                                </span>
                             </label>
                         <?php endforeach; ?>
                     </fieldset>

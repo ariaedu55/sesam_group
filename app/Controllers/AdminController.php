@@ -83,13 +83,17 @@ final class AdminController extends Controller
         foreach (['reservation', 'boutique', 'loyer'] as $sector) {
             $input[$sector . '_monthly'] = (string) $request->input($sector . '_monthly', '0');
             $input[$sector . '_setup'] = (string) $request->input($sector . '_setup', '0');
+            foreach ([3, 6, 12] as $months) {
+                $input[$sector . '_plan_' . $months . '_enabled'] = (string) $request->input($sector . '_plan_' . $months . '_enabled', '');
+                $input[$sector . '_plan_' . $months . '_discount'] = (string) $request->input($sector . '_plan_' . $months . '_discount', '0');
+            }
         }
         try {
             $this->admin->savePrices($actor, $input);
         } catch (ValidationException $exception) {
             return $this->pricesView($actor, $input, $exception->errors(), 422);
         }
-        $this->session->put('status', 'Tarifs enregistrés. Ils sont proposés à l\'activation des nouveaux abonnements.');
+        $this->session->put('status', 'Tarifs enregistrés. Ils s\'appliquent dès maintenant à chaque nouvel abonnement et à chaque renouvellement.');
 
         return Response::redirect('/tarifs');
     }

@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use Sesam\Core\Boutique\Money;
 use Sesam\Helpers\Html;
+use Sesam\Services\SaasService;
 
 $prices = is_array($prices ?? null) ? $prices : [];
 $old = is_array($old ?? null) ? $old : [];
@@ -17,7 +19,7 @@ $ro = $canManage ? '' : ' disabled';
     <header class="btq-head">
         <div>
             <h1>Tarifs et essai gratuit</h1>
-            <p class="muted">Mensualité proposée par défaut à l'activation d'un abonnement. Chaque commerce peut avoir un montant négocié dans sa fiche.</p>
+            <p class="muted">Ces tarifs s'appliquent automatiquement à chaque souscription et à chaque renouvellement payé depuis l'espace des commerces. Pour chaque service, proposez aussi des formules 3 mois, 6 mois et 1 an avec une réduction en pourcentage.</p>
         </div>
     </header>
     <?php if ($errors !== []): ?><p class="alert alert-danger" role="alert"><?= Html::e(implode(' ', $errors)) ?></p><?php endif; ?>
@@ -60,6 +62,27 @@ $ro = $canManage ? '' : ' disabled';
                         <label for="<?= Html::e($sector) ?>_setup"><span>Frais de mise en place (FCFA)</span></label>
                         <input class="input" id="<?= Html::e($sector) ?>_setup" name="<?= Html::e($sector) ?>_setup" inputmode="numeric" value="<?= Html::e((string) ($old[$sector . '_setup'] ?? $price['setup_fee'])) ?>"<?= $ro ?>>
                     </div>
+                </div>
+                <div class="plan-grid" role="group" aria-label="Formules longues Sesam <?= Html::e((string) $price['label']) ?>">
+                    <?php foreach ([3 => '3 mois', 6 => '6 mois', 12 => '1 an'] as $months => $planLabel):
+                        $plan = $price['plans'][$months] ?? ['enabled' => true, 'discount' => 0];
+                        $key = $sector . '_plan_' . $months;
+                        $enabled = $old !== [] ? !empty($old[$key . '_enabled']) : (bool) $plan['enabled'];
+                        $discount = (string) ($old[$key . '_discount'] ?? $plan['discount']);
+                        $amount = SaasService::planAmount((int) $price['monthly_amount'], $months, (int) $discount);
+                    ?>
+                        <div class="plan-cell<?= $enabled ? '' : ' is-off' ?><?= isset($errors[$key . '_discount']) ? ' is-invalid' : '' ?>">
+                            <label class="plan-toggle">
+                                <input type="checkbox" name="<?= Html::e($key) ?>_enabled" value="1"<?= $enabled ? ' checked' : '' ?><?= $ro ?>>
+                                <span><strong><?= Html::e($planLabel) ?></strong><small>Proposer</small></span>
+                            </label>
+                            <div class="field plan-discount">
+                                <label for="<?= Html::e($key) ?>_discount"><span>Réduction</span></label>
+                                <span class="plan-percent"><input class="input" id="<?= Html::e($key) ?>_discount" name="<?= Html::e($key) ?>_discount" inputmode="numeric" maxlength="3" value="<?= Html::e($discount) ?>"<?= isset($errors[$key . '_discount']) ? ' aria-invalid="true"' : '' ?><?= $ro ?>><span aria-hidden="true">%</span></span>
+                            </div>
+                            <p class="plan-price"><?php if ((int) $price['monthly_amount'] > 0): ?><strong><?= Html::e(Money::format($amount)) ?></strong><?php if ((int) $discount > 0): ?> <s><?= Html::e(Money::format((int) $price['monthly_amount'] * $months)) ?></s><?php endif; ?><?php else: ?>Mensualité à définir<?php endif; ?></p>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </fieldset>
         <?php endforeach; ?>
