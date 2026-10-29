@@ -33,6 +33,7 @@ $description = $settings->tagline() !== '' ? $settings->tagline() : 'Découvrez 
     <?php endif; ?>
     <meta name="theme-color" content="<?= Html::e($palette['accent']) ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/boutique.css') ?>">
+<?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
 </head>
 <body class="shop" style="--shop-accent: <?= Html::e($palette['accent']) ?>; --shop-soft: <?= Html::e($palette['soft']) ?>; --shop-ink: <?= Html::e($palette['ink']) ?>;">
 <?= $content ?>

@@ -1099,3 +1099,269 @@
         display: none;
     }
 }
+
+/* ---------------------------------------------------------------- Choix du mode d'inscription */
+.cm-choose {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    padding: 28px;
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    border-radius: 26px;
+    background: #fff;
+    box-shadow: 0 24px 60px -36px rgba(7, 26, 61, 0.45);
+    scroll-margin-top: 90px;
+}
+
+.cm-choose-list {
+    display: grid;
+    gap: 12px;
+}
+
+.cm-choose-btn {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 16px 18px;
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    border-radius: 18px;
+    background: #fff;
+    color: #0c1730;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.cm-choose-btn:hover {
+    background: #f5f9ff;
+    box-shadow: 0 12px 28px rgba(7, 26, 61, 0.1);
+    transform: translateY(-2px);
+}
+
+.cm-choose-btn:focus-visible {
+    outline: 3px solid #3cc4f5;
+    outline-offset: 2px;
+}
+
+.cm-choose-btn strong {
+    display: block;
+    font-size: 1.02rem;
+}
+
+.cm-choose-btn small {
+    display: block;
+    margin-top: 2px;
+    color: #5f6b7d;
+    font-size: 0.85rem;
+}
+
+.cm-choose-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: #e8f1ff;
+    color: #0a6cf0;
+    font-weight: 900;
+}
+
+.cm-choose-arrow {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #f1f4f9;
+    color: #0a6cf0;
+}
+
+.cm-choose-arrow .ui-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.cm-choose-btn.is-primary {
+    border-color: #0a6cf0;
+    background: #0a6cf0;
+    color: #fff;
+}
+
+.cm-choose-btn.is-primary small {
+    color: #d8e8ff;
+}
+
+.cm-choose-btn.is-primary .cm-choose-icon,
+.cm-choose-btn.is-primary .cm-choose-arrow {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+.cm-choose-btn.is-primary:hover {
+    background: #0759c7;
+}
+
+.cm-choose-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 2px 0;
+    color: #5f6b7d;
+    font-size: 0.85rem;
+}
+
+.cm-choose-or::before,
+.cm-choose-or::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(12, 23, 48, 0.1);
+}
+
+.cm-choose-google .google-signin {
+    margin: 0;
+}
+
+.cm-choose-google .auth-or {
+    display: none;
+}
+
+.cm-choose-google .btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 0 18px;
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    border-radius: 18px;
+    background: #fff;
+    color: #0c1730;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cm-choose-google .btn-google:hover {
+    background: #f5f9ff;
+    box-shadow: 0 12px 28px rgba(7, 26, 61, 0.1);
+}
+
+.cm-choose-google .btn-google:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* ---------------------------------------------------------------- Fenêtre d'inscription */
+.cm-signup-head {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.cm-signup-head h2 {
+    margin: 0;
+}
+
+.cm-signup-via {
+    justify-self: start;
+    margin: 0;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #e8f1ff;
+    color: #0750b8;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.cm-signup [data-only][hidden],
+.cm-signup [hidden] {
+    display: none !important;
+}
+
+.cm-signup-q {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+}
+
+.cm-signup-hint {
+    margin-top: -4px;
+    color: #5f6b7d;
+    font-size: 0.8rem;
+}
+
+.cm-g-field-error {
+    margin: -4px 0 4px;
+    color: #b42318;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.cm-signup .cm-g-fields .iti {
+    width: 100%;
+}
+
+.cm-signup .cm-g-fields input[type="tel"] {
+    width: 100%;
+}
+
+.cm-signup .cm-g-fields label.cm-show-pw {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.cm-show-pw input {
+    width: 18px;
+    min-height: 0;
+    height: 18px;
+}
+
+.cm-signup .cm-g-terms {
+    margin-top: 14px;
+}
+
+.cm-signup-switch {
+    display: grid;
+    gap: 4px;
+    margin: 14px 0 0;
+    color: #5f6b7d;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.cm-signup-switch button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #0a6cf0;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+@media (max-width: 560px) {
+    .cm-choose {
+        padding: 20px 16px;
+    }
+
+    .cm-choose-btn {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .cm-choose-arrow {
+        display: none;
+    }
+
+    .cm-choose-btn {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+}

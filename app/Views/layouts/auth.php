@@ -13,6 +13,7 @@ use Sesam\Helpers\Html;
     <title><?= Html::e($title ?? 'SESAM') ?></title>
     <link rel="stylesheet" href="<?= Html::asset('assets/css/sesam.css') ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/app-glass.css') ?>">
+<?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
 </head>
 <body class="auth-body">
 <div class="auth-page">

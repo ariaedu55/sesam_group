@@ -1,0 +1,55 @@
+/* Champs téléphone avec indicatif pays (intl-tel-input) : intégration au style SESAM. */
+.iti.sesam-tel {
+    display: block;
+    width: 100%;
+}
+
+.iti.sesam-tel input[type="tel"] {
+    width: 100%;
+}
+
+.iti--separate-dial-code.sesam-tel .iti__selected-country {
+    border-radius: 12px 0 0 12px;
+}
+
+.sesam-tel .iti__selected-country-primary {
+    padding: 0 6px 0 12px;
+}
+
+.sesam-tel .iti__selected-dial-code {
+    color: #0c1730;
+    font-weight: 700;
+}
+
+.iti__dropdown-content {
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(7, 26, 61, 0.16);
+    overflow: hidden;
+    z-index: 2000;
+}
+
+.iti__search-input {
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 1px solid rgba(12, 23, 48, 0.1);
+    font: inherit;
+}
+
+.iti__country {
+    padding: 8px 12px;
+}
+
+.iti__country.iti__highlight {
+    background: #eef5ff;
+}
+
+.iti__dial-code {
+    color: #5d6675;
+}
+
+/* Liste des pays (et plein écran sur téléphone) : au-dessus des fenêtres modales du site. */
+.iti--container,
+.iti--fullscreen-popup.iti--container {
+    z-index: 3000;
+}

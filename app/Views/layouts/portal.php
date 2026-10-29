@@ -17,6 +17,7 @@ $initials = Html::initials($name);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= Html::e($title ?? $name) ?></title>
     <link rel="stylesheet" href="<?= Html::asset('assets/css/sesam.css') ?>">
+<?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
 </head>
 <body class="portal">
     <header class="portal-top">

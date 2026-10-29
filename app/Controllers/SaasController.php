@@ -26,7 +26,7 @@ final class SaasController extends Controller
 {
     use RendersAppArea;
 
-    private const SIGNUP_FIELDS = ['full_name', 'business_name', 'phone', 'sector', 'email', 'password', 'password_confirm', 'terms'];
+    private const SIGNUP_FIELDS = ['mode', 'full_name', 'business_name', 'phone', 'sector', 'email', 'password', 'password_confirm', 'terms'];
 
     public function __construct(
         ViewRenderer $views,

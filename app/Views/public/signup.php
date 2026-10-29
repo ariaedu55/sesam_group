@@ -7,13 +7,6 @@ use Sesam\Helpers\Html;
 
 $old = is_array($old ?? null) ? $old : [];
 $errors = is_array($errors ?? null) ? $errors : [];
-$value = static fn (string $key): string => Html::e(is_scalar($old[$key] ?? null) ? (string) $old[$key] : '');
-$err = static function (string $key) use ($errors): void {
-    if (isset($errors[$key])) {
-        echo '<p class="field-error" id="' . $key . '-error">' . Html::e($errors[$key]) . '</p>';
-    }
-};
-$invalid = static fn (string $key): string => isset($errors[$key]) ? ' is-invalid" aria-invalid="true" aria-describedby="' . $key . '-error' : '';
 $sector = (string) ($old['sector'] ?? '');
 $googleEnabled = !empty($googleEnabled);
 $googlePending = is_array($googlePending ?? null) ? $googlePending : null;
@@ -55,8 +48,8 @@ $cta = $trial ? 'Créer mon espace gratuitement' : 'Créer mon compte';
                     <li><span aria-hidden="true">✓</span>Équipe à Dakar pour vous aider</li>
                 </ul>
                 <div class="cm-hero-actions">
-                    <a class="s-btn cm-btn-big" href="#inscription" data-cm-scroll><?= $trial ? 'Commencer mon mois offert' : 'Créer mon compte' ?> <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span></a>
-                    <button class="cm-btn-guided" type="button" data-cm-open="guided"><span aria-hidden="true">✨</span> Me faire guider pas à pas</button>
+                    <a class="s-btn cm-btn-big" href="#inscription-choix" data-cm-scroll><?= $trial ? 'Commencer mon mois offert' : 'Créer mon compte' ?> <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span></a>
+                    <button class="cm-btn-guided" type="button" data-cm-signup="phone"><span aria-hidden="true">📱</span> Avec mon numéro de téléphone</button>
                 </div>
             </div>
 
@@ -109,133 +102,47 @@ $cta = $trial ? 'Créer mon espace gratuitement' : 'Créer mon compte';
         <h2 id="cm-how-title" class="cm-section-title">Comment ça marche&nbsp;?</h2>
         <ol class="cm-how-list">
             <li><span class="cm-how-num">1</span><strong>Choisissez votre outil</strong><small>Réservation, Boutique ou Immo, selon votre métier.</small></li>
-            <li><span class="cm-how-num">2</span><strong>Créez votre compte</strong><small>Nom, numéro WhatsApp et e-mail, ou Google en un clic.</small></li>
+            <li><span class="cm-how-num">2</span><strong>Créez votre compte</strong><small>Avec votre numéro de téléphone, votre e-mail ou Google.</small></li>
             <li><span class="cm-how-num">3</span><strong><?= $trial ? 'Profitez de votre mois offert' : 'Activez et démarrez' ?></strong><small><?= $trial ? 'Votre espace s\'ouvre tout de suite, gratuit pendant 30 jours.' : 'Réglez le premier mois par Wave ou Orange Money : l\'espace s\'ouvre aussitôt.' ?></small></li>
         </ol>
     </section>
 
     <!-- ============ Formulaire + récapitulatif de l'offre ============ -->
     <section class="s-wrap cm-layout quote" id="inscription">
-        <form class="signup-form quote-form cm-form" method="post" action="<?= Html::url('/commencer') ?>" data-signup-form data-cm-form<?= $googlePending !== null ? ' data-google-pending="1"' : '' ?> novalidate>
-            <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+        <div class="cm-choose" id="inscription-choix">
             <header class="cm-form-head">
                 <p class="cm-form-kicker"><?= $trial ? 'Inscription gratuite' : 'Inscription' ?></p>
                 <h2>Créez votre espace</h2>
-                <p class="cm-form-sub">3 étapes, environ 2 minutes. Vos informations restent privées.</p>
+                <p class="cm-form-sub">Choisissez comment vous inscrire. Environ 2 minutes, sans paiement<?= $trial ? '' : ' avant la fin' ?>.</p>
             </header>
 
-            <?php if ($googleEnabled && $googlePending === null): ?>
-                <?php $googleFrom = 'signup'; $googleService = $sector; include dirname(__DIR__) . '/partials/google-button.php'; ?>
+            <?php if ($googlePending !== null): ?>
+                <button class="cm-choose-btn is-primary" type="button" data-cm-signup="google">
+                    <span class="cm-choose-icon" aria-hidden="true">✓</span>
+                    <span><strong>Terminer mon inscription Google</strong><small><?= Html::e((string) $googlePending['email']) ?> · il ne manque que votre outil et votre numéro</small></span>
+                    <span class="cm-choose-arrow" aria-hidden="true"><?php $name = 'arrow'; include $icon; ?></span>
+                </button>
             <?php endif; ?>
-
-            <ol class="signup-steps-nav cm-steps-nav" data-signup-nav aria-label="Étapes du formulaire">
-                <li data-step="1"><span>1</span> Votre outil</li>
-                <li data-step="2"><span>2</span> Vous</li>
-                <li data-step="3"><span>3</span> Connexion</li>
-            </ol>
-
-            <fieldset class="signup-step signup-services is-current" data-signup-step="1">
-                <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">1</span> Quel outil vous faut-il&nbsp;?</legend>
-                <div class="signup-service-grid cm-services">
-                    <?php foreach ($services as $key => [$label, $for, $hint, $iconName]): ?>
-                        <label class="signup-service cm-service">
-                            <input type="radio" name="sector" value="<?= Html::e($key) ?>"<?= $sector === $key ? ' checked' : '' ?> required data-cm-label="<?= Html::e($label) ?>" data-cm-monthly="<?= $monthly($key) ?>" data-cm-setup="<?= $setup($key) ?>">
-                            <span class="signup-service-icon" aria-hidden="true"><?php $name = $iconName; include $icon; ?></span>
-                            <span class="signup-service-copy">
-                                <strong><?= Html::e($label) ?></strong>
-                                <em class="cm-service-for"><?= Html::e($for) ?></em>
-                                <small><?= Html::e($hint) ?></small>
-                            </span>
-                            <span class="cm-service-price">
-                                <?php if ($trial): ?><b>1 mois offert</b><small>puis <?= Html::e($priceLabel($key)) ?></small><?php else: ?><b><?= Html::e($priceLabel($key)) ?></b><small><?= $setup($key) > 0 ? '+ ' . Html::e(Money::format($setup($key))) . ' à l\'activation' : 'sans frais d\'activation' ?></small><?php endif; ?>
-                            </span>
-                            <span class="cm-service-check" aria-hidden="true">✓</span>
-                        </label>
-                    <?php endforeach; ?>
-                </div>
-                <?php $err('sector'); ?>
-            </fieldset>
-
-            <fieldset class="signup-step" data-signup-step="2">
-                <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">2</span> Parlez-nous de vous</legend>
-                <div class="signup-fields">
-                    <div class="field">
-                        <label for="full_name">Votre nom</label>
-                        <input class="input signup-input<?= $invalid('full_name') ?>" id="full_name" name="full_name" type="text" required maxlength="120" autocomplete="name" placeholder="Prénom et nom" value="<?= $value('full_name') ?>">
-                        <?php $err('full_name'); ?>
-                    </div>
-                    <div class="field">
-                        <label for="business_name">Nom de votre commerce <small>(facultatif)</small></label>
-                        <input class="input signup-input" id="business_name" name="business_name" type="text" maxlength="120" autocomplete="organization" placeholder="Ex. Salon Awa, Boutique Teranga…" value="<?= $value('business_name') ?>">
-                        <p class="cm-hint">Il apparaîtra sur votre page publique. Vous pourrez le changer.</p>
-                    </div>
-                    <div class="field">
-                        <label for="phone">Numéro WhatsApp</label>
-                        <input class="input signup-input<?= $invalid('phone') ?>" id="phone" name="phone" type="tel" required maxlength="40" autocomplete="tel" inputmode="tel" placeholder="77 123 45 67" value="<?= $value('phone') ?>">
-                        <p class="cm-hint">Pour recevoir vos commandes et rendez-vous, et pour qu'on vous aide à démarrer.</p>
-                        <?php $err('phone'); ?>
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset class="signup-step" data-signup-step="3">
-                <legend class="signup-step-title"><span class="signup-step-num" aria-hidden="true">3</span> Votre connexion</legend>
-                <div class="signup-fields">
-                    <?php if ($googlePending !== null): ?>
-                        <p class="signup-google-ok" role="status">Compte Google : <?= Html::e((string) ($googlePending['email'] ?? '')) ?></p>
-                    <?php endif; ?>
-                    <div class="field">
-                        <label for="email">E-mail</label>
-                        <input class="input signup-input<?= $invalid('email') ?>" id="email" name="email" type="email" required maxlength="190" autocomplete="email" placeholder="vous@exemple.com" value="<?= $value('email') ?>"<?= $googlePending !== null ? ' readonly' : '' ?>>
-                        <?php $err('email'); ?>
-                    </div>
-                    <?php if ($googlePending === null): ?>
-                    <?php
-                    $id = 'password';
-                    $name = 'password';
-                    $label = 'Mot de passe (12 caractères minimum)';
-                    $error = $errors['password'] ?? null;
-                    $errorId = 'password-error';
-                    $autocomplete = 'new-password';
-                    $minlength = 12;
-                    include dirname(__DIR__) . '/partials/password-field.php';
-                    ?>
-                    <?php
-                    $id = 'password_confirm';
-                    $name = 'password_confirm';
-                    $label = 'Confirmer le mot de passe';
-                    $error = $errors['password_confirm'] ?? null;
-                    $errorId = 'password_confirm-error';
-                    $autocomplete = 'new-password';
-                    $minlength = 12;
-                    include dirname(__DIR__) . '/partials/password-field.php';
-                    ?>
-                    <?php endif; ?>
-                    <label class="signup-terms">
-                        <input type="checkbox" name="terms" value="1"<?= ($old['terms'] ?? '') !== '' ? ' checked' : '' ?> required>
-                        <span>J'accepte que SESAM crée mon espace et me contacte pour m'aider à démarrer.</span>
-                    </label>
-                    <?php $err('terms'); ?>
-                </div>
-            </fieldset>
-
-            <div class="signup-nav">
-                <button class="s-btn s-btn--ghost s-btn--plain signup-nav-back" type="button" data-signup-back hidden>Retour</button>
-                <button class="s-btn signup-nav-next" type="button" data-signup-next>
-                    Continuer
-                    <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span>
+            <div class="cm-choose-list">
+                <button class="cm-choose-btn<?= $googlePending === null ? ' is-primary' : '' ?>" type="button" data-cm-signup="phone">
+                    <span class="cm-choose-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="6" y="2.5" width="12" height="19" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                    <span><strong>Continuer avec mon numéro de téléphone</strong><small>Le plus simple : vous vous connecterez avec votre numéro</small></span>
+                    <span class="cm-choose-arrow" aria-hidden="true"><?php $name = 'arrow'; include $icon; ?></span>
                 </button>
-            </div>
-            <div class="signup-submit" data-signup-submit>
-                <button class="s-btn signup-submit-btn cm-submit" type="submit">
-                    <?= Html::e($cta) ?>
-                    <span class="s-btn-arrow"><?php $name = 'arrow'; include $icon; ?></span>
+                <button class="cm-choose-btn" type="button" data-cm-signup="email">
+                    <span class="cm-choose-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+                    <span><strong>Continuer avec mon e-mail</strong><small>Votre numéro WhatsApp vous sera aussi demandé</small></span>
+                    <span class="cm-choose-arrow" aria-hidden="true"><?php $name = 'arrow'; include $icon; ?></span>
                 </button>
-                <p class="cm-submit-note"><?= $trial ? 'Aucun paiement aujourd\'hui. Votre mois offert démarre dès la création du compte.' : 'Étape suivante : le paiement du premier mois, puis votre espace s\'ouvre.' ?></p>
+                <?php if ($googleEnabled && $googlePending === null): ?>
+                    <p class="cm-choose-or"><span>ou</span></p>
+                    <div class="cm-choose-google">
+                        <?php $googleFrom = 'signup'; $googleService = $sector; include dirname(__DIR__) . '/partials/google-button.php'; ?>
+                    </div>
+                <?php endif; ?>
             </div>
             <p class="signup-login">Déjà un compte&nbsp;? <a href="<?= Html::url('/connexion') ?>">Se connecter</a></p>
-            <script src="<?= Html::asset('assets/js/signup.js') ?>"></script>
-        </form>
+        </div>
 
         <aside class="cm-aside">
             <!-- Récapitulatif qui suit le service choisi -->
@@ -276,7 +183,7 @@ $cta = $trial ? 'Créer mon espace gratuitement' : 'Créer mon compte';
 
             <section class="cm-help">
                 <p><b>Une question avant de vous lancer&nbsp;?</b> Notre équipe vous répond.</p>
-                <button class="cm-help-btn" type="button" data-cm-open="guided">✨ Inscription guidée</button>
+                <button class="cm-help-btn" type="button" data-cm-signup="phone">📱 Inscription avec mon numéro</button>
                 <a class="cm-help-link" href="<?= Html::url('/devis') ?>">Besoin d'un site web sur mesure&nbsp;? Demander un devis</a>
             </section>
         </aside>
@@ -299,7 +206,13 @@ $cta = $trial ? 'Créer mon espace gratuitement' : 'Créer mon compte';
     </section>
 
     <!-- ============ Popups de la page (inscription guidée, « attendez », aide) ============ -->
-    <?php include dirname(__DIR__) . '/partials/commencer-popups.php'; ?>
+    <?php
+    $signupErrors = $errors;
+    $signupOld = $old;
+    $signupMode = $googlePending !== null ? 'google' : (in_array($old['mode'] ?? '', ['phone', 'email'], true) ? (string) $old['mode'] : 'phone');
+    $signupAutoOpen = $errors !== [] || $googlePending !== null;
+    include dirname(__DIR__) . '/partials/commencer-popups.php';
+    ?>
 </main>
 <script src="<?= Html::asset('assets/js/auth.js') ?>" defer></script>
 <script src="<?= Html::asset('assets/js/commencer.js') ?>" defer></script>

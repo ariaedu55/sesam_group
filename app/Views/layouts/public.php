@@ -29,6 +29,7 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
     <meta name="description" content="SESAM crée votre site et vous donne les outils pour vendre : boutique en ligne avec commandes WhatsApp, réservation, gestion immobilière. Dakar.">
     <meta name="theme-color" content="#f4f2ec">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/site.css') ?>">
+<?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
 </head>
 <body class="site">
 <a class="sr-only" href="#contenu">Aller au contenu</a>

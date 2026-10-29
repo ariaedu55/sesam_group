@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 /*
  * Popups de la page « Commencer » (pilotés par commencer.js, styles welcome.css + commencer.css) :
- *  - guided : inscription guidée dans le popup (accueil cadeau, puis 4 étapes : outil, vous, connexion, récapitulatif) ;
+ *  - signup : le formulaire d'inscription, ouvert par « Continuer avec le téléphone / l'e-mail » (ou au retour de Google) ;
  *  - wait   : le visiteur s'apprête à partir → rappel de l'offre, reprise en 1 minute ;
  *  - help   : le visiteur hésite sur le formulaire → proposition d'aide guidée.
- * Le formulaire du popup envoie exactement les mêmes champs que celui de la page (POST /commencer).
+ * Le formulaire envoie POST /commencer avec le mode choisi : seuls les champs utiles à ce mode sont affichés et envoyés.
  */
 
 use Sesam\Core\Boutique\Money;
@@ -18,7 +18,10 @@ $services = is_array($services ?? null) ? $services : [];
 $monthly = $monthly ?? static fn (string $key): int => 0;
 $setup = $setup ?? static fn (string $key): int => 0;
 $priceLabel = $priceLabel ?? static fn (string $key): string => '';
-$googleEnabled = !empty($googleEnabled) && ($googlePending ?? null) === null;
+$googlePending = is_array($googlePending ?? null) ? $googlePending : null;
+$signupErrors = is_array($signupErrors ?? null) ? $signupErrors : [];
+$signupOld = is_array($signupOld ?? null) ? $signupOld : [];
+$signupAutoOpen = !empty($signupAutoOpen);
 $close = '<button class="wl-close" type="button" data-cm-close aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
 $giftArt = '<svg class="wl-scene" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid meet">'
     . '<g class="wl-stars"><circle cx="36" cy="34" r="1.8"/><circle cx="364" cy="30" r="2"/><circle cx="352" cy="186" r="1.5"/><circle cx="46" cy="182" r="1.8"/><circle cx="120" cy="20" r="1.3"/></g>'
@@ -35,90 +38,102 @@ $rocketArt = '<svg class="wl-scene" viewBox="0 0 400 220" preserveAspectRatio="x
     . '</svg>';
 
 ?>
-<!-- ======================= Inscription guidée ======================= -->
-<div class="wl wl-site cm-modal" data-cm-modal="guided" hidden>
+<!-- ======================= Inscription (téléphone, e-mail ou Google) ======================= -->
+<?php
+$signupMode = in_array($signupMode ?? '', ['phone', 'email', 'google'], true) ? $signupMode : 'phone';
+$fieldError = static function (string $key) use ($signupErrors): string {
+    return isset($signupErrors[$key]) ? '<p class="cm-g-field-error" id="su-' . $key . '-error">' . Html::e((string) $signupErrors[$key]) . '</p>' : '';
+};
+$aria = static fn (string $key): string => isset($signupErrors[$key]) ? ' aria-invalid="true" aria-describedby="su-' . $key . '-error"' : '';
+$oldValue = static fn (string $key): string => Html::e(is_scalar($signupOld[$key] ?? null) ? (string) $signupOld[$key] : '');
+$oldSector = (string) ($signupOld['sector'] ?? '');
+?>
+<div class="wl wl-site cm-modal" data-cm-modal="signup" data-signup-mode="<?= Html::e($signupMode) ?>"<?= $signupAutoOpen ? ' data-cm-autoopen' : '' ?> hidden>
     <div class="wl-backdrop" data-cm-close></div>
-    <section class="wl-card cm-guided" role="dialog" aria-modal="true" aria-labelledby="cm-guided-title">
+    <section class="wl-card cm-guided" role="dialog" aria-modal="true" aria-labelledby="cm-signup-title">
         <?= $close ?>
-        <div class="wl-art cm-guided-art" aria-hidden="true"><span class="wl-dots"></span><?= $trial ? $giftArt : $rocketArt ?></div>
-        <form class="wl-body cm-guided-body" method="post" action="<?= Html::url('/commencer') ?>" data-cm-guided novalidate>
+        <form class="wl-body cm-guided-body cm-signup" method="post" action="<?= Html::url('/commencer') ?>" data-cm-signup-form novalidate>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+            <input type="hidden" name="mode" value="<?= Html::e($signupMode) ?>" data-signup-mode-input>
 
-            <!-- Écran d'accueil -->
-            <div class="cm-g-step" data-g-step="intro">
-                <p class="wl-eyebrow"><?= $trial ? '🎁 Cadeau de bienvenue' : 'Inscription guidée' ?></p>
-                <h2 id="cm-guided-title"><?= $trial ? 'Votre premier mois est offert' : 'Votre espace prêt en 3 minutes' ?></h2>
-                <p class="wl-text"><?= $trial
-                    ? 'Je vous guide en 4 petites étapes, ici même. Aucun paiement aujourd\'hui, aucune carte bancaire.'
-                    : 'Je vous guide en 4 petites étapes, ici même. Ensuite, vous réglez le premier mois et votre espace s\'ouvre.' ?></p>
-                <ul class="wl-bullets"><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>2 minutes</li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Sans engagement</li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Aide de l'équipe</li></ul>
-                <div class="wl-site-actions">
-                    <button class="wl-btn" type="button" data-g-next>C'est parti</button>
-                    <button class="wl-btn wl-btn-ghost" type="button" data-cm-close data-cm-goto-form>Je préfère la page</button>
-                </div>
-            </div>
+            <header class="cm-signup-head">
+                <p class="cm-signup-via" data-signup-via>
+                    <span data-only="phone">📱 Inscription avec votre numéro</span>
+                    <span data-only="email">✉️ Inscription avec votre e-mail</span>
+                    <span data-only="google">Inscription avec Google<?= $googlePending !== null ? ' · ' . Html::e((string) $googlePending['email']) : '' ?></span>
+                </p>
+                <h2 id="cm-signup-title"><?= $trial ? 'Créez votre espace, 1 mois offert' : 'Créez votre espace' ?></h2>
+                <p class="cm-g-progress"><span data-signup-progress>Étape 1</span><i data-signup-bar style="--p: 33%"></i></p>
+            </header>
+
+            <?php if (isset($signupErrors['email']) && $signupMode !== 'email' || isset($signupErrors['_general'])): ?>
+                <p class="cm-g-error" role="alert"><?= Html::e((string) ($signupErrors['email'] ?? $signupErrors['_general'])) ?></p>
+            <?php endif; ?>
 
             <!-- Étape 1 : l'outil -->
-            <div class="cm-g-step" data-g-step="sector" hidden>
-                <p class="cm-g-progress"><span>Étape 1 sur 4</span><i style="--p: 25%"></i></p>
-                <h2>Quel outil vous faut-il&nbsp;?</h2>
+            <div class="cm-g-step" data-g-step="sector">
+                <h3 class="cm-signup-q">Quel outil vous faut-il&nbsp;?</h3>
                 <div class="cm-g-services">
                     <?php foreach ($services as $key => [$label, $for]): ?>
                         <label class="cm-g-service">
-                            <input type="radio" name="sector" value="<?= Html::e($key) ?>" data-cm-label="<?= Html::e($label) ?>" data-cm-monthly="<?= $monthly($key) ?>" data-cm-setup="<?= $setup($key) ?>">
+                            <input type="radio" name="sector" value="<?= Html::e($key) ?>"<?= $oldSector === $key ? ' checked' : '' ?> data-cm-label="<?= Html::e($label) ?>" data-cm-monthly="<?= $monthly($key) ?>" data-cm-setup="<?= $setup($key) ?>">
                             <span><b><?= Html::e($label) ?></b><small><?= Html::e($for) ?> · <?= $trial ? '1 mois offert' : Html::e($priceLabel($key)) ?></small></span>
                         </label>
                     <?php endforeach; ?>
                 </div>
+                <?= $fieldError('sector') ?>
                 <p class="cm-g-error" data-g-error hidden></p>
             </div>
 
-            <!-- Étape 2 : vous -->
+            <!-- Étape 2 : vous et votre commerce -->
             <div class="cm-g-step" data-g-step="you" hidden>
-                <p class="cm-g-progress"><span>Étape 2 sur 4</span><i style="--p: 50%"></i></p>
-                <h2>Parlez-nous de vous</h2>
+                <h3 class="cm-signup-q">Vous et votre commerce</h3>
                 <div class="cm-g-fields">
-                    <label>Votre nom<input name="full_name" type="text" maxlength="120" autocomplete="name" placeholder="Prénom et nom"></label>
-                    <label>Nom de votre commerce <small>(facultatif)</small><input name="business_name" type="text" maxlength="120" autocomplete="organization" placeholder="Ex. Salon Awa"></label>
-                    <label>Numéro WhatsApp<input name="phone" type="tel" inputmode="tel" maxlength="40" autocomplete="tel" placeholder="77 123 45 67"></label>
+                    <label>Votre nom<input name="full_name" type="text" maxlength="120" autocomplete="name" placeholder="Prénom et nom" value="<?= $oldValue('full_name') ?>"<?= $aria('full_name') ?>></label>
+                    <?= $fieldError('full_name') ?>
+                    <label>Nom de votre commerce<input name="business_name" type="text" maxlength="120" autocomplete="organization" placeholder="Ex. Salon Awa, Boutique Teranga" value="<?= $oldValue('business_name') ?>"<?= $aria('business_name') ?>></label>
+                    <?= $fieldError('business_name') ?>
+                    <label for="su-phone">Numéro de téléphone (WhatsApp)</label>
+                    <input id="su-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" value="<?= $oldValue('phone') ?>"<?= $aria('phone') ?>>
+                    <small class="cm-signup-hint" data-only="phone">Vous vous connecterez avec ce numéro.</small>
+                    <small class="cm-signup-hint" data-only="email google">Pour recevoir vos commandes et rendez-vous, et pour qu'on vous aide à démarrer.</small>
+                    <?= $fieldError('phone') ?>
                 </div>
+                <div data-only="google">
+                    <label class="cm-g-terms"><input type="checkbox" name="terms" value="1"<?= ($signupOld['terms'] ?? '') !== '' ? ' checked' : '' ?>> <span>J'accepte que SESAM crée mon espace et me contacte pour m'aider à démarrer.</span></label>
+                </div>
+                <?= $signupMode === 'google' ? $fieldError('terms') : '' ?>
                 <p class="cm-g-error" data-g-error hidden></p>
             </div>
 
-            <!-- Étape 3 : connexion -->
+            <!-- Étape 3 : connexion (téléphone ou e-mail) -->
             <div class="cm-g-step" data-g-step="login" hidden>
-                <p class="cm-g-progress"><span>Étape 3 sur 4</span><i style="--p: 75%"></i></p>
-                <h2>Votre connexion</h2>
+                <h3 class="cm-signup-q" data-only="phone">Choisissez votre mot de passe</h3>
+                <h3 class="cm-signup-q" data-only="email">Votre e-mail et votre mot de passe</h3>
                 <div class="cm-g-fields">
-                    <label>E-mail<input name="email" type="email" maxlength="190" autocomplete="email" placeholder="vous@exemple.com"></label>
-                    <label>Mot de passe <small>(12 caractères minimum)</small><input name="password" type="password" minlength="12" autocomplete="new-password"></label>
-                    <label>Confirmer le mot de passe<input name="password_confirm" type="password" minlength="12" autocomplete="new-password"></label>
+                    <label data-only="email">E-mail<input name="email" type="email" maxlength="190" autocomplete="email" placeholder="vous@exemple.com" value="<?= $oldValue('email') ?>"<?= $aria('email') ?> data-only-input="email"></label>
+                    <?= $signupMode === 'email' ? $fieldError('email') : '' ?>
+                    <label>Mot de passe <small>(12 caractères minimum)</small><input name="password" type="password" minlength="12" maxlength="255" autocomplete="new-password"<?= $aria('password') ?>></label>
+                    <?= $fieldError('password') ?>
+                    <label>Confirmer le mot de passe<input name="password_confirm" type="password" minlength="12" maxlength="255" autocomplete="new-password"<?= $aria('password_confirm') ?>></label>
+                    <?= $fieldError('password_confirm') ?>
+                    <label class="cm-show-pw"><input type="checkbox" data-signup-showpw> <span>Afficher le mot de passe</span></label>
                 </div>
-                <?php if ($googleEnabled): ?>
-                    <button class="cm-g-google" type="button" data-cm-google>Ou continuer avec Google</button>
-                <?php endif; ?>
+                <label class="cm-g-terms"><input type="checkbox" name="terms" value="1"<?= ($signupOld['terms'] ?? '') !== '' ? ' checked' : '' ?>> <span>J'accepte que SESAM crée mon espace et me contacte pour m'aider à démarrer.</span></label>
+                <?= $signupMode !== 'google' ? $fieldError('terms') : '' ?>
                 <p class="cm-g-error" data-g-error hidden></p>
             </div>
 
-            <!-- Étape 4 : récapitulatif et création -->
-            <div class="cm-g-step" data-g-step="recap" hidden>
-                <p class="cm-g-progress"><span>Étape 4 sur 4</span><i style="--p: 100%"></i></p>
-                <h2>On vérifie ensemble&nbsp;?</h2>
-                <dl class="cm-g-recap">
-                    <div><dt>Outil</dt><dd data-g-recap="sector">—</dd><button type="button" data-g-goto="sector">Modifier</button></div>
-                    <div><dt>Vous</dt><dd data-g-recap="you">—</dd><button type="button" data-g-goto="you">Modifier</button></div>
-                    <div><dt>E-mail</dt><dd data-g-recap="email">—</dd><button type="button" data-g-goto="login">Modifier</button></div>
-                    <div class="is-price"><dt>Aujourd'hui</dt><dd data-g-recap="today"><?= $trial ? '0 FCFA · 1 mois offert' : '—' ?></dd></div>
-                </dl>
-                <label class="cm-g-terms"><input type="checkbox" name="terms" value="1"> <span>J'accepte que SESAM crée mon espace et me contacte pour m'aider à démarrer.</span></label>
-                <p class="cm-g-error" data-g-error hidden></p>
-            </div>
-
-            <div class="cm-g-nav" data-g-nav hidden>
+            <div class="cm-g-nav" data-g-nav>
                 <button class="wl-btn wl-btn-ghost" type="button" data-g-back>Retour</button>
                 <button class="wl-btn" type="button" data-g-next>Continuer</button>
-                <button class="wl-btn cm-g-submit" type="submit" data-g-submit hidden><?= $trial ? 'Créer mon espace gratuit' : 'Créer mon compte' ?></button>
+                <button class="wl-btn cm-g-submit" type="submit" data-g-submit hidden><?= $trial ? 'Créer mon espace gratuitement' : 'Créer mon compte' ?></button>
             </div>
+            <p class="cm-signup-switch">
+                <span data-only="phone">Vous préférez l'e-mail&nbsp;? <button type="button" data-signup-switch="email">Continuer avec l'e-mail</button></span>
+                <span data-only="email">Vous préférez votre numéro&nbsp;? <button type="button" data-signup-switch="phone">Continuer avec le téléphone</button></span>
+                <span>Déjà un compte&nbsp;? <a href="<?= Html::url('/connexion') ?>">Se connecter</a></span>
+            </p>
         </form>
     </section>
 </div>
@@ -136,7 +151,7 @@ $rocketArt = '<svg class="wl-scene" viewBox="0 0 400 220" preserveAspectRatio="x
                 ? 'Vous y êtes presque : terminez votre inscription et profitez de 30 jours gratuits, sans carte bancaire. Vous pouvez arrêter à tout moment.'
                 : 'Terminez votre inscription : votre espace s\'ouvre dès le paiement du premier mois, sans engagement.' ?></p>
             <div class="wl-site-actions">
-                <button class="wl-btn" type="button" data-cm-switch="guided">Terminer en 1 minute</button>
+                <button class="wl-btn" type="button" data-cm-signup="phone">Terminer en 1 minute</button>
                 <button class="wl-btn wl-btn-ghost" type="button" data-cm-close>Plus tard</button>
             </div>
         </div>
@@ -160,7 +175,7 @@ $rocketArt = '<svg class="wl-scene" viewBox="0 0 400 220" preserveAspectRatio="x
             <h2 id="cm-help-title">On fait l'inscription ensemble&nbsp;?</h2>
             <p class="wl-text">Je vous pose les questions une par une, avec un récapitulatif avant de valider. C'est plus simple et ça prend 2 minutes.</p>
             <div class="wl-site-actions">
-                <button class="wl-btn" type="button" data-cm-switch="guided">Oui, guidez-moi</button>
+                <button class="wl-btn" type="button" data-cm-signup="phone">Oui, guidez-moi</button>
                 <button class="wl-btn wl-btn-ghost" type="button" data-cm-close>Je continue seul</button>
             </div>
         </div>
