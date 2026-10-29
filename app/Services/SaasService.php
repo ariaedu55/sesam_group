@@ -458,8 +458,12 @@ final class SaasService extends Service
             'canPay' => $actor->can(Permission::SUBSCRIPTION_PAY),
             'setupFee' => $this->setupFeeDue($tenantId, $subscription),
             'months' => self::RENEW_MONTHS,
-            'plans' => $this->plans($tenantId, $subscription),
+            'plans' => array_map(
+                fn (array $plan): array => $plan + ['new_end' => $this->renewedEnd($subscription, $plan['months'])],
+                $this->plans($tenantId, $subscription)
+            ),
             'methods' => self::RENEW_METHODS,
+            'live' => $this->isLivePayments(),
         ];
     }
 

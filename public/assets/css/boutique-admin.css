@@ -912,6 +912,17 @@
     background: #e8f1ff;
 }
 
+.pay-checkout-with {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.pay-checkout-with img {
+    border-radius: 8px;
+}
+
 .sub-inline-logo {
     display: inline-grid;
     width: 24px;

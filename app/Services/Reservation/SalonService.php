@@ -69,8 +69,27 @@ final class SalonService extends Service
         $monthCounts = $this->appointments->countByStatus($tenantId, $monthStart, $monthEnd);
         $done = $monthCounts[AppointmentStatus::COMPLETED] + $monthCounts[AppointmentStatus::NO_SHOW];
         $shareText = $tenant->displayName() . ' — réservez votre rendez-vous en ligne : ' . $this->publicUrl($tenant);
+        $now = gmdate('Y-m-d H:i:s');
+        $upcoming = array_values(array_filter(
+            $this->appointments->listBetween($tenantId, $now, gmdate('Y-m-d H:i:s', strtotime('+14 days')), true),
+            static fn ($item): bool => $item->startsAt() >= $now
+        ));
+        $perDay = $this->appointments->countPerDay($tenantId, $weekStart, $weekEnd);
+        $week = [];
+        for ($i = 0; $i < 7; $i++) {
+            $day = gmdate('Y-m-d', strtotime(substr($weekStart, 0, 10) . ' +' . $i . ' days'));
+            $week[] = ['date' => $day, 'total' => $perDay[$day] ?? 0, 'today' => $day === gmdate('Y-m-d')];
+        }
+        $lastWeekStart = gmdate('Y-m-d', strtotime(substr($weekStart, 0, 10) . ' -7 days')) . ' 00:00:00';
 
         return [
+            'next' => $upcoming[0] ?? null,
+            'week' => $week,
+            'revenueToday' => $this->appointments->revenueBetween($tenantId, $todayStart, $tomorrow),
+            'revenueLastWeek' => $this->appointments->revenueBetween($tenantId, $lastWeekStart, $weekStart),
+            'depositsMonth' => $this->appointments->depositsPaidBetween($tenantId, $monthStart, $monthEnd),
+            'monthTotal' => array_sum($monthCounts) - $monthCounts[AppointmentStatus::CANCELLED],
+            'topServices' => $this->appointments->topServices($tenantId, $monthStart, $monthEnd),
             'tenant' => $tenant,
             'settings' => $settings,
             'publicUrl' => $this->publicUrl($tenant),

@@ -27,7 +27,8 @@ final class TenantLayout
             // Immo a sa propre page Locataires.
             'showClientsNav' => !$loyerSector && $user->can(Permission::CLIENTS_VIEW),
             // Une boutique encaisse via WhatsApp ou en main propre : le suivi se fait sur la commande (« Payée »).
-            'showPaymentsNav' => !$boutiqueSector && !$loyerSector && $user->can(Permission::PAYMENTS_VIEW),
+            // Un salon suit ses acomptes sur chaque rendez-vous et sur l'accueil : pas de liste de paiements à part.
+            'showPaymentsNav' => !$boutiqueSector && !$loyerSector && !$reservationSector && $user->can(Permission::PAYMENTS_VIEW),
             'showStatsNav' => $tenant instanceof Tenant && $user->can(Permission::STATS_VIEW),
             'showReservationNav' => $reservationSector && $user->can(Permission::RESERVATION_VIEW),
             'showBoutiqueNav' => $boutiqueSector && $user->can(Permission::BOUTIQUE_VIEW),
