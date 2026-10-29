@@ -32,10 +32,13 @@ final class SaasService extends Service
     public const SIGNUP_TRIAL_DAYS = 30;
     /** Jours après l'échéance pendant lesquels l'espace reste ouvert avant de n'afficher que la page Abonnement. */
     public const GRACE_DAYS = 5;
-    public const RENEW_MONTHS = [1 => '1 mois', 3 => '3 mois', 6 => '6 mois', 12 => '12 mois'];
+    public const RENEW_MONTHS = [1 => '1 mois', 3 => '3 mois', 6 => '6 mois', 12 => '1 an'];
+    /** Formules longues réglables dans la console (proposée ou non, % de réduction). */
+    public const PLAN_MONTHS = [3, 6, 12];
     public const RENEW_METHODS = ['wave' => 'Wave', 'orange-money' => 'Orange Money'];
     private const SIGNUP_RATE_MAX = 5;
-    private const SIGNUP_RATE_WINDOW = 3600;
+    /** En minutes (countRecent compte en minutes) : 5 inscriptions par heure et par connexion. */
+    private const SIGNUP_RATE_WINDOW = 60;
 
     private readonly \PDO $pdo;
     private readonly TenantRepository $tenants;
@@ -332,12 +335,70 @@ final class SaasService extends Service
         return (int) ($statement->fetchColumn() ?: 0);
     }
 
-    private function monthlyPrice(int $tenantId): int
+    /**
+     * Tarif en vigueur dans la console SESAM pour le module du commerce : il s'applique à chaque souscription
+     * et à chaque renouvellement (le montant mémorisé dans l'abonnement ne sert que si la console n'a pas de tarif).
+     */
+    private function monthlyPrice(int $tenantId, ?TenantSubscription $subscription = null): int
     {
-        $statement = $this->pdo->prepare('SELECT p.monthly_amount FROM tenants t LEFT JOIN saas_prices p ON p.sector = t.sector WHERE t.id = ?');
-        $statement->execute([$tenantId]);
+        $price = (int) ($this->sectorPrice($tenantId)['monthly_amount'] ?? 0);
 
-        return (int) ($statement->fetchColumn() ?: 0);
+        return $price > 0 ? $price : (int) ($subscription?->monthlyAmount() ?? 0);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sectorPrice(int $tenantId): array
+    {
+        try {
+            $statement = $this->pdo->prepare('SELECT p.* FROM tenants t JOIN saas_prices p ON p.sector = t.sector WHERE t.id = ?');
+            $statement->execute([$tenantId]);
+            $row = $statement->fetch(\PDO::FETCH_ASSOC);
+        } catch (\PDOException) {
+            $row = false;
+        }
+
+        return is_array($row) ? $row : [];
+    }
+
+    /** Montant d'une formule : mensualité × mois, moins la réduction (arrondi au franc). */
+    public static function planAmount(int $monthly, int $months, int $discount): int
+    {
+        return (int) round($monthly * $months * (100 - max(0, min(90, $discount))) / 100);
+    }
+
+    /**
+     * Formules proposées au commerce : 1 mois toujours, puis 3 / 6 / 12 mois si la console les propose.
+     *
+     * @return array<int, array{months: int, label: string, discount: int, base: int, amount: int, per_month: int, saving: int}>
+     */
+    public function plans(int $tenantId, ?TenantSubscription $subscription = null): array
+    {
+        $row = $this->sectorPrice($tenantId);
+        $monthly = $this->monthlyPrice($tenantId, $subscription);
+        $plans = [];
+        foreach (self::RENEW_MONTHS as $months => $label) {
+            $discount = 0;
+            if ($months > 1) {
+                if ((int) ($row['plan_' . $months . '_enabled'] ?? 1) !== 1) {
+                    continue;
+                }
+                $discount = (int) ($row['plan_' . $months . '_discount'] ?? 0);
+            }
+            $amount = self::planAmount($monthly, $months, $discount);
+            $plans[$months] = [
+                'months' => $months,
+                'label' => $label,
+                'discount' => $discount,
+                'base' => $monthly * $months,
+                'amount' => $amount,
+                'per_month' => (int) round($amount / $months),
+                'saving' => $monthly * $months - $amount,
+            ];
+        }
+
+        return $plans;
     }
 
     // ================================================================ État de l'accès
@@ -384,8 +445,8 @@ final class SaasService extends Service
         $tenantId = $this->tenantOf($actor);
         $subscription = $this->subscriptions->find($tenantId);
         $tenant = $this->tenants->findById($tenantId);
-        $price = $subscription?->monthlyAmount() ?: $this->monthlyPrice($tenantId);
-        $payments = $this->pdo->prepare('SELECT amount, months, paid_on, method, channel, reference, period_end FROM tenant_subscription_payments WHERE tenant_id = ? ORDER BY paid_on DESC, id DESC LIMIT 24');
+        $price = $this->monthlyPrice($tenantId, $subscription);
+        $payments =$this->pdo->prepare('SELECT amount, months, paid_on, method, channel, reference, period_end FROM tenant_subscription_payments WHERE tenant_id = ? ORDER BY paid_on DESC, id DESC LIMIT 24');
         $payments->execute([$tenantId]);
 
         return [
@@ -397,6 +458,7 @@ final class SaasService extends Service
             'canPay' => $actor->can(Permission::SUBSCRIPTION_PAY),
             'setupFee' => $this->setupFeeDue($tenantId, $subscription),
             'months' => self::RENEW_MONTHS,
+            'plans' => $this->plans($tenantId, $subscription),
             'methods' => self::RENEW_METHODS,
         ];
     }
@@ -417,9 +479,14 @@ final class SaasService extends Service
             throw new ValidationException(['method' => 'Choisissez Wave ou Orange Money.']);
         }
         $subscription = $this->subscriptions->find($tenantId);
-        $price = $subscription?->monthlyAmount() ?: $this->monthlyPrice($tenantId);
+        $price = $this->monthlyPrice($tenantId, $subscription);
         if ($price < 1) {
             throw new ValidationException(['months' => 'Le tarif de votre module n\'est pas encore défini. Contactez SESAM.']);
+        }
+
+        $plan = $this->plans($tenantId, $subscription)[$months] ?? null;
+        if ($plan === null) {
+            throw new ValidationException(['months' => 'Cette formule n\'est plus proposée. Choisissez une autre durée.']);
         }
 
         $setupFee = $this->setupFeeDue($tenantId, $subscription);
@@ -428,7 +495,11 @@ final class SaasService extends Service
             'months' => $months,
             'method' => $method,
             'methodLabel' => self::RENEW_METHODS[$method],
-            'amount' => $price * $months + $setupFee,
+            'planLabel' => $plan['label'],
+            'discount' => $plan['discount'],
+            'saving' => $plan['saving'],
+            'planAmount' => $plan['amount'],
+            'amount' => $plan['amount'] + $setupFee,
             'setupFee' => $setupFee,
             'newEnd' => $this->renewedEnd($subscription, $months),
         ];
@@ -450,13 +521,14 @@ final class SaasService extends Service
         return $this->payments->initiateSubscription(
             $this->tenantOf($actor),
             (int) $checkout['amount'],
-            'Abonnement SESAM · ' . $months . ' mois',
+            'Abonnement SESAM · ' . $checkout['planLabel'] . ($checkout['discount'] > 0 ? ' (-' . $checkout['discount'] . ' %)' : ''),
             [
                 'purpose' => 'subscription',
                 'months' => $months,
                 'method' => $method,
                 'actor_user_id' => $actor->id(),
                 'setup_fee' => (int) $checkout['setupFee'],
+                'discount' => (int) $checkout['discount'],
             ],
             [$nabooMethod],
         );
@@ -579,7 +651,7 @@ final class SaasService extends Service
         $reference = 'SIM-' . strtoupper(bin2hex(random_bytes(4)));
         $this->pdo->beginTransaction();
         try {
-            $this->subscriptions->save($tenantId, TenantSubscription::ACTIVE, intdiv($checkout['amount'], $months), $start, $end);
+            $this->subscriptions->save($tenantId, TenantSubscription::ACTIVE, intdiv($checkout['planAmount'], $months), $start, $end);
             $this->tenants->updateStatus($tenantId, 'active');
             $this->subscriptions->addEvent($tenantId, $state === 'active' || $state === 'overdue' ? 'renew' : 'activate', $subscription?->status(), TenantSubscription::ACTIVE, $end,
                 'Réabonnement en ligne : ' . Money::format($checkout['amount']) . ' par ' . $checkout['methodLabel'] . ' (simulation)', $actor->id());

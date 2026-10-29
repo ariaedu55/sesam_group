@@ -91,7 +91,7 @@ final class AdminConsoleTest extends IntegrationTestCase
 
     public function testPricesCanBeUpdated(): void
     {
-        $before = $this->pdo()->query('SELECT sector, monthly_amount, setup_fee FROM saas_prices')->fetchAll();
+        $before = $this->pdo()->query('SELECT * FROM saas_prices')->fetchAll(\PDO::FETCH_ASSOC);
         try {
             $kernel = $this->kernel();
             $this->loginAs($kernel, [Role::SUPER_ADMIN], null);
@@ -105,9 +105,9 @@ final class AdminConsoleTest extends IntegrationTestCase
             $this->assertSame(17500, (int) $this->value('SELECT monthly_amount FROM saas_prices WHERE sector = ?', ['reservation']));
             $this->assertSame(5000, (int) $this->value('SELECT setup_fee FROM saas_prices WHERE sector = ?', ['boutique']));
         } finally {
-            $restore = $this->pdo()->prepare('UPDATE saas_prices SET monthly_amount = ?, setup_fee = ? WHERE sector = ?');
             foreach ($before as $row) {
-                $restore->execute([$row['monthly_amount'], $row['setup_fee'], $row['sector']]);
+                $set = implode(', ', array_map(static fn (string $c): string => $c . ' = :' . $c, array_keys(array_diff_key($row, ['sector' => 1]))));
+                $this->pdo()->prepare('UPDATE saas_prices SET ' . $set . ' WHERE sector = :sector')->execute($row);
             }
         }
     }

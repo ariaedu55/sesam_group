@@ -307,7 +307,7 @@ final class AdminService extends Service
     }
 
     /**
-     * @return array<string, array{label: string, monthly_amount: int, setup_fee: int}>
+     * @return array<string, array{label: string, monthly_amount: int, setup_fee: int, plans: array<int, array{enabled: bool, discount: int}>}>
      */
     public function prices(User $actor): array
     {
@@ -315,7 +315,7 @@ final class AdminService extends Service
         $stored = $this->admin->prices();
         $prices = [];
         foreach (Sector::LABELS as $sector => $label) {
-            $prices[$sector] = ['label' => $label] + ($stored[$sector] ?? ['monthly_amount' => 0, 'setup_fee' => 0]);
+            $prices[$sector] = ['label' => $label] + ($stored[$sector] ?? ['monthly_amount' => 0, 'setup_fee' => 0, 'plans' => [3 => ['enabled' => true, 'discount' => 0], 6 => ['enabled' => true, 'discount' => 0], 12 => ['enabled' => true, 'discount' => 0]]]);
         }
 
         return $prices;
@@ -335,13 +335,22 @@ final class AdminService extends Service
             if ($monthly > 10_000_000 || $setup > 100_000_000) {
                 $errors[$sector . '_monthly'] = 'Montant trop élevé.';
             }
-            $clean[$sector] = [$monthly, $setup];
+            $plans = [];
+            foreach ([3, 6, 12] as $months) {
+                $raw = trim(str_replace(['%', ' '], '', (string) ($input[$sector . '_plan_' . $months . '_discount'] ?? '0')));
+                $raw = $raw === '' ? '0' : $raw;
+                if (preg_match('/^\d{1,2}$/', $raw) !== 1 || (int) $raw > 90) {
+                    $errors[$sector . '_plan_' . $months . '_discount'] = 'Réduction ' . $months . ' mois (' . Sector::LABELS[$sector] . ') : un nombre entier entre 0 et 90 %.';
+                }
+                $plans[$months] = ['enabled' => !empty($input[$sector . '_plan_' . $months . '_enabled']), 'discount' => min(90, (int) $raw)];
+            }
+            $clean[$sector] = [$monthly, $setup, $plans];
         }
         if ($errors !== []) {
             throw new ValidationException($errors);
         }
-        foreach ($clean as $sector => [$monthly, $setup]) {
-            $this->admin->savePrice($sector, $monthly, $setup);
+        foreach ($clean as $sector => [$monthly, $setup, $plans]) {
+            $this->admin->savePrice($sector, $monthly, $setup, $plans);
         }
     }
 

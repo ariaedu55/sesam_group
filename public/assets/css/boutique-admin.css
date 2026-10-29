@@ -920,6 +920,112 @@
     vertical-align: middle;
 }
 
+.sub-choice-save {
+    color: #0a7a3d !important;
+    font-weight: 700;
+}
+
+.sub-choice s {
+    display: block;
+    color: var(--muted, #5d6675);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+/* Console SESAM : formules 3 / 6 / 12 mois de chaque service (page Tarifs) */
+.plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.plan-cell {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid rgba(12, 23, 48, 0.1);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.plan-cell.is-off {
+    background: #f6f7f9;
+}
+
+.plan-cell.is-off .plan-discount,
+.plan-cell.is-off .plan-price {
+    opacity: 0.5;
+}
+
+.plan-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.plan-toggle input {
+    width: 18px;
+    height: 18px;
+    accent-color: #0a6cf0;
+}
+
+.plan-toggle > span {
+    display: grid;
+}
+
+.plan-toggle small {
+    color: var(--muted, #5d6675);
+    font-size: 0.78rem;
+}
+
+.plan-discount {
+    margin: 0;
+}
+
+.plan-percent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.plan-percent .input {
+    max-width: 90px;
+}
+
+.plan-price {
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+.plan-price s {
+    color: var(--muted, #5d6675);
+}
+
+@media (max-width: 600px) {
+    .plan-cell {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+    }
+
+    .plan-discount label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+    }
+
+    .plan-percent .input {
+        max-width: 72px;
+    }
+
+    .plan-price {
+        grid-column: 1 / -1;
+    }
+}
+
 /* Console SESAM : réglage de l'essai gratuit (page Tarifs) */
 .trial-card {
     display: grid;

@@ -335,25 +335,52 @@ final class AdminRepository extends Repository
     // ---------------------------------------------------------------- Tarifs
 
     /**
-     * @return array<string, array{monthly_amount: int, setup_fee: int}>
+     * Tarifs de chaque module : mensualité, frais de mise en place et formules 3 / 6 / 12 mois (proposée ou non, % de réduction).
+     *
+     * @return array<string, array{monthly_amount: int, setup_fee: int, plans: array<int, array{enabled: bool, discount: int}>}>
      */
     public function prices(): array
     {
-        $statement = $this->pdo->query('SELECT sector, monthly_amount, setup_fee FROM saas_prices');
+        $statement = $this->pdo->query('SELECT * FROM saas_prices');
         $prices = [];
         foreach ($statement === false ? [] : $statement->fetchAll() as $row) {
-            $prices[(string) $row['sector']] = ['monthly_amount' => (int) $row['monthly_amount'], 'setup_fee' => (int) $row['setup_fee']];
+            $plans = [];
+            foreach ([3, 6, 12] as $months) {
+                $plans[$months] = [
+                    'enabled' => (int) ($row['plan_' . $months . '_enabled'] ?? 1) === 1,
+                    'discount' => (int) ($row['plan_' . $months . '_discount'] ?? 0),
+                ];
+            }
+            $prices[(string) $row['sector']] = ['monthly_amount' => (int) $row['monthly_amount'], 'setup_fee' => (int) $row['setup_fee'], 'plans' => $plans];
         }
 
         return $prices;
     }
 
-    public function savePrice(string $sector, int $monthly, int $setup): void
+    /**
+     * @param array<int, array{enabled: bool, discount: int}> $plans
+     */
+    public function savePrice(string $sector, int $monthly, int $setup, array $plans = []): void
     {
+        $params = ['sector' => $sector, 'monthly' => $monthly, 'setup' => $setup, 'updated_at' => gmdate('Y-m-d H:i:s')];
+        foreach ([3, 6, 12] as $months) {
+            $params['e' . $months] = !empty($plans[$months]['enabled'] ?? true) ? 1 : 0;
+            $params['d' . $months] = (int) ($plans[$months]['discount'] ?? 0);
+        }
         $this->pdo->prepare(
-            'INSERT INTO saas_prices (sector, monthly_amount, setup_fee, updated_at) VALUES (:sector, :monthly, :setup, :updated_at)
-             ON DUPLICATE KEY UPDATE monthly_amount = VALUES(monthly_amount), setup_fee = VALUES(setup_fee), updated_at = VALUES(updated_at)'
-        )->execute(['sector' => $sector, 'monthly' => $monthly, 'setup' => $setup, 'updated_at' => gmdate('Y-m-d H:i:s')]);
+            'INSERT INTO saas_prices (sector, monthly_amount, setup_fee, plan_3_enabled, plan_3_discount, plan_6_enabled, plan_6_discount, plan_12_enabled, plan_12_discount, updated_at)
+             VALUES (:sector, :monthly, :setup, :e3, :d3, :e6, :d6, :e12, :d12, :updated_at)
+             ON DUPLICATE KEY UPDATE monthly_amount = VALUES(monthly_amount), setup_fee = VALUES(setup_fee),
+                plan_3_enabled = VALUES(plan_3_enabled), plan_3_discount = VALUES(plan_3_discount),
+                plan_6_enabled = VALUES(plan_6_enabled), plan_6_discount = VALUES(plan_6_discount),
+                plan_12_enabled = VALUES(plan_12_enabled), plan_12_discount = VALUES(plan_12_discount),
+                updated_at = VALUES(updated_at)'
+        )->execute($params);
+        // Les commerces qui n'ont encore rien payé (essai, activation en attente) suivent le nouveau tarif.
+        $this->pdo->prepare(
+            "UPDATE tenant_subscriptions s JOIN tenants t ON t.id = s.tenant_id
+             SET s.monthly_amount_minor = ? WHERE t.sector = ? AND s.status IN ('trial', 'pending')"
+        )->execute([$monthly, $sector]);
     }
 
     /**
