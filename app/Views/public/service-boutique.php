@@ -9,16 +9,16 @@ use Sesam\Helpers\Html;
 $catalog = require __DIR__ . '/home-catalog.php';
 $service = $catalog['services']['boutique'];
 $page = $service['page'];
-$nav = $catalog['nav'];
 $icon = dirname(__DIR__) . '/partials/ui-icon.php';
 $demo = require __DIR__ . '/partials/boutique-products.php';
-$categories = $demo['categories'];
 $products = $demo['products'];
 $byKey = [];
 foreach ($products as $product) {
     $byKey[$product[0]] = $product;
 }
-$art = static fn (string $key, string $class = ''): string => '<svg class="' . $class . '" viewBox="0 0 120 120" aria-hidden="true" focusable="false">' . $byKey[$key][7] . '</svg>';
+$pic = static function (string $key, bool $eager = false) use ($byKey): string {
+    return Html::picture('boutique/' . $byKey[$key][7], '', 240, 240, !$eager);
+};
 $arrow = static function () use ($icon): void {
     $name = 'arrow';
     echo '<span class="s-btn-arrow">';
@@ -47,7 +47,7 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
                 <p class="s-lead"><?= Html::e($page['hero_lead']) ?></p>
                 <div class="s-actions">
                     <a class="s-btn s-btn--blue" href="<?= Html::url('/commencer?service=boutique') ?>">Essayer gratuitement 1 mois <?php $arrow(); ?></a>
-                    <a class="s-btn s-btn--ghost s-btn--plain" href="#vitrine">Essayer la vitrine</a>
+                    <a class="s-btn s-btn--ghost s-btn--plain" href="#fonctionnalites">Voir l'arrière-boutique</a>
                 </div>
                 <ul class="bx-chips" aria-label="Ce qui est inclus">
                     <li>Mode</li><li>Beauté</li><li>Électronique</li><li>Maison</li><li>Épicerie</li><li>Accessoires</li>
@@ -69,7 +69,7 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
                         <?php foreach ($shelves as $row => $items): ?>
                             <div class="bx-shelf-row">
                                 <?php foreach ($items as $index => $key): ?>
-                                    <span class="bx-item" style="--d: <?= ($row * 4 + $index) * 0.18 ?>s; --bg: <?= Html::e($byKey[$key][6]) ?>"><?= $art($key) ?></span>
+                                    <span class="bx-item" style="--d: <?= ($row * 4 + $index) * 0.18 ?>s"><?= $pic($key, true) ?></span>
                                 <?php endforeach; ?>
                             </div>
                         <?php endforeach; ?>
@@ -88,7 +88,7 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
                         <p class="bx-phone-search">Rechercher un produit…</p>
                         <div class="bx-phone-grid">
                             <?php foreach ($phoneItems as $key): ?>
-                                <span class="bx-phone-card"><span style="background: <?= Html::e($byKey[$key][6]) ?>"><?= $art($key) ?></span><b><?= Html::e(Money::format((int) $byKey[$key][3])) ?></b></span>
+                                <span class="bx-phone-card"><span><?= $pic($key, true) ?></span><b><?= Html::e(Money::format((int) $byKey[$key][3])) ?></b></span>
                             <?php endforeach; ?>
                         </div>
                         <p class="bx-phone-cta">Commander sur WhatsApp</p>
@@ -107,77 +107,15 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
         <div class="bx-marquee-track">
             <?php for ($loop = 0; $loop < 2; $loop++): ?>
                 <?php foreach ($products as $product): ?>
-                    <span class="bx-marquee-item"><?= $art($product[0]) ?><?= Html::e($product[1]) ?></span>
+                    <span class="bx-marquee-item"><?= $pic($product[0]) ?><?= Html::e($product[1]) ?></span>
                 <?php endforeach; ?>
             <?php endfor; ?>
         </div>
     </div>
 
-    <div class="s-wrap">
-        <ul class="figures bx-figures" aria-label="Sesam Boutique en chiffres">
-            <?php foreach ($page['proof'] as [$value, $label]): ?>
-                <li data-reveal><strong><?= Html::e($value) ?></strong><span><?= Html::e($label) ?></span></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-
-    <!-- ================= La vitrine à essayer comme un client ================= -->
-    <section class="s-section bx-shop" id="vitrine" aria-labelledby="bx-shop-title">
-        <div class="s-wrap">
-            <header class="s-head" data-reveal>
-                <p class="s-kicker" style="color: var(--blue)">Essayez comme un client</p>
-                <h2 class="s-h2" id="bx-shop-title">Tous vos produits, rangés comme dans votre boutique</h2>
-                <p class="s-lead">Vêtements, cosmétiques, téléphones, déco ou épicerie : chaque produit a sa photo, son prix et son rayon. Ajoutez au panier, puis commandez sur WhatsApp, exactement comme le feront vos clients.</p>
-            </header>
-
-            <div class="bx-shop-layout" data-bx-shop>
-                <div class="bx-shop-main">
-                    <div class="bx-tabs" role="tablist" aria-label="Rayons">
-                        <button class="bx-tab is-on" type="button" role="tab" aria-selected="true" data-bx-filter="all">Tout</button>
-                        <?php foreach ($categories as $key => $label): ?>
-                            <button class="bx-tab" type="button" role="tab" aria-selected="false" data-bx-filter="<?= Html::e($key) ?>"><?= Html::e($label) ?></button>
-                        <?php endforeach; ?>
-                    </div>
-                    <ul class="bx-grid">
-                        <?php foreach ($products as $index => [$key, $name, $category, $price, $old, $badge, $bg]): ?>
-                            <li class="bx-card" data-bx-cat="<?= Html::e($category) ?>" data-reveal data-reveal-delay="<?= $index % 4 ?>">
-                                <span class="bx-card-art" style="background: <?= Html::e($bg) ?>"><?= $art($key) ?></span>
-                                <?php if ($badge !== ''): ?><span class="bx-badge<?= str_starts_with($badge, '-') || $badge === 'Promo' ? ' is-promo' : ($badge === 'Plus que 3' ? ' is-stock' : '') ?>"><?= Html::e($badge) ?></span><?php endif; ?>
-                                <span class="bx-card-cat"><?= Html::e($categories[$category]) ?></span>
-                                <strong class="bx-card-name"><?= Html::e($name) ?></strong>
-                                <span class="bx-card-price"><b><?= Html::e(Money::format((int) $price)) ?></b><?php if ($old > 0): ?> <s><?= Html::e(Money::format((int) $old)) ?></s><?php endif; ?></span>
-                                <button class="bx-add" type="button" data-bx-add data-name="<?= Html::e($name) ?>" data-price="<?= (int) $price ?>" aria-label="Ajouter « <?= Html::e($name) ?> » au panier"><span aria-hidden="true">+</span> Ajouter</button>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-
-                <aside class="bx-cart" aria-label="Panier de démonstration" data-bx-cart>
-                    <p class="bx-cart-head"><span class="bx-cart-icon" aria-hidden="true">🛒<b data-bx-count>0</b></span> Votre panier</p>
-                    <ul class="bx-cart-lines" data-bx-lines>
-                        <li class="bx-cart-empty">Ajoutez un produit pour remplir le panier.</li>
-                    </ul>
-                    <p class="bx-cart-total"><span>Total</span><b data-bx-total>0 FCFA</b></p>
-                    <button class="bx-wa" type="button" data-bx-order disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg> Commander sur WhatsApp</button>
-                    <div class="bx-chat" data-bx-chat hidden>
-                        <p class="bx-chat-head"><b>Chez Awa</b><small>en ligne</small></p>
-                        <p class="bx-bubble" data-bx-message></p>
-                        <p class="bx-chat-note">C'est ce message, déjà rédigé avec le total, que vous recevez sur votre WhatsApp.</p>
-                    </div>
-                    <p class="bx-cart-note">Démonstration : rien n'est commandé.</p>
-                </aside>
-            </div>
-        </div>
-    </section>
-
     <!-- ================= Plus besoin d'un site ================= -->
-    <section class="s-section" aria-labelledby="bq-innovation-title" style="padding-top: 0">
+    <section class="s-section" aria-label="Site e-commerce classique ou Sesam Boutique">
         <div class="s-wrap">
-            <header class="s-head" data-reveal>
-                <p class="s-kicker" style="color: var(--blue)">L'innovation Sesam Boutique</p>
-                <h2 class="s-h2" id="bq-innovation-title"><?= Html::e($page['innovation_title']) ?></h2>
-                <p class="s-lead"><?= Html::e($page['innovation_lead']) ?></p>
-            </header>
             <div class="compare">
                 <?php foreach ($page['compare'] as $index => [$title, $lines]): ?>
                     <article class="panel<?= $index === 1 ? ' panel--lime' : '' ?>" data-reveal data-reveal-delay="<?= $index ?>">
@@ -214,16 +152,8 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
     </section>
 
     <!-- ================= Votre arrière-boutique ================= -->
-    <section class="s-section" id="fonctionnalites" aria-labelledby="bq-features-title">
+    <section class="s-section" id="fonctionnalites" aria-label="Commandes et stock">
         <div class="s-wrap">
-            <header class="s-head s-head--split" data-reveal>
-                <div>
-                    <p class="s-kicker">Votre arrière-boutique</p>
-                    <h2 class="s-h2" id="bq-features-title"><?= Html::e($page['features_title']) ?></h2>
-                </div>
-                <p class="s-lead"><?= Html::e($page['features_lead']) ?></p>
-            </header>
-
             <div class="bx-office" data-reveal>
                 <div class="bx-office-panel">
                     <p class="bx-office-title">Commandes du jour <span>4</span></p>
@@ -237,10 +167,10 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
                 <div class="bx-office-panel">
                     <p class="bx-office-title">Stock</p>
                     <ul class="bx-stock">
-                        <li><span><?= $art('baskets') ?>Baskets urbaines</span><span class="bx-bar is-low"><i style="--w: 15%"></i></span><b class="is-low">3</b></li>
-                        <li><span><?= $art('robe') ?>Robe wax Teranga</span><span class="bx-bar"><i style="--w: 55%"></i></span><b>11</b></li>
-                        <li><span><?= $art('cafe') ?>Café Touba 500 g</span><span class="bx-bar"><i style="--w: 90%"></i></span><b>40</b></li>
-                        <li><span><?= $art('montre') ?>Montre connectée</span><span class="bx-bar is-out"><i style="--w: 0%"></i></span><b class="is-out">Épuisé</b></li>
+                        <li><span><?= $pic('baskets') ?>Baskets urbaines</span><span class="bx-bar is-low"><i style="--w: 15%"></i></span><b class="is-low">3</b></li>
+                        <li><span><?= $pic('robe') ?>Robe wax Teranga</span><span class="bx-bar"><i style="--w: 55%"></i></span><b>11</b></li>
+                        <li><span><?= $pic('cafe') ?>Café Touba 500 g</span><span class="bx-bar"><i style="--w: 90%"></i></span><b>40</b></li>
+                        <li><span><?= $pic('montre') ?>Montre connectée</span><span class="bx-bar is-out"><i style="--w: 0%"></i></span><b class="is-out">Épuisé</b></li>
                     </ul>
                     <p class="bx-alert">⚠️ Bientôt épuisé : Baskets urbaines</p>
                 </div>
@@ -279,20 +209,6 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
         </article>
     </section>
 
-    <section class="s-section" aria-labelledby="bq-audience-title">
-        <div class="s-wrap">
-            <header class="s-head" data-reveal>
-                <p class="s-kicker"><?= Html::e($service['sector']) ?></p>
-                <h2 class="s-h2" id="bq-audience-title"><?= Html::e($page['audience_title']) ?></h2>
-            </header>
-            <ul class="audience">
-                <?php foreach ($page['audience'] as [$title, $text]): ?>
-                    <li data-reveal><strong><?= Html::e($title) ?></strong><span><?= Html::e($text) ?></span></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    </section>
-
     <section class="s-section" aria-labelledby="bq-faq-title" style="padding-top: 0">
         <div class="s-wrap">
             <header class="s-head" data-reveal>
@@ -313,7 +229,7 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
         <div class="cta bx-cta" data-reveal>
             <div class="bx-cta-art" aria-hidden="true">
                 <?php foreach (['sac', 'parfum', 'baskets', 'plante', 'ecouteurs', 'mangues'] as $index => $key): ?>
-                    <span style="--d: <?= $index * 0.3 ?>s; background: <?= Html::e($byKey[$key][6]) ?>"><?= $art($key) ?></span>
+                    <span style="--d: <?= $index * 0.3 ?>s"><?= $pic($key) ?></span>
                 <?php endforeach; ?>
             </div>
             <p class="s-kicker"><?= Html::e($service['label']) ?></p>
@@ -326,16 +242,4 @@ $phoneItems = ['robe', 'baskets', 'parfum', 'ecouteurs'];
         </div>
     </section>
 
-    <nav class="s-wrap others" aria-label="Les autres services" style="padding-top: 32px">
-        <?php foreach ($nav as $other => $label): ?>
-            <?php if ($other === 'boutique') {
-                continue;
-            } ?>
-            <a href="<?= Html::url('/services/' . $other) ?>">
-                <span aria-hidden="true"><?php $name = (string) $catalog['services'][$other]['icon']; include $icon; ?></span>
-                <?= Html::e($label) ?>
-            </a>
-        <?php endforeach; ?>
-    </nav>
 </main>
-<script src="<?= Html::asset('assets/js/service-boutique.js') ?>" defer></script>
