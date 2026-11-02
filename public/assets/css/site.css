@@ -1745,6 +1745,34 @@ html:not(.js) .hx-rot-list {
     color: var(--accent);
 }
 
+.page-contact .contact-wa {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-contact .contact-wa-icon {
+    color: var(--wa);
+    flex: none;
+}
+
+.page-contact .contact-wa:hover {
+    color: var(--wa);
+}
+
+.page-contact .contact-mail {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--blue);
+    font-weight: 600;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.page-contact .contact-mail:hover {
+    text-decoration: underline;
+}
+
 .page-contact .contact-address {
     margin: 0;
     font-size: 1.05rem;
