@@ -271,9 +271,10 @@ return [
         ],
     ],
     'contact' => [
+        // Sénégal d'abord. Chaque numéro ouvre la discussion WhatsApp ; l'e-mail de l'interlocuteur du pays suit.
         'phones' => [
-            ['label' => 'États-Unis', 'display' => '+1 (917) 569-6871', 'tel' => '+19175696871'],
-            ['label' => 'Sénégal', 'display' => '+221 71 097 45 45', 'tel' => '+221710974545'],
+            ['label' => 'Sénégal', 'display' => '+221 71 097 45 45', 'tel' => '+221710974545', 'email' => 'yannick@sesam-tech.com'],
+            ['label' => 'États-Unis', 'display' => '+1 (917) 569-6871', 'tel' => '+19175696871', 'email' => 'talla@sesam-tech.com'],
         ],
         'address' => '183 West Foire, Dakar',
         'map_embed' => 'https://www.google.com/maps?q=183+West+Foire,+Dakar,+Senegal&hl=fr&z=16&output=embed',
