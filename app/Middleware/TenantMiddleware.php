@@ -24,7 +24,19 @@ final class TenantMiddleware implements Middleware
     public function handle(Request $request, callable $next): Response
     {
         if (preg_match('#^/t/([^/]+)#', $request->path(), $matches) === 1) {
-            $tenant = $this->tenants->findBySlug(rawurldecode($matches[1]));
+            $slug = rawurldecode($matches[1]);
+            $tenant = $this->tenants->findBySlug($slug);
+            if ($tenant === null) {
+                // Ancien lien d'un commerce qui a changé de lien : on redirige vers le nouveau (liens déjà partagés).
+                $movedId = $this->tenants->tenantIdForOldSlug($slug);
+                $tenant = $movedId !== null ? $this->tenants->findById($movedId) : null;
+                if ($tenant !== null && $request->method() === 'GET') {
+                    $rest = substr($request->path(), strlen($matches[0]));
+                    $query = http_build_query($request->query());
+
+                    return Response::redirect('/t/' . rawurlencode($tenant->slug()) . $rest . ($query !== '' ? '?' . $query : ''), 301);
+                }
+            }
             $this->context->bind($tenant !== null && $tenant->isActive() ? $tenant : null);
 
             return $next($request);

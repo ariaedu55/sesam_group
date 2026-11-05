@@ -18,7 +18,7 @@ $statusLabel = static function (string $status): string {
     return match ($status) {
         DeliveryStatus::SENT => 'Envoyé',
         DeliveryStatus::FAILED => 'Échec',
-        DeliveryStatus::MOCK => 'Mock (non expédié)',
+        DeliveryStatus::MOCK => 'Enregistré, non envoyé',
         DeliveryStatus::CANCELLED => 'Annulé',
         default => 'En attente',
     };
@@ -37,7 +37,7 @@ $channelLabel = static function (string $channel): string {
     <h1>Historique des envois</h1>
     <?php require __DIR__ . '/_nav.php'; ?>
     <?php if ($mockMode): ?>
-        <p class="alert" role="status">Mode <strong>mock</strong> actif (`NOTIFICATIONS_MODE=mock`) : e-mail et WhatsApp ne partent pas réellement.</p>
+        <p class="alert" role="status">L'envoi automatique par WhatsApp arrive bientôt : en attendant, les messages WhatsApp sont seulement enregistrés ici.</p>
     <?php endif; ?>
     <?php if ($deliveries === []): ?>
         <div class="empty">
@@ -65,7 +65,7 @@ $channelLabel = static function (string $channel): string {
                             <td><?= Html::e($delivery->templateSlug()) ?></td>
                             <td>
                                 <?= Html::e($statusLabel($delivery->status())) ?>
-                                <?php if ($delivery->errorMessage() !== null): ?>
+                                <?php if ($delivery->errorMessage() !== null && $delivery->status() === DeliveryStatus::FAILED): ?>
                                     <span class="muted"> — <?= Html::e($delivery->errorMessage()) ?></span>
                                 <?php endif; ?>
                             </td>

@@ -245,6 +245,7 @@ final class Bootstrap
         $router->post('/agence/projets/{id}/factures', [$agencyController, 'invoiceStore']);
         $router->get('/agence/factures', [$agencyController, 'invoices']);
         $router->post('/agence/factures/{id}/payer', [$agencyController, 'invoicePay']);
+        $router->post('/lien-public', [$tenantController, 'changePublicLink']);
         $router->get('/parametres', [$tenantController, 'settingsForm']);
         $router->post('/parametres', [$tenantController, 'settingsUpdate']);
         $router->get('/firebase-messaging-sw.js', [$pushController, 'serviceWorker']);

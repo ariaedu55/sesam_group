@@ -94,6 +94,74 @@
     background: #fff;
 }
 
+/* Changer le lien public (dans la carte verte du lien) */
+.btq-link-edit {
+    margin-top: 4px;
+}
+
+.btq-link-edit summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.btq-link-form {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btq-link-form label {
+    font-weight: 700;
+}
+
+.btq-link-field {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #fff;
+    color: #0b2a3a;
+}
+
+.btq-link-field span {
+    padding: 0 4px 0 14px;
+    color: #5d6675;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.btq-link-field input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px 12px 0;
+    border: 0;
+    background: transparent;
+    color: #0b2a3a;
+    font: inherit;
+    font-weight: 700;
+}
+
+.btq-link-field:focus-within {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+.btq-link-field input:focus {
+    outline: none;
+}
+
+.btq-link-form .muted {
+    margin: 0;
+    color: inherit;
+    opacity: 0.85;
+    font-size: 0.85rem;
+}
+
 .btq-share .btn {
     background: rgba(255, 255, 255, 0.16);
     color: #fff;

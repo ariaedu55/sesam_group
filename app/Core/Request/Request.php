@@ -91,6 +91,14 @@ final class Request
         return $path === '//' ? '/' : $path;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function query(): array
+    {
+        return $this->query;
+    }
+
     public function method(): string
     {
         return $this->method;

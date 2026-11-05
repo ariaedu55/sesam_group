@@ -55,6 +55,7 @@ $select = static function (string $name, array $options) use ($val, $ro): void {
             <button class="btn btn-primary" type="button" data-copy="public-url"><?php $name = 'link'; include $icon; ?><span data-copy-label>Copier le lien</span></button>
             <a class="btn" href="<?= Html::e('https://wa.me/?text=' . rawurlencode(($tenant?->displayName() ?? '') . ' — réservez en ligne : ' . $publicUrl)) ?>" target="_blank" rel="noopener"><?php $name = 'chat'; include $icon; ?>Envoyer sur WhatsApp</a>
         </div>
+            <?php include dirname(__DIR__, 2) . '/partials/public-link-editor.php'; ?>
     </section>
 
     <?php if ($errors !== []): ?>

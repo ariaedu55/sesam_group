@@ -10,6 +10,7 @@ use Sesam\Core\Database\Connection;
 use Sesam\Core\HttpException;
 use Sesam\Core\Logger\Logger;
 use Sesam\Core\Tenant\Sector;
+use Sesam\Core\Tenant\Slug;
 use Sesam\Core\Tenant\TenantContext;
 use Sesam\Core\Validation\ValidationException;
 use Sesam\Core\Validation\Validator;
@@ -139,6 +140,40 @@ final class TenantService extends Service
             'display_name' => 'required|string|max:120',
         ]);
         $this->tenants->updateDisplayName($id, (string) $data['display_name']);
+    }
+
+    /**
+     * Le responsable choisit le lien public de son commerce (/t/…). L'ancien lien continue de rediriger.
+     * Renvoie le nouveau lien (inchangé s'il est identique).
+     */
+    public function changePublicLink(User $actor, string $wanted): string
+    {
+        $id = $this->requireOwnTenant($actor);
+        $tenant = $this->tenants->findById($id);
+        if ($tenant === null) {
+            throw new HttpException(404, 'Commerce introuvable.');
+        }
+        $permission = match ($tenant->sector()) {
+            Sector::BOUTIQUE => Permission::BOUTIQUE_SETTINGS,
+            Sector::RESERVATION => Permission::RESERVATION_SETTINGS,
+            Sector::LOYER => Permission::LOYER_SETTINGS,
+            default => Permission::SETTINGS_UPDATE,
+        };
+        $this->assertCan($actor, $permission);
+        $slug = Slug::from($wanted);
+        if (strlen($slug) < Slug::MIN) {
+            throw new ValidationException(['slug' => 'Choisissez un lien d\'au moins 3 lettres ou chiffres, par exemple « boutique-awa ».']);
+        }
+        if ($slug === $tenant->slug()) {
+            return $slug;
+        }
+        if (!$this->tenants->slugAvailable($slug, $id)) {
+            throw new ValidationException(['slug' => 'Ce lien est déjà pris par un autre commerce. Essayez une variante, par exemple « ' . $slug . '-dakar ».']);
+        }
+        $this->tenants->changeSlug($id, $tenant->slug(), $slug);
+        $this->logger?->info('public link tenant=' . $id . ' ' . $tenant->slug() . ' -> ' . $slug . ' actor=' . $actor->id());
+
+        return $slug;
     }
 
     /**
