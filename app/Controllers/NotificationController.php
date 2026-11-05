@@ -8,6 +8,7 @@ use Sesam\Controllers\Concerns\RendersAppArea;
 use Sesam\Core\Auth\Permission;
 use Sesam\Core\HttpException;
 use Sesam\Core\Messaging\DeliveryStatus;
+use Sesam\Core\Messaging\MessageChannel;
 use Sesam\Core\Request\Request;
 use Sesam\Core\Response\Response;
 use Sesam\Core\Response\ViewRenderer;
@@ -76,7 +77,7 @@ final class NotificationController extends Controller
                 'channel' => 'internal',
                 'template_slug' => 'test_message',
                 'recipient' => '',
-                'name' => $user->fullName(),
+                'name' => '',
                 'amount' => '',
             ],
             'errors' => [],
@@ -113,11 +114,18 @@ final class NotificationController extends Controller
             ], $user, 422);
         }
 
+        $channel = (string) $input['channel'];
         $message = match ($delivery->status()) {
-            DeliveryStatus::SENT => 'Message interne publié dans la boîte de réception.',
-            DeliveryStatus::MOCK => 'Enregistré en mock (non expédié). Consultez l\'historique.',
-            DeliveryStatus::FAILED => 'Échec : ' . ($delivery->errorMessage() ?? 'erreur inconnue'),
-            default => 'Enregistré.',
+            DeliveryStatus::SENT => match ($channel) {
+                MessageChannel::EMAIL => 'E-mail envoyé.',
+                MessageChannel::WHATSAPP => 'Message WhatsApp envoyé.',
+                default => 'Note ajoutée à votre boîte de réception.',
+            },
+            DeliveryStatus::MOCK => $channel === MessageChannel::WHATSAPP
+                ? 'L\'envoi automatique par WhatsApp n\'est pas encore activé : le message est enregistré dans l\'historique.'
+                : 'Message enregistré dans l\'historique (l\'envoi réel n\'est pas activé sur ce serveur).',
+            DeliveryStatus::FAILED => 'Le message n\'a pas pu partir. Vérifiez l\'adresse ou le numéro, puis réessayez.',
+            default => 'Message enregistré.',
         };
         $this->session->put('status', $message);
 

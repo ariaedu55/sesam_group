@@ -12,6 +12,7 @@ use Sesam\Core\Database\Connection;
 use Sesam\Core\HttpException;
 use Sesam\Core\Payment\PaymentStatus;
 use Sesam\Core\Tenant\Sector;
+use Sesam\Core\Tenant\Slug;
 use Sesam\Core\Validation\ValidationException;
 use Sesam\Models\Payment;
 use Sesam\Models\TenantSubscription;
@@ -320,13 +321,10 @@ final class SaasService extends Service
 
     private function uniqueSlug(string $name): string
     {
-        // Accents retirés sans dépendre d'iconv (qui écrit « 'e » pour « é » sous Windows).
-        $plain = strtr($name, ['à' => 'a', 'â' => 'a', 'ä' => 'a', 'á' => 'a', 'ç' => 'c', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'î' => 'i', 'ï' => 'i', 'ô' => 'o', 'ö' => 'o', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ÿ' => 'y', 'ñ' => 'n',
-            'À' => 'a', 'Â' => 'a', 'Ç' => 'c', 'É' => 'e', 'È' => 'e', 'Ê' => 'e', 'Î' => 'i', 'Ô' => 'o', 'Ù' => 'u', 'Û' => 'u', 'œ' => 'oe', 'Œ' => 'oe', 'æ' => 'ae']);
-        $base = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $plain), '-'));
-        $base = $base !== '' ? substr($base, 0, 60) : 'commerce';
+        $base = Slug::from($name);
+        $base = $base !== '' ? $base : 'commerce';
         $slug = $base;
-        for ($i = 2; $this->tenants->findBySlug($slug) !== null; $i++) {
+        for ($i = 2; !$this->tenants->slugAvailable($slug); $i++) {
             $slug = $base . '-' . $i;
         }
 

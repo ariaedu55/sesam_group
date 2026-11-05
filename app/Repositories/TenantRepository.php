@@ -61,6 +61,55 @@ final class TenantRepository extends Repository
     }
 
     /**
+     * Lien libre : ni le lien actuel d'un autre commerce, ni un ancien lien qui redirige encore vers un autre commerce.
+     */
+    public function slugAvailable(string $slug, ?int $exceptTenantId = null): bool
+    {
+        $current = $this->findBySlug($slug);
+        if ($current !== null && $current->id() !== $exceptTenantId) {
+            return false;
+        }
+        $owner = $this->tenantIdForOldSlug($slug);
+
+        return $owner === null || $owner === $exceptTenantId;
+    }
+
+    public function tenantIdForOldSlug(string $slug): ?int
+    {
+        try {
+            $statement = $this->pdo->prepare('SELECT tenant_id FROM tenant_slug_history WHERE old_slug = ?');
+            $statement->execute([$slug]);
+            $id = $statement->fetchColumn();
+        } catch (\PDOException) {
+            return null;
+        }
+
+        return $id !== false ? (int) $id : null;
+    }
+
+    /**
+     * Change le lien public ; l'ancien est gardé pour rediriger les liens déjà partagés.
+     */
+    public function changeSlug(int $tenantId, string $oldSlug, string $newSlug): void
+    {
+        $now = gmdate('Y-m-d H:i:s');
+        $this->pdo->beginTransaction();
+        try {
+            $this->pdo->prepare(
+                'INSERT INTO tenant_slug_history (old_slug, tenant_id, created_at) VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE tenant_id = VALUES(tenant_id), created_at = VALUES(created_at)'
+            )->execute([$oldSlug, $tenantId, $now]);
+            // Revenir à un de ses anciens liens : il redevient le lien actuel.
+            $this->pdo->prepare('DELETE FROM tenant_slug_history WHERE old_slug = ? AND tenant_id = ?')->execute([$newSlug, $tenantId]);
+            $this->pdo->prepare('UPDATE tenants SET slug = ?, updated_at = ? WHERE id = ?')->execute([$newSlug, $now, $tenantId]);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            $this->pdo->rollBack();
+            throw $exception;
+        }
+    }
+
+    /**
      * @param array{slug: string, name: string, sector: string, status: string, display_name: string} $data
      */
     public function insert(array $data): int

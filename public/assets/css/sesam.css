@@ -4287,6 +4287,9 @@ html.has-form-modal {
 @media (min-width: 720px) {
     .form-modal[open] {
         padding: clamp(1rem, 4vh, 2.5rem) var(--sesam-space-5);
+        /* Une rangée à la hauteur de la fenêtre : le panneau ne dépasse jamais et son contenu défile. */
+        grid-template-rows: minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .form-modal-panel {

@@ -128,7 +128,7 @@
         setText('[data-recap-service]', service ? service.getAttribute('data-name') + ' (' + service.getAttribute('data-duration') + ')' : '—');
         setText('[data-recap-staff]', staff && staff.value ? (staff.closest('label').querySelector('strong') || {}).textContent || 'Peu importe' : 'Peu importe');
         setText('[data-recap-when]', startsAt.value ? whenText() : '—');
-        setText('[data-recap-price]', service ? service.getAttribute('data-price') + (deposit >= 100 ? ' · acompte ' + Math.round(deposit / 100).toLocaleString('fr-FR') + ' FCFA à régler maintenant' : '') : '—');
+        setText('[data-recap-price]', service ? service.getAttribute('data-price') + (deposit >= 100 ? ' · acompte ' + deposit.toLocaleString('fr-FR') + ' FCFA à régler maintenant' : '') : '—');
         refreshNav();
     }
 

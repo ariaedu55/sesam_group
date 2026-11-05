@@ -809,3 +809,40 @@
         }
     });
 }());
+
+/* Envoyer une notification : la liste « Message » ne propose que les messages du canal choisi
+   (écoute globale : le formulaire peut aussi s'ouvrir dans une fenêtre). */
+(function () {
+    "use strict";
+
+    document.addEventListener("change", function (event) {
+        var select = event.target;
+        if (!(select instanceof HTMLSelectElement) || select.name !== "channel") {
+            return;
+        }
+        var form = select.closest("[data-notification-send]");
+        var list = form ? form.querySelector("select[name=template_slug]") : null;
+        if (!list) {
+            return;
+        }
+        var first = null;
+        Array.prototype.forEach.call(list.options, function (option) {
+            var channel = option.getAttribute("data-channel");
+            if (!channel) {
+                return;
+            }
+            var on = channel === select.value;
+            option.hidden = !on;
+            option.disabled = !on;
+            if (on && first === null) {
+                first = option;
+            }
+        });
+        if (list.selectedOptions[0] && list.selectedOptions[0].disabled) {
+            list.value = "";
+        }
+        if (list.value === "" && first) {
+            list.value = first.value;
+        }
+    });
+}());

@@ -219,6 +219,26 @@ final class TenantController extends Controller
         return Response::redirect('/commerces/' . $id);
     }
 
+    /** Le responsable change le lien public de son commerce ; l'ancien lien redirige vers le nouveau. */
+    public function changePublicLink(Request $request): Response
+    {
+        $actor = $this->auth->requireUser();
+        $back = match ($this->tenants->current($actor)->sector()) {
+            Sector::BOUTIQUE => '/boutique/parametres',
+            Sector::RESERVATION => '/reservation/salon',
+            Sector::LOYER => '/immo/parametres',
+            default => '/parametres',
+        };
+        try {
+            $slug = $this->tenants->changePublicLink($actor, (string) $request->input('slug', ''));
+            $this->session->put('status', 'Votre lien est maintenant sesam-tech.com/t/' . $slug . '. L\'ancien lien continue de fonctionner : il redirige vers le nouveau.');
+        } catch (ValidationException $exception) {
+            $this->session->put('status', (string) (array_values($exception->errors())[0] ?? 'Lien invalide.'));
+        }
+
+        return Response::redirect($back . '#lien');
+    }
+
     public function settingsForm(Request $request): Response
     {
         $actor = $this->auth->requirePermission(Permission::SETTINGS_VIEW);
