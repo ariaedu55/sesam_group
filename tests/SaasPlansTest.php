@@ -19,22 +19,25 @@ use Sesam\Tests\Support\IntegrationTestCase;
  */
 final class SaasPlansTest extends IntegrationTestCase
 {
-    /** @var array<string, mixed> */
-    private array $savedPrice = [];
+    /** @var list<array<string, mixed>> */
+    private array $savedPrices = [];
 
     protected function setUp(): void
     {
         parent::setUp();
-        $row = $this->pdo()->query("SELECT * FROM saas_prices WHERE sector = 'boutique'")->fetch(\PDO::FETCH_ASSOC);
-        $this->savedPrice = is_array($row) ? $row : [];
+        $this->savedPrices = $this->pdo()->query("SELECT * FROM saas_prices WHERE sector = 'boutique'")->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     protected function tearDown(): void
     {
         // Tarifs globaux : on remet exactement ceux d'avant le test.
-        if ($this->savedPrice !== []) {
-            $set = implode(', ', array_map(static fn (string $c): string => $c . ' = :' . $c, array_keys(array_diff_key($this->savedPrice, ['sector' => 1]))));
-            $this->pdo()->prepare('UPDATE saas_prices SET ' . $set . ' WHERE sector = :sector')->execute($this->savedPrice);
+        $delete = $this->pdo()->prepare("DELETE FROM saas_prices WHERE sector = 'boutique' AND currency = ?");
+        foreach (array_diff(['XOF', 'USD', 'EUR'], array_column($this->savedPrices, 'currency')) as $currency) {
+            $delete->execute([$currency]);
+        }
+        foreach ($this->savedPrices as $row) {
+            $set = implode(', ', array_map(static fn (string $c): string => $c . ' = :' . $c, array_keys(array_diff_key($row, ['sector' => 1, 'currency' => 1]))));
+            $this->pdo()->prepare('UPDATE saas_prices SET ' . $set . ' WHERE sector = :sector AND currency = :currency')->execute($row);
         }
         parent::tearDown();
     }
@@ -48,7 +51,7 @@ final class SaasPlansTest extends IntegrationTestCase
             $params[] = ($plans[$months]['enabled'] ?? true) ? 1 : 0;
             $params[] = $plans[$months]['discount'] ?? 0;
         }
-        $this->pdo()->prepare($sql . " WHERE sector = 'boutique'")->execute($params);
+        $this->pdo()->prepare($sql . " WHERE sector = 'boutique' AND currency = 'XOF'")->execute($params);
     }
 
     /** Commerce déjà abonné à un ancien tarif (mémorisé dans son abonnement). */
@@ -127,41 +130,41 @@ final class SaasPlansTest extends IntegrationTestCase
     public function testConsoleSavesPlansPerServiceAndRejectsBadDiscounts(): void
     {
         [$tenantId] = $this->subscribedOwner(4000, 'trial');
+        [$euroTenant, $euroOwner] = $this->subscribedOwner(4000, 'trial');
+        [$dollarTenant, $dollarOwner] = $this->subscribedOwner(4000, 'trial');
+        $this->pdo()->prepare("UPDATE tenants SET country = 'FR', currency = 'EUR' WHERE id = ?")->execute([$euroTenant]);
+        $this->pdo()->prepare("UPDATE tenants SET country = 'US', currency = 'USD' WHERE id = ?")->execute([$dollarTenant]);
         $kernel = $this->kernel();
         $this->loginAs($kernel, [Role::SUPER_ADMIN], null);
-        $form = [];
-        foreach (['reservation', 'boutique', 'loyer'] as $sector) {
-            $row = $this->pdo()->query("SELECT * FROM saas_prices WHERE sector = '" . $sector . "'")->fetch(\PDO::FETCH_ASSOC);
-            $form[$sector . '_monthly'] = (string) $row['monthly_amount'];
-            $form[$sector . '_setup'] = (string) $row['setup_fee'];
-            foreach ([3, 6, 12] as $months) {
-                if ((int) $row['plan_' . $months . '_enabled'] === 1) {
-                    $form[$sector . '_plan_' . $months . '_enabled'] = '1';
-                }
-                $form[$sector . '_plan_' . $months . '_discount'] = (string) $row['plan_' . $months . '_discount'];
-            }
-        }
+        $form = [
+            'boutique_EUR_monthly' => '19,95',
+            'boutique_USD_monthly' => '24.50',
+            'boutique_XOF_monthly' => '11000',
+            'boutique_XOF_plan_3_enabled' => '1',
+            'boutique_XOF_plan_3_discount' => '7',
+            'boutique_XOF_plan_12_enabled' => '1',
+            'boutique_XOF_plan_12_discount' => '20 %',
+        ];
         $page = html_entity_decode($kernel->handle(new Request('GET', '/tarifs'))->content(), ENT_QUOTES, 'UTF-8');
-        $this->assertStringContainsString('boutique_plan_12_discount', $page);
+        $this->assertStringContainsString('boutique_XOF_plan_12_discount', $page);
 
         $bad = $form;
-        $bad['boutique_plan_3_discount'] = '95';
+        $bad['boutique_XOF_plan_3_discount'] = '95';
         $this->assertSame(422, $this->submit($kernel, '/tarifs', $bad, '/tarifs')->status());
 
-        $form['boutique_monthly'] = '11000';
-        $form['boutique_plan_3_enabled'] = '1';
-        $form['boutique_plan_3_discount'] = '7';
-        unset($form['boutique_plan_6_enabled']);
-        $form['boutique_plan_12_enabled'] = '1';
-        $form['boutique_plan_12_discount'] = '20 %';
         $this->assertSame('/tarifs', $this->submit($kernel, '/tarifs', $form, '/tarifs')->headers()['Location'] ?? '');
 
-        $row = $this->pdo()->query("SELECT * FROM saas_prices WHERE sector = 'boutique'")->fetch(\PDO::FETCH_ASSOC);
+        $row = $this->pdo()->query("SELECT * FROM saas_prices WHERE sector = 'boutique' AND currency = 'XOF'")->fetch(\PDO::FETCH_ASSOC);
         $this->assertSame([11000, 1, 7, 0, 1, 20], [(int) $row['monthly_amount'], (int) $row['plan_3_enabled'], (int) $row['plan_3_discount'], (int) $row['plan_6_enabled'], (int) $row['plan_12_enabled'], (int) $row['plan_12_discount']]);
         $this->assertSame(11000, (int) $this->value('SELECT monthly_amount_minor FROM tenant_subscriptions WHERE tenant_id = ?', [$tenantId]), 'Un commerce en essai suit le nouveau tarif.');
 
         $saas = new SaasService($this->config()['db']);
         $this->assertSame([1, 3, 12], array_keys($saas->plans($tenantId)));
         $this->assertSame(105600, $saas->plans($tenantId)[12]['amount']);
+        $this->assertSame(1995, $saas->page($euroOwner)['price']);
+        $this->assertSame(2450, $saas->page($dollarOwner)['price']);
+        $this->assertFalse($saas->page($euroOwner)['onlinePay']);
+        $this->expectException(ValidationException::class);
+        $saas->checkout($euroOwner, 1, 'wave');
     }
 }

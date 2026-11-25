@@ -10,8 +10,10 @@ use Sesam\Core\Database\Connection;
 use Sesam\Core\Env;
 use Sesam\Core\Request\Request;
 use Sesam\Core\Response\Response;
+use Sesam\Core\Security\Honeypot;
 use Sesam\Core\Security\SecurityHeaders;
 use Sesam\Core\Session\Session;
+use Sesam\Middleware\HoneypotMiddleware;
 use Sesam\Repositories\RoleRepository;
 use Sesam\Repositories\UserRepository;
 use Sesam\Services\QuoteService;
@@ -22,6 +24,17 @@ final class SecurityHardeningTest extends TestCase
 
     /** @var list<string> */
     private array $emails = [];
+
+    public function testRejectedShopOrderReturnsToThePublicShop(): void
+    {
+        $session = new Session();
+        $middleware = new HoneypotMiddleware(new Honeypot($session), $session);
+        $order = new Request('POST', '/t/boutique-test/commander', [], [Honeypot::FIELD => 'https://example.test']);
+        $response = $middleware->handle($order, static fn (): Response => Response::html('Commande créée'));
+
+        $this->assertSame(303, $response->status());
+        $this->assertSame('/t/boutique-test', $response->headers()['Location'] ?? '');
+    }
 
     protected function tearDown(): void
     {

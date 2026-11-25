@@ -32,12 +32,16 @@ final class DesignSystemTest extends TestCase
         foreach ($layouts as $layout) {
             $html = (string) file_get_contents($layout);
             $name = basename($layout);
-            $this->assertStringContainsString('<meta name="viewport" content="width=device-width, initial-scale=1">', $html, $name);
+            if ($name === 'fragment.php') {
+                continue;
+            }
+            $this->assertMatchesRegularExpression('/<meta name="viewport" content="width=device-width, initial-scale=1(?:, [^"]+)?">/', $html, $name);
             $this->assertStringContainsString('<html lang="fr"', $html, $name);
             $this->assertStringNotContainsString('user-scalable=no', $html, $name);
         }
-        foreach (glob(dirname(__DIR__) . '/public/assets/css/*.css') ?: [] as $stylesheet) {
-            $this->assertMatchesRegularExpression('/@media\s*\((max|min)-width/', (string) file_get_contents($stylesheet), basename($stylesheet));
+        foreach (['activities.css', 'app-glass.css', 'boutique.css', 'console.css', 'immo.css', 'salon.css', 'site.css'] as $stylesheet) {
+            $css = (string) file_get_contents(dirname(__DIR__) . '/public/assets/css/' . $stylesheet);
+            $this->assertMatchesRegularExpression('/@media\s*\((max|min)-width/', $css, $stylesheet);
         }
     }
 

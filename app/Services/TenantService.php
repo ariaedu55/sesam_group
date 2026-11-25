@@ -9,6 +9,7 @@ use Sesam\Core\Auth\Role;
 use Sesam\Core\Database\Connection;
 use Sesam\Core\HttpException;
 use Sesam\Core\Logger\Logger;
+use Sesam\Core\Money\Country;
 use Sesam\Core\Tenant\Sector;
 use Sesam\Core\Tenant\Slug;
 use Sesam\Core\Tenant\TenantContext;
@@ -22,6 +23,8 @@ use Sesam\Repositories\UserRepository;
 
 final class TenantService extends Service
 {
+    private const MAX_SLUG_LENGTH = 80;
+
     private readonly TenantRepository $tenants;
     private readonly UserRepository $users;
     private readonly RoleRepository $roles;
@@ -97,12 +100,15 @@ final class TenantService extends Service
         if ($existing !== null && $existing->tenantId() === null) {
             throw new ValidationException(['owner_email' => 'Cet e-mail appartient à un compte de l\'équipe SESAM. Utilisez l\'e-mail du client.']);
         }
+        if ($existing !== null && !$existing->hasRole(Role::TENANT_OWNER)) {
+            throw new ValidationException(['owner_email' => 'Cet e-mail appartient à un membre d\'équipe. Utilisez le compte responsable du client.']);
+        }
         $owner = $existing === null ? $this->validatedOwner($input) : null;
         $country = $this->validatedCountry($input);
 
         $rows = [];
         foreach ($sectors as $sector) {
-            $slug = count($sectors) > 1 ? $data['slug'] . '-' . self::SLUG_SUFFIX[$sector] : $data['slug'];
+            $slug = count($sectors) > 1 ? $this->activitySlug($data['slug'], '-' . self::SLUG_SUFFIX[$sector]) : $data['slug'];
             $this->assertUniqueSlug($slug);
             $rows[] = ['slug' => $slug, 'sector' => $sector] + $data;
         }
@@ -166,7 +172,7 @@ final class TenantService extends Service
         if (!in_array($sector, Sector::ALL, true)) {
             throw new ValidationException(['sector' => 'Choisissez une activité.']);
         }
-        $ownerId = $this->ownerIdOf($tenantId);
+        $ownerId = $this->access->ownerIdOf($tenantId);
         if ($ownerId === null) {
             throw new ValidationException(['sector' => 'Ce commerce n\'a pas de responsable : impossible de lui ajouter une activité.']);
         }
@@ -178,22 +184,30 @@ final class TenantService extends Service
         }
 
         $base = (string) preg_replace('/-(' . implode('|', self::SLUG_SUFFIX) . ')$/', '', $source->slug());
-        $slug = $base . '-' . self::SLUG_SUFFIX[$sector];
+        $suffix = '-' . self::SLUG_SUFFIX[$sector];
+        $slug = $this->activitySlug($base, $suffix);
         for ($n = 2; !$this->tenants->slugAvailable($slug); $n++) {
-            $slug = $base . '-' . self::SLUG_SUFFIX[$sector] . '-' . $n;
+            $slug = $this->activitySlug($base, $suffix . '-' . $n);
         }
-        $id = $this->tenants->insert([
-            'slug' => $slug,
-            'name' => $source->name(),
-            'sector' => $sector,
-            'status' => 'active',
-            'display_name' => $source->displayName(),
-        ]);
-        if ($source->phone() !== '') {
-            $this->pdo->prepare('UPDATE tenants SET phone = ? WHERE id = ?')->execute([$source->phone(), $id]);
+        $this->pdo->beginTransaction();
+        try {
+            $id = $this->tenants->insert([
+                'slug' => $slug,
+                'name' => $source->name(),
+                'sector' => $sector,
+                'status' => 'active',
+                'display_name' => $source->displayName(),
+            ]);
+            if ($source->phone() !== '') {
+                $this->pdo->prepare('UPDATE tenants SET phone = ? WHERE id = ?')->execute([$source->phone(), $id]);
+            }
+            $this->tenants->updateCountry($id, $source->country());
+            $this->access->grant($ownerId, $id);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            $this->pdo->rollBack();
+            throw $exception;
         }
-        $this->tenants->updateCountry($id, $source->country());
-        $this->access->grant($ownerId, $id);
         $this->logger?->info('tenant add activity source=' . $tenantId . ' new=' . $id . ' sector=' . $sector . ' user=' . $ownerId . ' actor=' . $actor->id());
 
         return $id;
@@ -206,7 +220,7 @@ final class TenantService extends Service
      */
     public function activitiesOf(int $tenantId): array
     {
-        $ownerId = $this->ownerIdOf($tenantId);
+        $ownerId = $this->access->ownerIdOf($tenantId);
         $owner = $ownerId !== null ? $this->users->findById($ownerId) : null;
         if ($owner === null) {
             return ['owner' => null, 'tenants' => []];
@@ -222,23 +236,9 @@ final class TenantService extends Service
         return ['owner' => $owner, 'tenants' => $tenants];
     }
 
-    /**
-     * Responsable du commerce : compte « tenant-owner » rattaché à ce commerce, en activité principale ou supplémentaire.
-     */
-    private function ownerIdOf(int $tenantId): ?int
+    private function activitySlug(string $base, string $suffix): string
     {
-        $statement = $this->pdo->prepare(
-            "SELECT u.id FROM users u
-             JOIN user_roles ur ON ur.user_id = u.id
-             JOIN roles r ON r.id = ur.role_id AND r.slug = ?
-             WHERE u.tenant_id = ? OR u.id IN (SELECT a.user_id FROM user_tenant_access a WHERE a.tenant_id = ?)
-             ORDER BY (u.tenant_id = ?) DESC, u.id
-             LIMIT 1"
-        );
-        $statement->execute([Role::TENANT_OWNER, $tenantId, $tenantId, $tenantId]);
-        $id = $statement->fetchColumn();
-
-        return $id === false ? null : (int) $id;
+        return rtrim(substr($base, 0, self::MAX_SLUG_LENGTH - strlen($suffix)), '-') . $suffix;
     }
 
     /**
@@ -271,7 +271,7 @@ final class TenantService extends Service
         }
         $data = $this->validated($input);
         $this->assertUniqueSlug($data['slug'], $id);
-        $country = $this->validatedCountry($input);
+        $country = $this->validatedCountry($input, $current->country());
         $this->tenants->update($id, $data);
         $this->tenants->updateCountry($id, $country);
     }
@@ -345,7 +345,7 @@ final class TenantService extends Service
         unset($input['tenant_id']);
         $data = $this->validator->validate($input, [
             'name' => 'required|string|max:120',
-            'slug' => 'required|string|max:80',
+            'slug' => 'required|string|max:' . self::MAX_SLUG_LENGTH,
             'sector' => 'required|string|max:40',
             'status' => 'required|string|max:20',
             'display_name' => 'required|string|max:120',
@@ -396,10 +396,11 @@ final class TenantService extends Service
     /**
      * @param array<string, mixed> $input
      */
-    private function validatedCountry(array $input): string
+    private function validatedCountry(array $input, string $default = Country::DEFAULT): string
     {
-        $country = strtoupper(trim((string) ($input['country'] ?? '')));
-        if (!\Sesam\Core\Money\Country::exists($country)) {
+        $value = $input['country'] ?? $default;
+        $country = is_string($value) ? strtoupper(trim($value)) : '';
+        if (!Country::exists($country)) {
             throw new ValidationException(['country' => 'Choisissez le pays du commerce : il décide de la devise de l\'abonnement.']);
         }
 
@@ -408,8 +409,7 @@ final class TenantService extends Service
 
     private function assertUniqueSlug(string $slug, ?int $exceptId = null): void
     {
-        $existing = $this->tenants->findBySlug($slug);
-        if ($existing !== null && $existing->id() !== $exceptId) {
+        if (!$this->tenants->slugAvailable($slug, $exceptId)) {
             throw new ValidationException(['slug' => 'Ce slug est déjà utilisé.']);
         }
     }

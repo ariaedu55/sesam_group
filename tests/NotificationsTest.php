@@ -32,7 +32,7 @@ final class NotificationsTest extends IntegrationTestCase
         $this->assertSame(200, $sw->status());
         $this->assertStringContainsString('application/javascript', $sw->headers()['Content-Type'] ?? '');
         $this->assertStringContainsString('onBackgroundMessage', $sw->content());
-        $this->assertStringContainsString('"projectId":"sesam-e1c82"', $sw->content());
+        $this->assertStringContainsString('"projectId":"sesam-tests"', $sw->content());
 
         $page = $this->get($kernel, '/espace');
         $this->assertStringContainsString('data-push', $page->content());

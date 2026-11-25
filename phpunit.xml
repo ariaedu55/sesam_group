@@ -11,6 +11,7 @@
     <php>
         <!-- Les tests ne doivent jamais envoyer de vraie notification push. -->
         <env name="PUSH_DRIVER_OVERRIDE" value="log" force="true"/>
+        <env name="FIREBASE_PROJECT_ID" value="sesam-tests" force="true"/>
         <!-- Ni aucun vrai e-mail : ils sont écrits dans storage/logs/mail.log. -->
         <env name="MAIL_DRIVER_OVERRIDE" value="log" force="true"/>
         <!-- Pas d'appels NabooPay live pendant PHPUnit (bac à sable uniquement). -->

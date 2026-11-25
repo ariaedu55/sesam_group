@@ -22,7 +22,7 @@ final class TrialSettingTest extends IntegrationTestCase
     {
         // Réglage global : on remet toujours l'essai gratuit (valeur par défaut) après chaque test.
         $this->pdo()->prepare("UPDATE platform_settings SET setting_value = '1' WHERE setting_key = 'trial_enabled'")->execute();
-        $this->pdo()->prepare("UPDATE saas_prices SET setup_fee = 0 WHERE sector = 'boutique'")->execute();
+        $this->pdo()->prepare("UPDATE saas_prices SET setup_fee = 0 WHERE sector = 'boutique' AND currency = 'XOF'")->execute();
         parent::tearDown();
     }
 
@@ -67,8 +67,8 @@ final class TrialSettingTest extends IntegrationTestCase
     {
         $kernel = $this->kernel();
         $this->pdo()->prepare("UPDATE platform_settings SET setting_value = '0' WHERE setting_key = 'trial_enabled'")->execute();
-        $this->pdo()->prepare("UPDATE saas_prices SET setup_fee = 5000 WHERE sector = 'boutique'")->execute();
-        $monthly = (int) $this->value("SELECT monthly_amount FROM saas_prices WHERE sector = 'boutique'");
+        $this->pdo()->prepare("UPDATE saas_prices SET setup_fee = 5000 WHERE sector = 'boutique' AND currency = 'XOF'")->execute();
+        $monthly = (int) $this->value("SELECT monthly_amount FROM saas_prices WHERE sector = 'boutique' AND currency = 'XOF'");
 
         $email = 'p20-paid-' . bin2hex(random_bytes(3)) . '@example.com';
         $signup = $this->submit($kernel, '/commencer', [

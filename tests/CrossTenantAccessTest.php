@@ -15,6 +15,54 @@ use Sesam\Tests\Support\IntegrationTestCase;
  */
 final class CrossTenantAccessTest extends IntegrationTestCase
 {
+    public function testSharedAccountCanOnlyBeManagedByAnOwnerOfAllItsActivities(): void
+    {
+        $kernel = $this->kernel();
+        $shop = $this->tenant(Sector::BOUTIQUE);
+        $salon = $this->tenant(Sector::RESERVATION);
+        $ownerId = $this->userId($this->loginAs($kernel, [Role::TENANT_OWNER], $shop));
+        $employee = $this->user([Role::STAFF], $shop);
+        $employeeId = $this->userId($employee);
+        $this->insert('user_tenant_access', ['user_id' => $employeeId, 'tenant_id' => $salon]);
+        $path = '/utilisateurs/' . $employeeId;
+        $changes = ['full_name' => 'Compte partagé', 'email' => $employee, 'is_active' => '1', 'roles' => [Role::STAFF]];
+
+        $this->assertSame(404, $this->submit($kernel, $path, $changes)->status());
+        $this->assertSame(404, $this->submit($kernel, $path . '/lien-reinitialisation')->status());
+
+        $this->insert('user_tenant_access', ['user_id' => $ownerId, 'tenant_id' => $salon]);
+        $this->assertSame('/mes-activites', $this->get($kernel, '/espace')->headers()['Location'] ?? '');
+        $this->assertSame('/espace', $this->submit($kernel, '/mes-activites/' . $salon, [], '/mes-activites')->headers()['Location'] ?? '');
+        $this->assertSame(422, $this->submit($kernel, $path, $changes + ['businesses' => []])->status());
+        $this->assertNotSame('Compte partagé', $this->value('SELECT full_name FROM users WHERE id = ?', [$employeeId]));
+        $this->assertSame(302, $this->submit($kernel, $path, $changes + ['businesses' => [$shop, $salon]])->status());
+        $this->assertSame('Compte partagé', $this->value('SELECT full_name FROM users WHERE id = ?', [$employeeId]));
+    }
+
+    public function testConsoleCreatesMultipleActivitiesWithLongPublicLinks(): void
+    {
+        $kernel = $this->kernel();
+        $this->loginAs($kernel, [Role::SUPER_ADMIN], null);
+        $email = 'p20-activites-' . bin2hex(random_bytes(4)) . '@example.com';
+        $slug = str_pad('p20-' . bin2hex(random_bytes(6)), 80, 'x');
+        $created = $this->submit($kernel, '/commerces', [
+            'name' => 'Activités p20', 'display_name' => 'Activités p20', 'slug' => $slug, 'status' => 'active',
+            'sectors' => [Sector::RESERVATION, Sector::BOUTIQUE], 'country' => 'FR', 'trial_days' => '0',
+            'owner_email' => $email, 'owner_full_name' => 'Responsable p20', 'owner_password' => self::PASSWORD,
+        ], '/commerces/nouveau');
+        $this->assertSame(302, $created->status());
+
+        $ownerId = $this->userId($email);
+        $primary = (int) $this->value('SELECT tenant_id FROM users WHERE id = ?', [$ownerId]);
+        $extra = (int) $this->value('SELECT tenant_id FROM user_tenant_access WHERE user_id = ?', [$ownerId]);
+        $this->track($primary, $email);
+        $this->track($extra);
+        $this->assertGreaterThan(0, $extra);
+        $this->assertSame('EUR', $this->value('SELECT currency FROM tenants WHERE id = ?', [$extra]));
+        $this->assertSame(80, strlen($this->slug($extra)));
+        $this->assertStringEndsWith('-boutique', $this->slug($extra));
+    }
+
     public function testClientsAndPaymentsOfAnotherTenantAreSealed(): void
     {
         [$kernel, $own, $other] = $this->pair(Sector::RESERVATION);

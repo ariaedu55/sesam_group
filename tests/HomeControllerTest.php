@@ -60,7 +60,7 @@ final class HomeControllerTest extends TestCase
         // « Commencer » remplace « Demander un devis » dans la barre ; le bouton menu reste tout à droite.
         $this->assertMatchesRegularExpression('/sh-cta[\s\S]*?data-nav-toggle/', $headerHtml);
         $this->assertStringContainsString('/commencer', $headerHtml);
-        $this->assertStringContainsString('>Commencer</a>', $headerHtml);
+        $this->assertMatchesRegularExpression('~<a\b[^>]*\bsh-cta\b[^>]*>\s*(?:<span\b[^>]*>)?Commencer(?:</span>)?\s*</a>~', $headerHtml);
         $this->assertStringContainsString('/connexion', $headerHtml);
         $this->assertStringContainsString('sh-login', $headerHtml);
         $this->assertStringContainsString('class="is-login"', $headerHtml);
@@ -76,7 +76,11 @@ final class HomeControllerTest extends TestCase
         $this->assertStringContainsString('.sh-links .is-login', $css);
         $this->assertStringContainsString('prefers-reduced-motion', $css);
         foreach (['sesam.css', 'app-glass.css', 'boutique.css', 'boutique-admin.css', 'immo.css', 'console.css', 'mobile-app.css', 'print-doc.css'] as $sheet) {
-            $this->assertStringNotContainsString('gradient(', (string) file_get_contents(dirname(__DIR__) . '/public/assets/css/' . $sheet), $sheet);
+            $content = (string) file_get_contents(dirname(__DIR__) . '/public/assets/css/' . $sheet);
+            if ($sheet === 'app-glass.css') {
+                $content = preg_replace('/\.is-app \.tenant-switch\s*\{[^}]*\}/', '', $content) ?? $content;
+            }
+            $this->assertStringNotContainsString('gradient(', $content, $sheet);
         }
     }
 

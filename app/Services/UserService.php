@@ -24,6 +24,7 @@ final class UserService extends Service
     private readonly RoleRepository $roles;
     private readonly \Sesam\Repositories\TenantAccessRepository $access;
     private readonly \Sesam\Repositories\TenantRepository $tenants;
+    private readonly \PDO $pdo;
 
     /**
      * @param array{host: string, port: string, name: string, user: string, password: string} $database
@@ -34,7 +35,7 @@ final class UserService extends Service
         private readonly ?Logger $logger = null,
         private readonly Validator $validator = new Validator(),
     ) {
-        $pdo = Connection::make($database);
+        $pdo = $this->pdo = Connection::make($database);
         $this->users = new UserRepository($pdo);
         $this->roles = new RoleRepository($pdo);
         $this->access = new \Sesam\Repositories\TenantAccessRepository($pdo);
@@ -140,7 +141,7 @@ final class UserService extends Service
     {
         $this->assertCan($actor, Permission::USERS_VIEW);
         $user = $this->users->findById($id);
-        if ($user === null || !$this->visibleTo($actor, $user)) {
+        if ($user === null || !$this->manageableBy($actor, $user)) {
             $this->deny($actor, 'read user=' . $id);
         }
 
@@ -213,7 +214,7 @@ final class UserService extends Service
         $this->assertCan($actor, Permission::USERS_UPDATE);
         unset($input['tenant_id']);
         $current = $this->users->findById($id);
-        if ($current === null || !$this->visibleTo($actor, $current)) {
+        if ($current === null || !$this->manageableBy($actor, $current)) {
             $this->deny($actor, 'update user=' . $id);
         }
         if ($current->hasRole(Role::SUPER_ADMIN) && !$actor->hasRole(Role::SUPER_ADMIN)) {
@@ -245,26 +246,34 @@ final class UserService extends Service
         if ($passwordRequired) {
             $payload['password_hash'] = password_hash($data['password'], PASSWORD_DEFAULT);
         }
-        $this->users->update($id, $payload);
-
+        $roleIds = null;
         if ($actor->can(Permission::USERS_ASSIGN_ROLES) && array_key_exists('roles', $input)) {
             $roles = $this->normalizedRoles($actor, $input['roles'] ?? [], $current);
             $this->guardLastSuperAdminRoles($current, $roles);
-            $this->roles->replaceUserRoles($id, $this->roles->idsForSlugs($roles));
+            $roleIds = $this->roles->idsForSlugs($roles);
         }
 
-        if (array_key_exists('businesses', $input) && $this->businessesEditable($actor, $current)) {
-            $businesses = $this->selectedBusinesses($actor, $input['businesses']);
+        $businesses = array_key_exists('businesses', $input) && $this->businessesEditable($actor, $current)
+            ? $this->selectedBusinesses($actor, $input['businesses'])
+            : null;
+
+        $this->pdo->beginTransaction();
+        try {
+            $this->users->update($id, $payload);
+            if ($roleIds !== null) {
+                $this->roles->replaceUserRoles($id, $roleIds);
+            }
             if ($businesses !== null) {
-                // Les business hors du groupe de ce responsable (s'il y en a) restent inchangés.
-                $choices = array_map(static fn (\Sesam\Models\Tenant $t): int => $t->id(), $this->businessChoices($actor));
-                $outside = array_values(array_filter($this->businessesOf($current), static fn (int $t): bool => !in_array($t, $choices, true)));
                 $home = in_array((int) $current->tenantId(), $businesses['all'], true) ? (int) $current->tenantId() : $businesses['home'];
                 if ($home !== $current->tenantId()) {
                     $this->users->setHomeTenant($id, $home);
                 }
-                $this->access->replaceExtra($id, $home, [...$businesses['all'], ...$outside]);
+                $this->access->replaceExtra($id, $home, $businesses['all']);
             }
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            $this->pdo->rollBack();
+            throw $exception;
         }
     }
 
@@ -351,7 +360,7 @@ final class UserService extends Service
         return [null, true];
     }
 
-    private function visibleTo(User $actor, User $target): bool
+    private function manageableBy(User $actor, User $target): bool
     {
         $actorTenant = $actor->tenantId();
         $contextId = $this->context->id();
@@ -362,7 +371,17 @@ final class UserService extends Service
             return $target->tenantId() === null;
         }
 
-        return $target->tenantId() === $actorTenant || ($target->tenantId() !== null && $this->access->has($target->id(), $actorTenant));
+        if ($target->tenantId() === null || ($target->tenantId() !== $actorTenant && !$this->access->has($target->id(), $actorTenant))) {
+            return false;
+        }
+        if ($actor->id() === $target->id()) {
+            return true;
+        }
+
+        // Le profil, les rôles et le mot de passe sont communs à toutes les activités du compte.
+        $actorTenants = $this->access->tenantIdsFor($actor->id(), $actor->homeTenantId());
+
+        return array_diff($this->businessesOf($target), $actorTenants) === [];
     }
 
     private function deny(User $actor, string $reason): never

@@ -178,7 +178,7 @@ final class SaasService extends Service
         $email = strtolower($text('email', 190));
         $password = (string) ($input['password'] ?? '');
         $sector = (string) ($input['sector'] ?? '');
-        $country = strtoupper(trim((string) ($input['country'] ?? '')));
+        $country = strtoupper(trim((string) ($input['country'] ?? Country::DEFAULT)));
         $googleSub = trim((string) ($input['google_sub'] ?? ''));
         // Trois façons de s'inscrire : téléphone (l'identifiant est le numéro), e-mail, ou Google.
         // Le numéro WhatsApp est obligatoire dans les trois cas ; l'e-mail seulement en mode e-mail.

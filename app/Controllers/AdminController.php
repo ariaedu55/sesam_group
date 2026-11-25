@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sesam\Controllers;
 
 use Sesam\Core\Auth\Permission;
+use Sesam\Core\Money\Currency;
 use Sesam\Core\Request\Request;
 use Sesam\Core\Response\Response;
 use Sesam\Core\Response\ViewRenderer;
@@ -81,9 +82,17 @@ final class AdminController extends Controller
         $actor = $this->auth->requirePermission(Permission::SUBSCRIPTIONS_MANAGE);
         $input = ['usd_rate' => (string) $request->input('usd_rate', '')];
         foreach (['reservation', 'boutique', 'loyer'] as $sector) {
-            foreach (array_keys(\Sesam\Core\Money\Currency::ALL) as $currency) {
+            foreach (array_keys(Currency::ALL) as $currency) {
                 $prefix = $sector . '_' . $currency;
-                $input[$prefix . '_monthly'] = (string) $request->input($prefix . '_monthly', '0');
+                $monthly = $request->input($prefix . '_monthly');
+                if ($monthly === null && $currency === Currency::XOF) {
+                    $prefix = $sector;
+                    $monthly = $request->input($prefix . '_monthly');
+                }
+                if ($monthly === null) {
+                    continue;
+                }
+                $input[$prefix . '_monthly'] = is_scalar($monthly) ? (string) $monthly : 'invalide';
                 $input[$prefix . '_setup'] = (string) $request->input($prefix . '_setup', '0');
                 foreach ([3, 6, 12] as $months) {
                     $input[$prefix . '_plan_' . $months . '_enabled'] = (string) $request->input($prefix . '_plan_' . $months . '_enabled', '');

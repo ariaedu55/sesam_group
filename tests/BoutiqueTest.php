@@ -92,7 +92,8 @@ final class BoutiqueTest extends IntegrationTestCase
 
         $clientId = (int) $this->value('SELECT client_id FROM boutique_orders WHERE id = ?', [$orderId]);
         $client = html_entity_decode($this->get($kernel, '/clients/' . $clientId)->content(), ENT_QUOTES, 'UTF-8');
-        $this->assertStringContainsString('Commandes de la boutique', $client);
+        $this->assertStringContainsString('Commandes boutique', $client);
+        $this->assertStringContainsString('/boutique/commandes/' . $orderId . '"', $client);
 
         $this->submit($kernel, '/boutique/produits/' . $productId . '/visibilite', [], '/boutique/produits');
         $this->assertSame(0, (int) $this->value('SELECT is_published FROM boutique_products WHERE id = ?', [$productId]));

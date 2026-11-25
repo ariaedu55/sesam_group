@@ -458,7 +458,7 @@ final class AuthService extends Service
             return $user;
         }
         if (!$this->access->has($user->id(), $active)) {
-            $this->session->forget(self::SESSION_ACTIVE_TENANT);
+            $this->resetActivity();
 
             return $user;
         }

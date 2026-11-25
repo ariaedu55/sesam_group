@@ -68,6 +68,9 @@ final class HoneypotMiddleware implements Middleware
                 : 'La page était ouverte depuis longtemps : envoyez de nouveau le formulaire.');
         }
 
-        return Response::redirect($request->path(), 303);
+        $path = $request->path();
+        $returnPath = preg_replace('#^(/t/[^/]+)/commander$#', '$1', $path) ?? $path;
+
+        return Response::redirect($returnPath, 303);
     }
 }

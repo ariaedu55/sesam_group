@@ -159,8 +159,8 @@ final class TenantIsolationTest extends TestCase
             'password' => 'ValidPass-1234',
         ]));
         $this->assertSame(422, $denied->status());
-        $this->assertStringContainsString('E-mail ou mot de passe incorrect.', $denied->content());
-        $this->assertStringNotContainsString('suspendu', strtolower($denied->content()));
+        $this->assertStringContainsString('commerce est suspendu', $denied->content());
+        $this->assertSame(302, $kernel->handle(new Request('GET', '/espace'))->status());
     }
 
     public function testTenantEspaceShowsSectorDashboard(): void

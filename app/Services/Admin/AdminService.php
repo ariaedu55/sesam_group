@@ -363,6 +363,12 @@ final class AdminService extends Service
         foreach (array_keys(Sector::LABELS) as $sector) {
             foreach (array_keys(Currency::ALL) as $currency) {
                 $prefix = $sector . '_' . $currency;
+                if (!array_key_exists($prefix . '_monthly', $input)) {
+                    if ($currency !== Currency::XOF || !array_key_exists($sector . '_monthly', $input)) {
+                        continue;
+                    }
+                    $prefix = $sector;
+                }
                 $where = ' (' . Sector::LABELS[$sector] . ', ' . Currency::short($currency) . ')';
                 $monthly = Currency::parse((string) ($input[$prefix . '_monthly'] ?? '0'), $currency);
                 $setup = Currency::parse((string) ($input[$prefix . '_setup'] ?? '0'), $currency);
@@ -390,11 +396,18 @@ final class AdminService extends Service
         if ($errors !== []) {
             throw new ValidationException($errors);
         }
-        if ($rateRaw !== '') {
-            (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->set('rate_usd_xof', (string) $usdRate, $actor->id());
-        }
-        foreach ($clean as [$sector, $currency, $monthly, $setup, $plans]) {
-            $this->admin->savePrice($sector, $currency, $monthly, $setup, $plans, Currency::toXof($monthly, $currency, $usdRate));
+        $this->pdo->beginTransaction();
+        try {
+            if ($rateRaw !== '') {
+                (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->set('rate_usd_xof', (string) $usdRate, $actor->id());
+            }
+            foreach ($clean as [$sector, $currency, $monthly, $setup, $plans]) {
+                $this->admin->savePrice($sector, $currency, $monthly, $setup, $plans, Currency::toXof($monthly, $currency, $usdRate));
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            $this->pdo->rollBack();
+            throw $exception;
         }
     }
 

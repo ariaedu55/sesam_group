@@ -6,6 +6,7 @@ namespace Sesam\Controllers;
 
 use Sesam\Controllers\Concerns\RendersAppArea;
 use Sesam\Core\HttpException;
+use Sesam\Core\Money\Country;
 use Sesam\Core\Request\Request;
 use Sesam\Core\Response\Response;
 use Sesam\Core\Response\ViewRenderer;
@@ -65,7 +66,7 @@ final class SaasController extends Controller
         }
         $input = [];
         foreach (self::SIGNUP_FIELDS as $key) {
-            $value = $request->input($key);
+            $value = $request->input($key, $key === 'country' ? Country::DEFAULT : '');
             $input[$key] = is_scalar($value) ? (string) $value : '';
         }
         $pending = $this->auth->pendingGoogle();
