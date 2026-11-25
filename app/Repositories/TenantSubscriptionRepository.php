@@ -129,12 +129,12 @@ final class TenantSubscriptionRepository extends Repository
         if (($filters['source'] ?? '') === 'site') {
             $where[] = "t.signup_source = 'site'";
         }
-        $sql = 'SELECT t.id, t.slug, t.name, t.sector, t.status, t.created_at, t.updated_at, s.display_name, t.signup_source, t.phone,
+        $sql = 'SELECT t.id, t.slug, t.name, t.sector, t.status, t.created_at, t.updated_at, s.display_name, t.signup_source, t.phone, t.country, t.currency,
                        sub.status AS subscription_status, sub.period_end AS subscription_period_end,
                        (SELECT u.email FROM users u
                         INNER JOIN user_roles ur ON ur.user_id = u.id
                         INNER JOIN roles r ON r.id = ur.role_id AND r.slug = \'tenant-owner\'
-                        WHERE u.tenant_id = t.id
+                        WHERE u.tenant_id = t.id OR u.id IN (SELECT user_id FROM user_tenant_access a WHERE a.tenant_id = t.id)
                         ORDER BY u.id ASC
                         LIMIT 1) AS owner_email
                 FROM tenants t
@@ -217,10 +217,10 @@ final class TenantSubscriptionRepository extends Repository
              FROM users u
              INNER JOIN user_roles ur ON ur.user_id = u.id
              INNER JOIN roles r ON r.id = ur.role_id AND r.slug = 'tenant-owner'
-             WHERE u.tenant_id = :tenant_id
+             WHERE u.tenant_id = :tenant_id OR u.id IN (SELECT user_id FROM user_tenant_access WHERE tenant_id = :access_tenant_id)
              ORDER BY u.id ASC"
         );
-        $statement->execute(['tenant_id' => $tenantId]);
+        $statement->execute(['tenant_id' => $tenantId, 'access_tenant_id' => $tenantId]);
         $owners = [];
         foreach ($statement->fetchAll() as $row) {
             if (is_array($row)) {
@@ -238,8 +238,8 @@ final class TenantSubscriptionRepository extends Repository
 
     public function countUsers(int $tenantId): int
     {
-        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM users WHERE tenant_id = :tenant_id');
-        $statement->execute(['tenant_id' => $tenantId]);
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM users WHERE tenant_id = :tenant_id OR id IN (SELECT user_id FROM user_tenant_access WHERE tenant_id = :access_tenant_id)');
+        $statement->execute(['tenant_id' => $tenantId, 'access_tenant_id' => $tenantId]);
 
         return (int) $statement->fetchColumn();
     }

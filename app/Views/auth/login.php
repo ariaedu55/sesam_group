@@ -63,6 +63,7 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
             <p class="lg-error" role="alert" id="login-error"><?= Html::e($loginError) ?></p>
         <?php endif; ?>
         <form class="auth-form" method="post" action="<?= Html::url('/connexion') ?>" data-login-form>
+            <?php include dirname(__DIR__) . '/partials/honeypot.php'; ?>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
             <input type="hidden" name="mode" value="<?= Html::e($mode !== '' ? $mode : 'phone') ?>" data-login-mode-input>
             <div class="field" data-only="phone">

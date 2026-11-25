@@ -18,7 +18,8 @@ $arrow = static function () use ($icon): void {
     include $icon;
     echo '</span>';
 };
-$words = ['votre boutique', 'vos réservations', 'vos loyers', 'votre site'];
+// Mots qui défilent dans le titre, avec leur anglais (écrit à la main : Google traduit mal les morceaux de phrase).
+$words = [['votre boutique', 'your shop'], ['vos réservations', 'your bookings'], ['vos loyers', 'your rentals'], ['votre site', 'your website']];
 $bento = [
     'boutique' => ['blue', 'wide', 'shop'],
     'reservation' => ['lilac', 'narrow', 'booking'],
@@ -34,13 +35,13 @@ $bento = [
             <div class="hx-copy">
                 <a class="s-eyebrow" href="<?= Html::url('/services/boutique') ?>"><b>Nouveau</b> Sesam Boutique : vendez sur WhatsApp →</a>
                 <h1 class="s-display hx-title" id="hx-title">
-                    <span class="line"><span>Le digital</span></span>
-                    <span class="line"><span>qui fait vendre</span></span>
+                    <span class="line"><span><?= Html::en('Le digital', 'Digital that') ?></span></span>
+                    <span class="line"><span><?= Html::en('qui fait vendre', 'sells for') ?></span></span>
                     <span class="line"><span>
-                        <span class="sr-only">votre boutique, vos réservations, vos loyers et votre site.</span>
+                        <span class="sr-only"><?= Html::en('votre boutique, vos réservations, vos loyers et votre site.', 'your shop, your bookings, your rentals and your website.') ?></span>
                         <span class="hx-rot" aria-hidden="true" data-hx-rot><span class="hx-rot-list">
-                            <?php foreach ([...$words, $words[0]] as $word): ?>
-                                <span><?= Html::e($word) ?></span>
+                            <?php foreach ([...$words, $words[0]] as [$word, $wordEn]): ?>
+                                <?= Html::en($word, $wordEn) ?>
                             <?php endforeach; ?>
                         </span></span>
                     </span></span>
@@ -118,10 +119,10 @@ $bento = [
                 <ul class="ticks">
                     <?php foreach ([
                         ['link', 'Un lien à votre nom', 'À partager dans vos statuts, votre bio Instagram, vos groupes.'],
-                        ['chat', 'Commandes sur WhatsApp', 'Le panier arrive chez vous, déjà rédigé, avec le total.'],
+                        ['chat', 'Commandes sur WhatsApp', Html::en('Le panier arrive chez vous, déjà rédigé, avec le total.', 'The order lands in your WhatsApp, already written out, with the total.')],
                         ['box', 'Stock et clients suivis', 'Le stock baisse tout seul, chaque client a sa fiche.'],
                     ] as [$tickIcon, $tickTitle, $tickText]): ?>
-                        <li><span><?php $name = $tickIcon; include $icon; ?></span><span><strong><?= Html::e($tickTitle) ?></strong><small><?= Html::e($tickText) ?></small></span></li>
+                        <li><span><?php $name = $tickIcon; include $icon; ?></span><span><strong><?= Html::e($tickTitle) ?></strong><small><?= str_starts_with($tickText, '<span class="notranslate"') ? $tickText /* déjà échappé par Html::en */ : Html::e($tickText) ?></small></span></li>
                     <?php endforeach; ?>
                 </ul>
                 <div class="s-actions">
@@ -173,7 +174,7 @@ $bento = [
             <div class="offers">
                 <?php foreach ($catalog['offers'] as $index => $offer): ?>
                     <article class="offer<?= $index === 1 ? ' offer--hot' : '' ?>" data-reveal data-reveal-delay="<?= $index ?>">
-                        <?php if ($index === 1): ?><span class="offer-badge">Le plus choisi</span><?php endif; ?>
+                        <?php if ($index === 1): ?><span class="offer-badge"><?= Html::en('Le plus choisi', 'Most popular') ?></span><?php endif; ?>
                         <h3><?= Html::e($offer['name']) ?></h3>
                         <p class="offer-price"><?= Html::e($offer['price']) ?></p>
                         <p><?= Html::e($offer['description']) ?></p>
@@ -195,7 +196,7 @@ $bento = [
             <div class="cta-orb" aria-hidden="true">
                 <svg viewBox="0 0 120 120">
                     <defs><path id="cta-circle" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1 -92 0"/></defs>
-                    <text font-size="12" font-weight="800" letter-spacing="2.6" fill="#3cc4f5"><textPath href="#cta-circle">DEVIS GRATUIT · RÉPONSE RAPIDE · </textPath></text>
+                    <text font-size="12" font-weight="800" letter-spacing="2.6" fill="#3cc4f5"><textPath href="#cta-circle"><?= Html::en('DEVIS GRATUIT · RÉPONSE RAPIDE · ', 'FREE QUOTE · FAST REPLY · ', 'tspan') ?></textPath></text>
                 </svg>
             </div>
         </div>

@@ -158,6 +158,8 @@ final class TenantController extends Controller
             'name' => '',
             'slug' => '',
             'sector' => Sector::RESERVATION,
+            'sectors' => [Sector::RESERVATION],
+            'country' => \Sesam\Core\Money\Country::DEFAULT,
             'status' => 'active',
             'display_name' => '',
             'owner_full_name' => '',
@@ -175,16 +177,45 @@ final class TenantController extends Controller
             return $this->formView($actor, null, $input, ['trial_days' => 'Choisissez 15 jours, 1 mois ou sans essai.'], 422);
         }
         try {
-            $id = $this->tenants->create($actor, $input);
+            $created = $this->tenants->createWithActivities($actor, $input);
         } catch (ValidationException $exception) {
             return $this->formView($actor, null, $input, $exception->errors(), 422);
         }
+        $ids = $created['ids'];
         if ($trial > 0 && $this->saas !== null) {
-            $this->saas->startTrial($id, $trial, $actor->id(), 'Commerce créé par ' . $actor->fullName());
+            foreach ($ids as $id) {
+                $this->saas->startTrial($id, $trial, $actor->id(), 'Commerce créé par ' . $actor->fullName());
+            }
         }
-        $this->session->put('status', $trial > 0 ? 'Commerce créé avec un essai gratuit de ' . ($trial === 30 ? '1 mois' : '15 jours') . '.' : 'Le commerce a été créé.');
+        $what = count($ids) > 1 ? count($ids) . ' activités créées pour le même compte' : 'Commerce créé';
+        $message = $trial > 0 ? $what . ' avec un essai gratuit de ' . ($trial === 30 ? '1 mois' : '15 jours') . '.' : $what . '.';
+        if ($created['linked']) {
+            $message .= ' L\'e-mail avait déjà un compte : il ouvre maintenant ces activités avec son mot de passe habituel.';
+        }
+        $this->session->put('status', $message);
 
-        return Response::redirect('/commerces/' . $id);
+        return Response::redirect('/commerces/' . $ids[0]);
+    }
+
+    /** Console : ajoute une activité (Immo, Réservation, Boutique) au client de ce commerce, sur le même compte. */
+    public function addActivity(Request $request): Response
+    {
+        $actor = $this->auth->requirePermission(Permission::TENANTS_CREATE);
+        $id = $this->id($request);
+        $trial = (int) $request->input('trial_days', '30');
+        try {
+            $newId = $this->tenants->addActivity($actor, $id, (string) $request->input('sector', ''));
+        } catch (ValidationException $exception) {
+            $this->session->put('status', (string) (array_values($exception->errors())[0] ?? 'Activité non ajoutée.'));
+
+            return Response::redirect('/commerces/' . $id . '#activites');
+        }
+        if (in_array($trial, [15, 30], true) && $this->saas !== null) {
+            $this->saas->startTrial($newId, $trial, $actor->id(), 'Activité ajoutée par ' . $actor->fullName());
+        }
+        $this->session->put('status', 'Activité ajoutée : le client l\'ouvre avec le même e-mail et le même mot de passe, depuis « Mes activités ».');
+
+        return Response::redirect('/commerces/' . $newId . '#activites');
     }
 
     public function editForm(Request $request): Response
@@ -196,6 +227,7 @@ final class TenantController extends Controller
             'name' => $tenant->name(),
             'slug' => $tenant->slug(),
             'sector' => $tenant->sector(),
+            'country' => $tenant->country(),
             'status' => $tenant->status(),
             'display_name' => $tenant->displayName(),
         ]);
@@ -299,6 +331,8 @@ final class TenantController extends Controller
             'name' => $request->input('name'),
             'slug' => $request->input('slug'),
             'sector' => $request->input('sector'),
+            'sectors' => $request->input('sectors'),
+            'country' => $request->input('country'),
             'status' => $request->input('status'),
             'display_name' => $request->input('display_name'),
             'tenant_id' => $request->input('tenant_id'),
@@ -331,6 +365,9 @@ final class TenantController extends Controller
             'canUpdate' => $actor->can(Permission::TENANTS_UPDATE),
             'canSeeSubscriptions' => $actor->can(Permission::SUBSCRIPTIONS_VIEW),
             'canManageSubscriptions' => $actor->can(Permission::SUBSCRIPTIONS_MANAGE),
+            'activities' => $this->tenants->activitiesOf($id),
+            'canAddActivity' => $actor->can(Permission::TENANTS_CREATE),
+            'sectorLabels' => Sector::LABELS,
         ], $actor, $status);
     }
 
@@ -348,6 +385,8 @@ final class TenantController extends Controller
             'old' => $old,
             'errors' => $errors,
             'sectors' => Sector::LABELS,
+            // Tarifs de chaque devise : le formulaire affiche le prix qui s'applique au pays choisi.
+            'pricesByCurrency' => $this->saas?->publicOffer()['byCurrency'] ?? [],
             'canUpdate' => $actor->can(Permission::TENANTS_UPDATE) || $tenant === null,
         ], $actor, $status);
     }

@@ -10,6 +10,8 @@ use Sesam\Core\Boutique\Money;
 use Sesam\Core\Boutique\WhatsApp;
 use Sesam\Core\Database\Connection;
 use Sesam\Core\HttpException;
+use Sesam\Core\Money\Country;
+use Sesam\Core\Money\Currency;
 use Sesam\Core\Payment\PaymentStatus;
 use Sesam\Core\Tenant\Sector;
 use Sesam\Core\Tenant\Slug;
@@ -106,20 +108,48 @@ final class SaasService extends Service
     /**
      * Offre affichée sur la page « Commencer » : essai gratuit ou non, et tarifs de chaque module.
      *
-     * @return array{trial: bool, prices: array<string, array{monthly: int, setup: int}>}
+     * « prices » : tarifs en FCFA (par module) ; « byCurrency » : tarifs de chaque devise, en plus petite unité.
+     *
+     * @return array{trial: bool, prices: array<string, array{monthly: int, setup: int}>, byCurrency: array<string, array<string, array{monthly: int, setup: int}>>}
      */
     public function publicOffer(): array
     {
-        $prices = [];
+        $byCurrency = [];
         try {
-            foreach ($this->pdo->query('SELECT sector, monthly_amount, setup_fee FROM saas_prices') ?: [] as $row) {
-                $prices[(string) $row['sector']] = ['monthly' => (int) $row['monthly_amount'], 'setup' => (int) $row['setup_fee']];
+            foreach ($this->pdo->query('SELECT sector, currency, monthly_amount, setup_fee FROM saas_prices') ?: [] as $row) {
+                $byCurrency[Currency::normalize((string) $row['currency'])][(string) $row['sector']] = ['monthly' => (int) $row['monthly_amount'], 'setup' => (int) $row['setup_fee']];
             }
         } catch (\PDOException) {
-            $prices = [];
+            $byCurrency = [];
         }
 
-        return ['trial' => $this->trialEnabled(), 'prices' => $prices];
+        return ['trial' => $this->trialEnabled(), 'prices' => $byCurrency[Currency::XOF] ?? [], 'byCurrency' => $byCurrency];
+    }
+
+    // ================================================================ Devises
+
+    /** Taux du dollar en FCFA (page Tarifs de la console). L'euro a une parité fixe. */
+    public function usdRate(): float
+    {
+        $raw = (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->get('rate_usd_xof', (string) Currency::DEFAULT_USD_TO_XOF);
+        $rate = (float) str_replace(',', '.', $raw);
+
+        return $rate > 0 ? $rate : Currency::DEFAULT_USD_TO_XOF;
+    }
+
+    /** Devise de l'abonnement du commerce, décidée par son pays. */
+    public function currencyOf(int $tenantId): string
+    {
+        $statement = $this->pdo->prepare('SELECT currency FROM tenants WHERE id = ?');
+        $statement->execute([$tenantId]);
+
+        return Currency::normalize((string) ($statement->fetchColumn() ?: ''));
+    }
+
+    /** Équivalent FCFA d'un montant du commerce (revenus et tableaux de bord de la console). */
+    public function toXof(int $minor, string $currency): int
+    {
+        return Currency::toXof($minor, $currency, $this->usdRate());
     }
 
     public function usePayments(PaymentService $payments): void
@@ -148,6 +178,7 @@ final class SaasService extends Service
         $email = strtolower($text('email', 190));
         $password = (string) ($input['password'] ?? '');
         $sector = (string) ($input['sector'] ?? '');
+        $country = strtoupper(trim((string) ($input['country'] ?? '')));
         $googleSub = trim((string) ($input['google_sub'] ?? ''));
         // Trois façons de s'inscrire : téléphone (l'identifiant est le numéro), e-mail, ou Google.
         // Le numéro WhatsApp est obligatoire dans les trois cas ; l'e-mail seulement en mode e-mail.
@@ -167,6 +198,9 @@ final class SaasService extends Service
         }
         if (!in_array($sector, Sector::ALL, true)) {
             $errors['sector'] = 'Choisissez votre service.';
+        }
+        if (!Country::exists($country)) {
+            $errors['country'] = 'Choisissez votre pays.';
         }
         if ($email !== '' || $mode === 'email') {
             if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
@@ -204,6 +238,7 @@ final class SaasService extends Service
                 'display_name' => $display,
             ]);
             $this->pdo->prepare("UPDATE tenants SET phone = ?, signup_source = 'site' WHERE id = ?")->execute([$normalized, $tenantId]);
+            $this->tenants->updateCountry($tenantId, $country);
             $userId = $this->users->insert([
                 'tenant_id' => $tenantId,
                 'full_name' => $name,
@@ -223,7 +258,7 @@ final class SaasService extends Service
                 $this->startTrial($tenantId, self::SIGNUP_TRIAL_DAYS, null, 'Inscription depuis le site');
             } else {
                 // Essai gratuit désactivé dans la console : l'espace s'ouvre au paiement du premier mois.
-                $this->subscriptions->save($tenantId, TenantSubscription::PENDING, $this->monthlyPrice($tenantId), gmdate('Y-m-d'), null);
+                $this->subscriptions->save($tenantId, TenantSubscription::PENDING, $this->toXof($this->monthlyPrice($tenantId), $this->currencyOf($tenantId)), gmdate('Y-m-d'), null);
                 $this->subscriptions->addEvent($tenantId, 'pending', null, TenantSubscription::PENDING, null, 'Inscription depuis le site, sans essai : activation au premier paiement', null);
             }
             $this->pdo->commit();
@@ -243,7 +278,7 @@ final class SaasService extends Service
                 [
                     'Votre espace Sesam ' . Sector::label($sector) . ' « ' . $display . ' » est créé. ' . ($withTrial
                         ? 'Vous profitez d\'un mois d\'essai gratuit, avec toutes les fonctions.'
-                        : 'Il s\'ouvre dès le paiement de votre premier mois (' . Money::format($this->monthlyPrice($tenantId)) . '), par Wave ou Orange Money, depuis la page Abonnement.'),
+                        : 'Il s\'ouvre dès le paiement de votre premier mois (' . Currency::format($this->monthlyPrice($tenantId), $this->currencyOf($tenantId)) . ')' . ($this->currencyOf($tenantId) === Currency::XOF ? ', par Wave ou Orange Money, depuis la page Abonnement.' : '. L\'équipe SESAM vous contacte pour le règlement.')),
                     $googleSub !== ''
                         ? 'Connectez-vous ensuite avec Google (le même compte) ou via « Mot de passe oublié » si vous préférez un mot de passe. L\'équipe SESAM vous appelle très vite pour vous aider à démarrer.'
                         : 'Connectez-vous avec cette adresse e-mail et le mot de passe choisi à l\'inscription. L\'équipe SESAM vous appelle très vite pour vous aider à démarrer.',
@@ -274,7 +309,7 @@ final class SaasService extends Service
         $start = gmdate('Y-m-d');
         $end = gmdate('Y-m-d', (int) strtotime('+' . max(1, $days) . ' days'));
         $current = $this->subscriptions->find($tenantId);
-        $this->subscriptions->save($tenantId, TenantSubscription::TRIAL, $this->monthlyPrice($tenantId), $start, $end);
+        $this->subscriptions->save($tenantId, TenantSubscription::TRIAL, $this->toXof($this->monthlyPrice($tenantId), $this->currencyOf($tenantId)), $start, $end);
         $this->subscriptions->addEvent($tenantId, 'trial', $current?->status(), TenantSubscription::TRIAL, $end, mb_substr('Essai gratuit de ' . $days . ' jours — ' . $note, 0, 180), $actorId);
     }
 
@@ -340,7 +375,7 @@ final class SaasService extends Service
         if ($subscription?->status() !== TenantSubscription::PENDING) {
             return 0;
         }
-        $statement = $this->pdo->prepare('SELECT p.setup_fee FROM tenants t LEFT JOIN saas_prices p ON p.sector = t.sector WHERE t.id = ?');
+        $statement = $this->pdo->prepare('SELECT p.setup_fee FROM tenants t LEFT JOIN saas_prices p ON p.sector = t.sector AND p.currency = t.currency WHERE t.id = ?');
         $statement->execute([$tenantId]);
 
         return (int) ($statement->fetchColumn() ?: 0);
@@ -349,12 +384,16 @@ final class SaasService extends Service
     /**
      * Tarif en vigueur dans la console SESAM pour le module du commerce : il s'applique à chaque souscription
      * et à chaque renouvellement (le montant mémorisé dans l'abonnement ne sert que si la console n'a pas de tarif).
+     * Le montant est dans la devise du commerce ; le montant mémorisé, lui, est en FCFA (repli pour le FCFA seulement).
      */
     private function monthlyPrice(int $tenantId, ?TenantSubscription $subscription = null): int
     {
         $price = (int) ($this->sectorPrice($tenantId)['monthly_amount'] ?? 0);
+        if ($price > 0 || $this->currencyOf($tenantId) !== Currency::XOF) {
+            return $price;
+        }
 
-        return $price > 0 ? $price : (int) ($subscription?->monthlyAmount() ?? 0);
+        return (int) ($subscription?->monthlyAmount() ?? 0);
     }
 
     /**
@@ -363,7 +402,7 @@ final class SaasService extends Service
     private function sectorPrice(int $tenantId): array
     {
         try {
-            $statement = $this->pdo->prepare('SELECT p.* FROM tenants t JOIN saas_prices p ON p.sector = t.sector WHERE t.id = ?');
+            $statement = $this->pdo->prepare('SELECT p.* FROM tenants t JOIN saas_prices p ON p.sector = t.sector AND p.currency = t.currency WHERE t.id = ?');
             $statement->execute([$tenantId]);
             $row = $statement->fetch(\PDO::FETCH_ASSOC);
         } catch (\PDOException) {
@@ -457,7 +496,7 @@ final class SaasService extends Service
         $subscription = $this->subscriptions->find($tenantId);
         $tenant = $this->tenants->findById($tenantId);
         $price = $this->monthlyPrice($tenantId, $subscription);
-        $payments =$this->pdo->prepare('SELECT amount, months, paid_on, method, channel, reference, period_end FROM tenant_subscription_payments WHERE tenant_id = ? ORDER BY paid_on DESC, id DESC LIMIT 24');
+        $payments =$this->pdo->prepare('SELECT COALESCE(amount_paid, amount) AS amount, currency, months, paid_on, method, channel, reference, period_end FROM tenant_subscription_payments WHERE tenant_id = ? ORDER BY paid_on DESC, id DESC LIMIT 24');
         $payments->execute([$tenantId]);
 
         return [
@@ -475,6 +514,9 @@ final class SaasService extends Service
             ),
             'methods' => self::RENEW_METHODS,
             'live' => $this->isLivePayments(),
+            'currency' => $this->currencyOf($tenantId),
+            // Wave et Orange Money (NabooPay) n'encaissent qu'en FCFA : en dollars ou en euros, SESAM encaisse et enregistre.
+            'onlinePay' => $this->currencyOf($tenantId) === Currency::XOF,
         ];
     }
 
@@ -492,6 +534,9 @@ final class SaasService extends Service
         }
         if (!isset(self::RENEW_METHODS[$method])) {
             throw new ValidationException(['method' => 'Choisissez Wave ou Orange Money.']);
+        }
+        if ($this->currencyOf($tenantId) !== Currency::XOF) {
+            throw new ValidationException(['method' => 'Le paiement Wave ou Orange Money se fait en FCFA. Votre abonnement est en ' . Currency::name($this->currencyOf($tenantId)) . ' : contactez l\'équipe SESAM pour régler par carte ou virement.']);
         }
         $subscription = $this->subscriptions->find($tenantId);
         $price = $this->monthlyPrice($tenantId, $subscription);

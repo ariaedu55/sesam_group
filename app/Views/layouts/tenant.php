@@ -32,6 +32,7 @@ $resetLink = is_string($resetLink ?? null) ? $resetLink : '';
 $csrf = is_string($csrf ?? null) ? $csrf : '';
 $searchQuery = is_string($searchQuery ?? null) ? $searchQuery : '';
 $subscriptionAccess = is_array($subscriptionAccess ?? null) ? $subscriptionAccess : [];
+$activityCount = (int) ($activityCount ?? 0);
 
 $nav = [
     ['id' => 'espace', 'href' => '/espace', 'label' => $showBoutiqueNav || $showReservationNav || $showLoyerNav ? 'Accueil' : 'Tableau de bord', 'icon' => 'home', 'tone' => 'blue'],
@@ -114,6 +115,7 @@ foreach ($nav as $item) {
     <link rel="stylesheet" href="<?= Html::asset('assets/css/mobile-app.css') ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/record-detail.css') ?>">
 <?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
+    <link rel="stylesheet" href="<?= Html::asset('assets/css/language.css') ?>">
 </head>
 <body class="is-app is-tenant">
 <div class="app-shell tenant-shell">
@@ -134,6 +136,16 @@ foreach ($nav as $item) {
                     <?php $name = 'close'; include dirname(__DIR__) . '/partials/ui-icon.php'; ?>
                 </button>
             </div>
+            <?php if ($activityCount > 1): ?>
+                <a class="tenant-switch" href="<?= Html::url('/mes-activites') ?>" title="Voir mes autres activités SESAM">
+                    <?php $name = 'arrow-left'; include dirname(__DIR__) . '/partials/ui-icon.php'; ?>
+                    <span class="tenant-rail-text">
+                        <strong>Mes activités</strong>
+                        <small><?= Html::e($tenantSectorLabel !== '' ? 'Ici : Sesam ' . $tenantSectorLabel : $activityCount . ' activités') ?></small>
+                    </span>
+                    <span class="tenant-switch-count tenant-rail-text"><?= $activityCount ?></span>
+                </a>
+            <?php endif; ?>
             <nav class="side-nav tenant-rail-nav" aria-label="Tableau de bord">
                 <?php foreach ($nav as $item): ?>
                     <a href="<?= Html::url($item['href']) ?>"<?= $current === $item['id'] ? ' aria-current="page"' : '' ?> title="<?= Html::e($item['label']) ?>" data-tone="<?= Html::e($item['tone']) ?>">
@@ -167,6 +179,7 @@ foreach ($nav as $item) {
                     </button>
                 </form>
                 <div class="tenant-chrome-tools">
+                    <?php $langSwitchClass = ''; include dirname(__DIR__) . '/partials/language-switch.php'; ?>
                     <a class="tenant-bell" href="<?= Html::url('/notifications') ?>" aria-label="Notifications<?= $notificationUnread > 0 ? ' (' . $notificationUnread . ' non lues)' : '' ?>">
                         <?php $name = 'bell'; include dirname(__DIR__) . '/partials/ui-icon.php'; ?>
                         <span class="tenant-bell-count" data-notification-count<?= $notificationUnread > 0 ? '' : ' hidden' ?>><?= $notificationUnread ?></span>
@@ -209,5 +222,6 @@ foreach ($nav as $item) {
 <?php endif; ?>
 <?php require dirname(__DIR__) . '/partials/push.php'; ?>
 <?php require dirname(__DIR__) . '/partials/welcome.php'; ?>
+<?php include dirname(__DIR__) . '/partials/gtranslate.php'; ?>
 </body>
 </html>

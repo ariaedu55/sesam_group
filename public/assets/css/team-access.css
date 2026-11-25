@@ -1,0 +1,98 @@
+/* Équipe d'un groupe à plusieurs business : choix des business qu'un compte peut ouvrir. */
+
+.biz-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+    gap: 0.7rem;
+    margin: 0.5rem 0;
+}
+
+.biz-choice {
+    --tone: var(--sesam-blue);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.85rem 0.95rem;
+    border: 1.5px solid var(--sesam-line);
+    border-radius: var(--sesam-radius-lg);
+    background: var(--sesam-surface);
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.biz-choice[data-tone="emerald"] { --tone: var(--sesam-emerald); }
+.biz-choice[data-tone="electric"] { --tone: var(--sesam-electric); }
+.biz-choice[data-tone="amber"] { --tone: var(--sesam-amber); }
+
+.biz-choice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.biz-choice-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.8rem;
+    background: color-mix(in srgb, var(--tone) 14%, #fff);
+    color: var(--tone);
+}
+
+.biz-choice-icon .ui-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.biz-choice-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.biz-choice-text small {
+    overflow: hidden;
+    color: var(--sesam-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.biz-choice-check {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.4rem;
+    height: 1.4rem;
+    border: 1.5px solid var(--sesam-line);
+    border-radius: 0.45rem;
+}
+
+.biz-choice-check .ui-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    opacity: 0;
+}
+
+.biz-choice:has(input:checked) {
+    border-color: var(--tone);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.biz-choice:has(input:checked) .biz-choice-check {
+    border-color: var(--tone);
+    background: var(--tone);
+    color: #fff;
+}
+
+.biz-choice:has(input:checked) .biz-choice-check .ui-icon {
+    opacity: 1;
+}
+
+.biz-choice:has(input:focus-visible) {
+    outline: 3px solid var(--sesam-cyan);
+    outline-offset: 2px;
+}

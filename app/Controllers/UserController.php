@@ -62,6 +62,8 @@ final class UserController extends Controller
             'email' => '',
             'is_active' => '1',
             'roles' => [],
+            // Par défaut : le business ouvert en ce moment.
+            'businesses' => $actor->tenantId() !== null ? [$actor->tenantId()] : [],
         ]);
     }
 
@@ -90,6 +92,7 @@ final class UserController extends Controller
             'email' => $user->email(),
             'is_active' => $user->isActive() ? '1' : '0',
             'roles' => $user->roles(),
+            'businesses' => $this->users->businessesOf($user),
         ]);
     }
 
@@ -136,6 +139,7 @@ final class UserController extends Controller
             'password' => $request->input('password'),
             'is_active' => $request->input('is_active', '0'),
             'roles' => $request->input('roles', []),
+            'businesses' => $request->input('businesses', []),
         ];
     }
 
@@ -156,6 +160,8 @@ final class UserController extends Controller
             'canAssignRoles' => $actor->can(Permission::USERS_ASSIGN_ROLES),
             'canSetPassword' => $actor->can(Permission::USERS_SET_PASSWORD),
             'canDeactivate' => $actor->can(Permission::USERS_DEACTIVATE),
+            'businessChoices' => $this->users->businessesEditable($actor, $user) ? $this->users->businessChoices($actor) : [],
+            'businessLocked' => $user !== null && !$this->users->businessesEditable($actor, $user) && $this->users->businessChoices($actor) !== [],
         ], $actor, $status);
     }
 

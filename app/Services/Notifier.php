@@ -67,17 +67,18 @@ final class Notifier
     public function tenantUsers(int $tenantId, string $permission = ''): array
     {
         if ($permission === '') {
-            $statement = $this->pdo->prepare('SELECT id FROM users WHERE tenant_id = ? AND is_active = 1');
-            $statement->execute([$tenantId]);
+            // Le responsable qui a ce commerce en activité supplémentaire (même compte) est aussi prévenu.
+            $statement = $this->pdo->prepare('SELECT id FROM users WHERE (tenant_id = ? OR id IN (SELECT user_id FROM user_tenant_access WHERE tenant_id = ?)) AND is_active = 1');
+            $statement->execute([$tenantId, $tenantId]);
         } else {
             $statement = $this->pdo->prepare(
                 'SELECT DISTINCT u.id FROM users u
                  JOIN user_roles ur ON ur.user_id = u.id
                  JOIN role_permissions rp ON rp.role_id = ur.role_id
                  JOIN permissions p ON p.id = rp.permission_id
-                 WHERE u.tenant_id = ? AND u.is_active = 1 AND p.slug = ?'
+                 WHERE (u.tenant_id = ? OR u.id IN (SELECT user_id FROM user_tenant_access WHERE tenant_id = ?)) AND u.is_active = 1 AND p.slug = ?'
             );
-            $statement->execute([$tenantId, $permission]);
+            $statement->execute([$tenantId, $tenantId, $permission]);
         }
 
         return array_map('intval', $statement->fetchAll(\PDO::FETCH_COLUMN));

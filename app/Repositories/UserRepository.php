@@ -147,6 +147,12 @@ final class UserRepository extends Repository
         $statement->execute($params);
     }
 
+    /** Business principal du compte (celui qu'il ouvre par défaut). */
+    public function setHomeTenant(int $id, int $tenantId): void
+    {
+        $this->pdo->prepare('UPDATE users SET tenant_id = ?, updated_at = ? WHERE id = ?')->execute([$tenantId, gmdate('Y-m-d H:i:s'), $id]);
+    }
+
     public function touchLastLogin(int $id): void
     {
         $statement = $this->pdo->prepare(
@@ -214,8 +220,10 @@ final class UserRepository extends Repository
         if ($sesamOnly) {
             $where[] = 'tenant_id IS NULL';
         } elseif ($tenantId !== null) {
-            $where[] = 'tenant_id = :tenant_id';
+            // Comptes du business : rattachés à lui, ou qui y ont accès en plus de leur business principal.
+            $where[] = '(tenant_id = :tenant_id OR id IN (SELECT a.user_id FROM user_tenant_access a WHERE a.tenant_id = :access_tenant_id))';
             $params['tenant_id'] = $tenantId;
+            $params['access_tenant_id'] = $tenantId;
         }
         if ($query !== '') {
             $where[] = '(full_name LIKE :query_name OR email LIKE :query_email)';

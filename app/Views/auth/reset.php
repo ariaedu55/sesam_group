@@ -15,6 +15,7 @@ $token = is_string($token ?? null) ? $token : '';
         <p class="auth-card-lead">Au moins 12 caractères, lettres et chiffres recommandés.</p>
     </header>
     <form method="post" action="<?= Html::url('/mot-de-passe/reinitialiser/' . $token) ?>">
+        <?php include dirname(__DIR__) . '/partials/honeypot.php'; ?>
         <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
         <?php
         $id = 'password';

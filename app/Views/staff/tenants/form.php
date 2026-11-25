@@ -40,15 +40,80 @@ $currentStatus = is_scalar($old['status'] ?? '') ? (string) $old['status'] : 'ac
             <input class="input<?= isset($errors['slug']) ? ' is-invalid' : '' ?>" id="slug" name="slug" type="text" required maxlength="80" value="<?= $value('slug') ?>"<?= $locked ? ' readonly' : '' ?><?= isset($errors['slug']) ? ' aria-invalid="true" aria-describedby="slug-error"' : '' ?>>
             <?php if (isset($errors['slug'])): ?><p class="field-error" id="slug-error"><?= Html::e($errors['slug']) ?></p><?php endif; ?>
         </div>
+        <?php if ($edited === null): ?>
+            <?php $picked = is_array($old['sectors'] ?? null) ? array_map('strval', $old['sectors']) : [$currentSector]; ?>
+            <fieldset class="field activity-picker">
+                <legend>Activités SESAM</legend>
+                <p class="muted">Cochez une ou plusieurs activités. Elles s'ouvrent toutes avec le même e-mail (ou téléphone) et le même mot de passe.</p>
+                <div class="activity-choices">
+                    <?php foreach (\Sesam\Controllers\ActivityController::PRODUCTS as $slug => $product): ?>
+                        <label class="activity-choice" data-tone="<?= Html::e($product['tone']) ?>">
+                            <input type="checkbox" name="sectors[]" value="<?= Html::e($slug) ?>"<?= in_array($slug, $picked, true) ? ' checked' : '' ?>>
+                            <span class="activity-choice-icon"><?php $name = $product['icon']; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?></span>
+                            <span class="activity-choice-text"><strong><?= Html::e($product['product']) ?></strong><small><?= Html::e($product['pitch']) ?></small></span>
+                            <span class="activity-choice-check" aria-hidden="true"><?php $name = 'check'; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (isset($errors['sector'])): ?><p class="field-error"><?= Html::e($errors['sector']) ?></p><?php endif; ?>
+                <p class="muted">Plusieurs activités : chaque activité reçoit son lien public, par exemple <code>slug-immo</code> et <code>slug-reservation</code>.</p>
+            </fieldset>
+        <?php else: ?>
+            <div class="field">
+                <label for="sector"><span>Secteur</span></label>
+                <select class="select<?= isset($errors['sector']) ? ' is-invalid' : '' ?>" id="sector" name="sector" required<?= $locked ? ' disabled' : '' ?><?= isset($errors['sector']) ? ' aria-invalid="true" aria-describedby="sector-error"' : '' ?>>
+                        <?php foreach ($sectors as $slug => $label): ?>
+                            <?php if (!is_string($slug) || !is_string($label)) { continue; } ?>
+                            <option value="<?= Html::e($slug) ?>"<?= $currentSector === $slug ? ' selected' : '' ?>><?= Html::e($label) ?></option>
+                        <?php endforeach; ?>
+                </select>
+                <?php if (isset($errors['sector'])): ?><p class="field-error" id="sector-error"><?= Html::e($errors['sector']) ?></p><?php endif; ?>
+            </div>
+        <?php endif; ?>
+        <?php $currentCountry = is_scalar($old['country'] ?? '') ? strtoupper((string) $old['country']) : ''; ?>
         <div class="field">
-            <label for="sector"><span>Secteur</span></label>
-            <select class="select<?= isset($errors['sector']) ? ' is-invalid' : '' ?>" id="sector" name="sector" required<?= $locked ? ' disabled' : '' ?><?= isset($errors['sector']) ? ' aria-invalid="true" aria-describedby="sector-error"' : '' ?>>
-                <?php foreach ($sectors as $slug => $label): ?>
-                    <?php if (!is_string($slug) || !is_string($label)) { continue; } ?>
-                    <option value="<?= Html::e($slug) ?>"<?= $currentSector === $slug ? ' selected' : '' ?>><?= Html::e($label) ?></option>
+            <label for="country"><span>Pays du client</span></label>
+            <select class="select<?= isset($errors['country']) ? ' is-invalid' : '' ?>" id="country" name="country" required<?= $locked ? ' disabled' : '' ?> data-country-select data-country-picker<?= isset($errors['country']) ? ' aria-invalid="true" aria-describedby="country-error"' : '' ?>>
+                <?php foreach (\Sesam\Core\Money\Country::grouped() as $groupCurrency => $countries): ?>
+                    <optgroup label="<?= Html::e(\Sesam\Core\Money\Currency::name($groupCurrency) . ' — ' . \Sesam\Core\Money\Currency::ALL[$groupCurrency]['region']) ?>">
+                        <?php foreach ($countries as $code => $countryName): ?>
+                            <option value="<?= Html::e($code) ?>" data-currency="<?= Html::e(\Sesam\Core\Money\Currency::short($groupCurrency)) ?>"<?= $currentCountry === $code ? ' selected' : '' ?>><?= Html::e($countryName) ?></option>
+                        <?php endforeach; ?>
+                    </optgroup>
                 <?php endforeach; ?>
             </select>
-            <?php if (isset($errors['sector'])): ?><p class="field-error" id="sector-error"><?= Html::e($errors['sector']) ?></p><?php endif; ?>
+            <?php if (isset($errors['country'])): ?><p class="field-error" id="country-error"><?= Html::e($errors['country']) ?></p><?php endif; ?>
+            <p class="muted">Le pays décide de la devise de l'abonnement : <strong data-country-currency><?= Html::e(\Sesam\Core\Money\Currency::name(\Sesam\Core\Money\Country::currency($currentCountry))) ?></strong>. Zone franc CFA → FCFA · États-Unis, Canada → dollar · Europe → euro.</p>
+            <?php
+            $pricesByCurrency = is_array($pricesByCurrency ?? null) ? $pricesByCurrency : [];
+            $priceData = [];
+            foreach (array_keys(\Sesam\Core\Money\Currency::ALL) as $priceCurrency) {
+                foreach (\Sesam\Controllers\ActivityController::PRODUCTS as $priceSector => $priceProduct) {
+                    $priceMonthly = (int) ($pricesByCurrency[$priceCurrency][$priceSector]['monthly'] ?? 0);
+                    $priceData[\Sesam\Core\Money\Currency::short($priceCurrency)][$priceSector] = [
+                        'product' => $priceProduct['product'],
+                        'label' => $priceMonthly > 0 ? \Sesam\Core\Money\Currency::format($priceMonthly, $priceCurrency) . ' / mois' : 'tarif à définir (page Tarifs)',
+                    ];
+                }
+            }
+            $editedSector = $edited?->sector();
+            ?>
+            <div class="price-preview" data-price-preview data-prices="<?= Html::e((string) json_encode($priceData)) ?>"<?= $editedSector !== null ? ' data-sector="' . Html::e($editedSector) . '"' : '' ?>>
+                <p class="price-preview-title">Tarif appliqué à ce client</p>
+                <ul data-price-preview-list>
+                    <?php
+                    $shortNow = \Sesam\Core\Money\Currency::short(\Sesam\Core\Money\Country::currency($currentCountry));
+                    $shownSectors = $editedSector !== null ? [$editedSector] : (is_array($old['sectors'] ?? null) ? array_map('strval', $old['sectors']) : [$currentSector]);
+                    foreach ($shownSectors as $shownSector):
+                        if (!isset($priceData[$shortNow][$shownSector])) { continue; }
+                    ?>
+                        <li><span><?= Html::e($priceData[$shortNow][$shownSector]['product']) ?></span><strong><?= Html::e($priceData[$shortNow][$shownSector]['label']) ?></strong></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <link rel="stylesheet" href="<?= Html::asset('assets/css/country-picker.css') ?>">
+            <script src="<?= Html::asset('assets/js/country-picker.js') ?>" defer></script>
+            <script src="<?= Html::asset('assets/js/country-currency.js') ?>" defer></script>
         </div>
         <div class="field">
             <label for="status"><span>État</span></label>
@@ -74,8 +139,9 @@ $currentStatus = is_scalar($old['status'] ?? '') ? (string) $old['status'] : 'ac
                 </div>
                 <div class="field">
                     <label for="owner_password"><span>Mot de passe</span></label>
-                    <input class="input<?= isset($errors['owner_password']) ? ' is-invalid' : '' ?>" id="owner_password" name="owner_password" type="password" required minlength="12" maxlength="255" autocomplete="new-password"<?= isset($errors['owner_password']) ? ' aria-invalid="true" aria-describedby="owner_password-error"' : '' ?>>
+                    <input class="input<?= isset($errors['owner_password']) ? ' is-invalid' : '' ?>" id="owner_password" name="owner_password" type="password" minlength="12" maxlength="255" autocomplete="new-password"<?= isset($errors['owner_password']) ? ' aria-invalid="true" aria-describedby="owner_password-error"' : '' ?>>
                     <?php if (isset($errors['owner_password'])): ?><p class="field-error" id="owner_password-error"><?= Html::e($errors['owner_password']) ?></p><?php endif; ?>
+                    <p class="muted">Client déjà chez SESAM ? Saisissez son e-mail habituel et laissez le mot de passe vide : les nouvelles activités s'ajoutent à son compte.</p>
                 </div>
                 <div class="field">
                     <label for="owner_phone"><span>Téléphone WhatsApp (facultatif)</span></label>

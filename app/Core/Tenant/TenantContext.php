@@ -14,6 +14,19 @@ final class TenantContext
     /** @var array<string, mixed> État de l'abonnement du commerce connecté (bandeau, blocage). */
     private array $subscription = [];
 
+    /** Nombre d'activités du compte connecté (bouton « Mes activités » au-delà d'une). */
+    private int $activityCount = 0;
+
+    public function setActivityCount(int $count): void
+    {
+        $this->activityCount = $count;
+    }
+
+    public function activityCount(): int
+    {
+        return $this->activityCount;
+    }
+
     /**
      * @param array<string, mixed> $subscription
      */

@@ -50,6 +50,23 @@ final class Tenant extends Model
         return (string) $this->get('phone', '');
     }
 
+    /** Code pays ISO (SN, US, FR…). */
+    public function country(): string
+    {
+        return (string) $this->get('country', \Sesam\Core\Money\Country::DEFAULT);
+    }
+
+    public function countryName(): string
+    {
+        return \Sesam\Core\Money\Country::name($this->country());
+    }
+
+    /** Devise de l'abonnement SESAM du commerce (XOF, USD, EUR). */
+    public function currency(): string
+    {
+        return \Sesam\Core\Money\Currency::normalize((string) $this->get('currency', ''));
+    }
+
     /** « site » : inscrit seul depuis la page Commencer ; « console » : créé par SESAM. */
     public function signupSource(): string
     {

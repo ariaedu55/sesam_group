@@ -16,8 +16,45 @@
     var trial = page.classList.contains('cm-trial');
     var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Devise du pays choisi à l'inscription : FCFA (sans centimes), dollar ou euro (en centimes).
+    var currency = 'XOF';
+
     function money(value) {
+        if (currency === 'USD' || currency === 'EUR') {
+            var units = (value / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            return units + (currency === 'USD' ? ' $ US' : ' €');
+        }
         return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA';
+    }
+
+    // Le pays choisi change la devise : chaque outil affiche son tarif dans cette devise.
+    function applyCountry(select) {
+        if (!select) {
+            return;
+        }
+        var option = select.options[select.selectedIndex];
+        currency = option ? (option.getAttribute('data-currency') || 'XOF') : 'XOF';
+        document.querySelectorAll('input[name="sector"][data-cm-prices]').forEach(function (input) {
+            var prices = {};
+            try {
+                prices = JSON.parse(input.getAttribute('data-cm-prices') || '{}')[currency] || {};
+            } catch (e) {
+                prices = {};
+            }
+            var monthly = parseInt(prices.monthly || 0, 10);
+            input.setAttribute('data-cm-monthly', String(monthly));
+            input.setAttribute('data-cm-setup', String(parseInt(prices.setup || 0, 10)));
+            var label = input.closest('label');
+            var price = label ? label.querySelector('[data-cm-price]') : null;
+            if (price) {
+                var text = monthly > 0 ? money(monthly) + ' / mois' : 'Tarif sur demande';
+                price.textContent = trial ? '1 mois offert, puis ' + text : text;
+            }
+        });
+        var checked = document.querySelector('input[name="sector"]:checked');
+        if (checked) {
+            updateOffer(checked);
+        }
     }
 
     function once(key) {
@@ -49,7 +86,7 @@
             }
         };
         set('[data-cm-offer-title]', input.getAttribute('data-cm-label') || '');
-        set('[data-cm-offer-today]', trial ? '0 FCFA' : (monthly > 0 ? money(monthly + setup) : 'Selon le tarif'));
+        set('[data-cm-offer-today]', trial ? money(0) : (monthly > 0 ? money(monthly + setup) : 'Selon le tarif'));
         set('[data-cm-offer-after]', monthly > 0 ? money(monthly) + ' / mois, sans engagement' : 'Tarif sur demande');
         offer.classList.remove('is-pulse');
         void offer.offsetWidth;
@@ -378,6 +415,13 @@
         });
 
         applyMode();
+        var countrySelect = form.querySelector('[data-cm-country]');
+        if (countrySelect) {
+            countrySelect.addEventListener('change', function () {
+                applyCountry(countrySelect);
+            });
+            applyCountry(countrySelect);
+        }
         var preset = form.querySelector('input[name="sector"]:checked');
         if (preset) {
             updateOffer(preset);

@@ -1,0 +1,164 @@
+/* Choix du pays avec drapeaux (country-picker.js). Drapeaux : image de la bibliothèque intl-tel-input. */
+
+.cp {
+    --iti-flag-height: 12px;
+    --iti-flag-width: 16px;
+    --iti-flag-sprite-width: 3904px;
+    --iti-flag-sprite-height: 12px;
+    --iti-path-flags-1x: url("/assets/lib/intl-tel-input-24.8.2/img/flags.webp");
+    --iti-path-flags-2x: url("/assets/lib/intl-tel-input-24.8.2/img/flags@2x.webp");
+    position: relative;
+    width: 100%;
+}
+
+.cp-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.cp-flag {
+    flex: none;
+    transform: scale(1.35);
+    transform-origin: left center;
+    margin-right: 0.35rem;
+    border-radius: 2px;
+}
+
+.cp-button {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    min-height: 2.9rem;
+    padding: 0.55rem 0.9rem;
+    border: 1px solid rgba(12, 23, 48, 0.16);
+    border-radius: 0.8rem;
+    background: #fff;
+    color: #0c1730;
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cp-button:hover {
+    border-color: rgba(3, 73, 184, 0.45);
+}
+
+.cp-button:focus-visible,
+.cp.is-open .cp-button {
+    border-color: #0349b8;
+    box-shadow: 0 0 0 3px rgba(8, 124, 255, 0.18);
+    outline: none;
+}
+
+.cp-button:disabled {
+    background: #f4f6fa;
+    cursor: default;
+}
+
+.cp-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cp-currency {
+    flex: none;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #eef3fb;
+    color: #4b5b78;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.cp-chevron {
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-left: 0.15rem;
+    border-right: 2px solid #63708a;
+    border-bottom: 2px solid #63708a;
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+.cp.is-open .cp-chevron {
+    transform: rotate(225deg) translateY(-2px);
+}
+
+.cp-list {
+    position: absolute;
+    z-index: 60;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 18rem;
+    margin: 0;
+    padding: 0.35rem;
+    overflow-y: auto;
+    border: 1px solid rgba(12, 23, 48, 0.12);
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 18px 40px rgba(7, 26, 61, 0.18);
+    list-style: none;
+}
+
+.cp-list:focus {
+    outline: none;
+}
+
+.cp-option {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.6rem;
+    color: #0c1730;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.cp-option.cp-group-start {
+    margin-top: 0.35rem;
+    border-top: 1px solid rgba(12, 23, 48, 0.08);
+    border-radius: 0 0 0.6rem 0.6rem;
+    padding-top: 0.75rem;
+}
+
+.cp-option.is-active {
+    background: #eef5ff;
+}
+
+.cp-option[aria-selected="true"] {
+    color: #0349b8;
+    font-weight: 700;
+}
+
+.cp-option[aria-selected="true"]::after {
+    content: "";
+    flex: none;
+    width: 0.35rem;
+    height: 0.65rem;
+    margin-left: 0.2rem;
+    border-right: 2px solid #0349b8;
+    border-bottom: 2px solid #0349b8;
+    transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cp-button,
+    .cp-chevron {
+        transition: none;
+    }
+}

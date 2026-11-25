@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Sesam\Core\Boutique\Money;
 use Sesam\Helpers\Html;
 
 $page = is_array($page ?? null) ? $page : [];
@@ -15,6 +14,10 @@ $old = is_array($old ?? null) ? $old : [];
 $price = (int) ($page['price'] ?? 0);
 $setupFee = (int) ($page['setupFee'] ?? 0);
 $live = !empty($page['live']);
+// Devise de l'abonnement (pays du commerce). Wave / Orange Money n'existent qu'en FCFA.
+$currency = \Sesam\Core\Money\Currency::normalize((string) ($page['currency'] ?? 'XOF'));
+$onlinePay = !array_key_exists('onlinePay', $page) || !empty($page['onlinePay']);
+$fmt = static fn (int $value): string => \Sesam\Core\Money\Currency::format($value, $currency);
 $state = (string) ($access['state'] ?? 'none');
 $daysLeft = $access['days_left'] ?? null;
 $end = $access['period_end'] ?? null;
@@ -117,15 +120,15 @@ $logos = ['wave' => 'assets/images/paiement/wave.png', 'orange-money' => 'assets
             <?php endif; ?>
         </div>
         <dl class="sb-facts">
-            <div><dt>Mensualité</dt><dd><?= Html::e(Money::format($price)) ?></dd></div>
+            <div><dt>Mensualité</dt><dd><?= Html::e($fmt($price)) ?></dd></div>
             <div><dt>Début de période</dt><dd><?= Html::e($date(is_string($start) ? $start : null)) ?></dd></div>
             <div><dt><?= $state === 'trial' ? 'Fin de l\'essai' : 'Échéance' ?></dt><dd><?= Html::e($date(is_string($end) ? $end : null)) ?></dd></div>
-            <div><dt>Dernier paiement</dt><dd><?= $lastPayment !== null ? Html::e(Money::format((int) $lastPayment['amount'])) . '<small>le ' . Html::e($date((string) $lastPayment['paid_on'])) . '</small>' : 'Aucun' ?></dd></div>
+            <div><dt>Dernier paiement</dt><dd><?= $lastPayment !== null ? Html::e($fmt((int) $lastPayment['amount'])) . '<small>le ' . Html::e($date((string) $lastPayment['paid_on'])) . '</small>' : 'Aucun' ?></dd></div>
         </dl>
     </article>
 
     <?php if ($state === 'pending' && $setupFee > 0): ?>
-        <p class="alert" role="status">Le premier paiement inclut <?= Html::e(Money::format($setupFee)) ?> de frais de mise en place, payés une seule fois.</p>
+        <p class="alert" role="status">Le premier paiement inclut <?= Html::e($fmt($setupFee)) ?> de frais de mise en place, payés une seule fois.</p>
     <?php endif; ?>
 
     <?php if (empty($page['canPay'])): ?>
@@ -142,19 +145,20 @@ $logos = ['wave' => 'assets/images/paiement/wave.png', 'orange-money' => 'assets
                         <?php $total = (int) $plan['amount'] + $setupFee; ?>
                         <label class="sb-plan<?= (int) $count === $bestMonths ? ' is-best' : '' ?>">
                             <input type="radio" name="months" value="<?= (int) $count ?>"<?= (int) $count === $selected ? ' checked' : '' ?>
-                                data-amount="<?= $total ?>" data-amount-label="<?= Html::e(Money::format($total)) ?>" data-plan-label="<?= Html::e((string) $plan['label']) ?>" data-end="<?= Html::e($longDate((string) ($plan['new_end'] ?? ''))) ?>">
+                                data-amount="<?= $total ?>" data-amount-label="<?= Html::e($fmt($total)) ?>" data-plan-label="<?= Html::e((string) $plan['label']) ?>" data-end="<?= Html::e($longDate((string) ($plan['new_end'] ?? ''))) ?>">
                             <?php if ((int) $count === $bestMonths): ?><span class="sb-plan-ribbon">Le plus avantageux</span><?php endif; ?>
                             <span class="sb-plan-name"><?= Html::e((string) $plan['label']) ?><?= (int) $plan['discount'] > 0 ? ' · -' . (int) $plan['discount'] . ' %' : '' ?></span>
-                            <span class="sb-plan-price"><?= Html::e(Money::format($total)) ?></span>
-                            <?php if ((int) $plan['discount'] > 0): ?><s><?= Html::e(Money::format((int) $plan['base'] + $setupFee)) ?></s><?php endif; ?>
-                            <span class="sb-plan-meta"><?= (int) $count > 1 ? Html::e(Money::format((int) $plan['per_month'])) . ' / mois' : 'Sans engagement' ?></span>
-                            <?php if ((int) $plan['saving'] > 0): ?><span class="sb-plan-save">Vous économisez <?= Html::e(Money::format((int) $plan['saving'])) ?></span><?php endif; ?>
+                            <span class="sb-plan-price"><?= Html::e($fmt($total)) ?></span>
+                            <?php if ((int) $plan['discount'] > 0): ?><s><?= Html::e($fmt((int) $plan['base'] + $setupFee)) ?></s><?php endif; ?>
+                            <span class="sb-plan-meta"><?= (int) $count > 1 ? Html::e($fmt((int) $plan['per_month'])) . ' / mois' : 'Sans engagement' ?></span>
+                            <?php if ((int) $plan['saving'] > 0): ?><span class="sb-plan-save">Vous économisez <?= Html::e($fmt((int) $plan['saving'])) ?></span><?php endif; ?>
                             <span class="sb-plan-check" aria-hidden="true"></span>
                         </label>
                     <?php endforeach; ?>
                 </div>
             </section>
 
+            <?php if ($onlinePay): ?>
             <section class="sb-step" aria-labelledby="sb-step-method">
                 <h2 id="sb-step-method"><span class="sb-step-num" aria-hidden="true">2</span>Choisissez votre moyen de paiement</h2>
                 <?php if (isset($errors['method'])): ?><p class="field-error" role="alert"><?= Html::e($errors['method']) ?></p><?php endif; ?>
@@ -175,12 +179,25 @@ $logos = ['wave' => 'assets/images/paiement/wave.png', 'orange-money' => 'assets
                 <dl>
                     <div><dt>Formule</dt><dd data-recap-plan><?= Html::e((string) ($plans[$selected]['label'] ?? '')) ?></dd></div>
                     <div><dt>Actif jusqu'au</dt><dd data-recap-end><?= Html::e($longDate((string) ($plans[$selected]['new_end'] ?? ''))) ?></dd></div>
-                    <?php if ($setupFee > 0): ?><div><dt>Dont mise en place</dt><dd><?= Html::e(Money::format($setupFee)) ?></dd></div><?php endif; ?>
-                    <div class="sb-recap-total"><dt>Total à payer</dt><dd data-recap-amount><?= Html::e(Money::format((int) ($plans[$selected]['amount'] ?? 0) + $setupFee)) ?></dd></div>
+                    <?php if ($setupFee > 0): ?><div><dt>Dont mise en place</dt><dd><?= Html::e($fmt($setupFee)) ?></dd></div><?php endif; ?>
+                    <div class="sb-recap-total"><dt>Total à payer</dt><dd data-recap-amount><?= Html::e($fmt((int) ($plans[$selected]['amount'] ?? 0) + $setupFee)) ?></dd></div>
                 </dl>
                 <button class="btn btn-primary sb-submit" type="submit"><span data-recap-button>Continuer vers le paiement</span></button>
                 <p class="sb-secure"><?php $name = 'check'; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?><?= $live ? 'Vous allez être redirigé vers la page sécurisée NabooPay pour valider le paiement sur votre téléphone.' : 'Démonstration : le paiement est simulé, aucun argent ne circule.' ?></p>
             </section>
+            <?php else: ?>
+            <section class="sb-step sb-recap sb-contact" aria-labelledby="sb-step-contact">
+                <h2 id="sb-step-contact"><span class="sb-step-num" aria-hidden="true">2</span>Réglez avec l'équipe SESAM</h2>
+                <?php if (isset($errors['method'])): ?><p class="field-error" role="alert"><?= Html::e($errors['method']) ?></p><?php endif; ?>
+                <p>Votre abonnement est en <strong><?= Html::e(\Sesam\Core\Money\Currency::name($currency)) ?></strong>. Wave et Orange Money ne fonctionnent qu'en FCFA : l'équipe SESAM vous envoie un lien de paiement par carte bancaire ou les coordonnées pour un virement.</p>
+                <dl>
+                    <div><dt>Formule choisie</dt><dd data-recap-plan><?= Html::e((string) ($plans[$selected]['label'] ?? '')) ?></dd></div>
+                    <div class="sb-recap-total"><dt>Montant</dt><dd data-recap-amount><?= Html::e($fmt((int) ($plans[$selected]['amount'] ?? 0) + $setupFee)) ?></dd></div>
+                </dl>
+                <a class="btn btn-primary sb-submit" href="<?= Html::url('/contact') ?>">Contacter SESAM pour payer</a>
+                <p class="sb-secure"><?php $name = 'check'; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?>Dès réception du paiement, SESAM l'enregistre et votre accès est prolongé automatiquement.</p>
+            </section>
+            <?php endif; ?>
         </form>
     <?php endif; ?>
 
@@ -196,7 +213,7 @@ $logos = ['wave' => 'assets/images/paiement/wave.png', 'orange-money' => 'assets
                         <li>
                             <?php if (isset($logos[$method])): ?><img src="<?= Html::asset($logos[$method]) ?>" alt="<?= Html::e($methodLabels[$method]) ?>" width="40" height="40"><?php else: ?><span class="sb-history-icon" aria-hidden="true">F</span><?php endif; ?>
                             <span class="sb-history-main">
-                                <strong><?= Html::e(Money::format((int) $payment['amount'])) ?></strong>
+                                <strong><?= Html::e($fmt((int) $payment['amount'])) ?></strong>
                                 <small><?= Html::e($date((string) $payment['paid_on'])) ?> · <?= (int) $payment['months'] ?> mois · <?= Html::e($methodLabels[$method] ?? $method) ?><?= $payment['channel'] === 'en-ligne' ? ' · en ligne' : '' ?></small>
                             </span>
                             <span class="sb-history-end"><small>Valable jusqu'au</small><strong><?= Html::e($date((string) $payment['period_end'])) ?></strong></span>

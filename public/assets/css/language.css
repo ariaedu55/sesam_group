@@ -1,0 +1,162 @@
+/* Choix de la langue FR / EN (barre du haut). La barre et le widget de Google Translate restent cachés. */
+
+.lang-switch {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid rgba(7, 26, 61, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.lang-switch button {
+    min-width: 2.1rem;
+    height: 1.85rem;
+    padding: 0 0.55rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #4b5b78;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lang-switch button:hover {
+    color: #071a3d;
+}
+
+.lang-switch button[aria-pressed="true"] {
+    background: #0349b8;
+    color: #fff;
+}
+
+.lang-switch button:focus-visible {
+    outline: 3px solid #00d9f5;
+    outline-offset: 1px;
+}
+
+/* Sur fond sombre (« Mes activités »). */
+.lang-switch--dark {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.lang-switch--dark button {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.lang-switch--dark button:hover {
+    color: #fff;
+}
+
+.lang-switch--dark button[aria-pressed="true"] {
+    background: #fff;
+    color: #071a3d;
+}
+
+/* Widget GTranslate et bandeau Google : invisibles, la page ne doit pas bouger. */
+.gtranslate_wrapper,
+.skiptranslate,
+iframe.skiptranslate,
+#goog-gt-tt,
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf {
+    display: none !important;
+}
+
+body {
+    top: 0 !important;
+}
+
+font[style*="background-color"],
+.goog-text-highlight {
+    background: none !important;
+    box-shadow: none !important;
+}
+
+/* Page de connexion : « Retour au site » à gauche, langue à droite. */
+.auth-back--top:has(.lang-switch) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+/* Drapeaux du choix de langue (image de la bibliothèque intl-tel-input, déjà utilisée pour les téléphones). */
+.lang-switch {
+    --iti-flag-height: 12px;
+    --iti-flag-width: 16px;
+    --iti-flag-sprite-width: 3904px;
+    --iti-flag-sprite-height: 12px;
+    --iti-path-flags-1x: url("/assets/lib/intl-tel-input-24.8.2/img/flags.webp");
+    --iti-path-flags-2x: url("/assets/lib/intl-tel-input-24.8.2/img/flags@2x.webp");
+}
+
+.lang-switch button {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.35rem;
+}
+
+.lang-flag {
+    display: block;
+    transform: scale(1.3);
+    border-radius: 2px;
+    opacity: 0.55;
+    filter: grayscale(0.35);
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.lang-switch button:hover .lang-flag,
+.lang-switch button[aria-pressed="true"] .lang-flag {
+    opacity: 1;
+    filter: none;
+}
+
+.lang-switch button[aria-pressed="true"] {
+    background: #e6f0ff;
+    box-shadow: inset 0 0 0 1.5px #0349b8;
+}
+
+.lang-switch--dark button[aria-pressed="true"] {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: none;
+}
+
+/* Drapeaux autonomes : certaines pages (« Mes activités ») ne chargent pas la feuille intl-tel-input. */
+.lang-switch .lang-flag {
+    width: 16px;
+    height: 12px;
+    background-image: url("/assets/lib/intl-tel-input-24.8.2/img/flags.webp");
+    background-repeat: no-repeat;
+    background-size: 3904px 12px;
+    box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.lang-switch .lang-flag.iti__fr {
+    background-position: -1168px 0;
+}
+
+.lang-switch .lang-flag.iti__gb {
+    background-position: -1200px 0;
+}
+
+@media (min-resolution: 2x) {
+    .lang-switch .lang-flag {
+        background-image: url("/assets/lib/intl-tel-input-24.8.2/img/flags@2x.webp");
+    }
+}
+
+/* Sur fond sombre, le bouton actif reste clair mais le drapeau doit rester visible. */
+.lang-switch--dark button[aria-pressed="true"] .lang-flag {
+    opacity: 1;
+    filter: none;
+}

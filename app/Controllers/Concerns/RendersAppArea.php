@@ -50,6 +50,7 @@ trait RendersAppArea
             'notificationUnread' => $unread,
             'welcome' => $welcome,
             'subscriptionAccess' => $user->tenantId() !== null ? $context->subscription() : [],
+            'activityCount' => $user->tenantId() !== null ? $context->activityCount() : 0,
         ], $status, $layout);
     }
 }

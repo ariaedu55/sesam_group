@@ -74,6 +74,9 @@ final class Bootstrap
         $logger = new Logger($root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'app.log');
         $session = new Session();
         $csrf = new Csrf($session);
+        // Pièges anti-robots des formulaires publics (champ invisible + délai minimum).
+        $honeypot = new \Sesam\Core\Security\Honeypot($session);
+        \Sesam\Core\Security\Honeypot::setCurrent($honeypot);
         /** @var array{db: array{host: string, port: string, name: string, user: string, password: string}, url: string} $config */
         $config = require $root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'app.php';
         /** @var array{gateway: string, naboopay: array{api_key: string, webhook_secret: string, api_base: string, signature_header: string}} $paymentConfig */
@@ -204,6 +207,9 @@ final class Bootstrap
         $router->get('/mot-de-passe/reinitialiser/{token}', [$authController, 'resetForm']);
         $router->post('/mot-de-passe/reinitialiser/{token}', [$authController, 'reset']);
         $router->get('/espace', [$account, 'show']);
+        $activityController = new \Sesam\Controllers\ActivityController($views, $csrf, $session, $auth, $saas);
+        $router->get('/mes-activites', [$activityController, 'index']);
+        $router->post('/mes-activites/{id}', [$activityController, 'open']);
         $router->get('/utilisateurs', [$userController, 'index']);
         $router->get('/utilisateurs/nouveau', [$userController, 'createForm']);
         $router->post('/utilisateurs', [$userController, 'store']);
@@ -220,6 +226,7 @@ final class Bootstrap
         $router->post('/commerces/{id}/encaissement', [$tenantController, 'payment']);
         $router->post('/commerces/{id}/notes', [$tenantController, 'note']);
         $router->post('/commerces/{id}/essai', [$tenantController, 'trial']);
+        $router->post('/commerces/{id}/activites', [$tenantController, 'addActivity']);
         $router->get('/revenus', [$adminController, 'revenue']);
         $router->get('/revenus/export', [$adminController, 'export']);
         $router->get('/finance/statistiques', [$adminController, 'statistics']);
@@ -384,6 +391,7 @@ final class Bootstrap
         return new Kernel($router, new ErrorHandler($logger, $views), [
             new SessionMiddleware($session),
             new CsrfMiddleware($csrf),
+            new \Sesam\Middleware\HoneypotMiddleware($honeypot, $session, $logger, Env::get('HONEYPOT_DISABLED', '0') !== '1'),
             new AuthMiddleware($auth),
             new TenantMiddleware($auth, new TenantRepository(Connection::make($config['db'])), $tenantContext, $saas),
         ], new SecurityHeaders());

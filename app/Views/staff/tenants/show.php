@@ -47,7 +47,9 @@ $payValue = static function (string $key, string $default = '') use ($payOld): s
 
     return Html::e(is_scalar($value) ? (string) $value : $default);
 };
-$money = static fn (int $value): string => number_format($value, 0, ',', ' ') . ' FCFA';
+$currency = \Sesam\Core\Money\Currency::normalize(is_string($currency ?? null) ? $currency : $tenant->currency());
+$money = static fn (int $value): string => \Sesam\Core\Money\Currency::format($value, $currency);
+$xof = static fn (int $value): string => \Sesam\Core\Money\Currency::format($value, 'XOF');
 
 ?>
 <section class="console">
@@ -85,6 +87,57 @@ $money = static fn (int $value): string => number_format($value, 0, ',', ' ') . 
 
     <div class="console-detail">
         <div class="console-side">
+            <?php
+            $activities = is_array($activities ?? null) ? $activities : ['owner' => null, 'tenants' => []];
+            $activityTenants = is_array($activities['tenants'] ?? null) ? $activities['tenants'] : [];
+            $ownedSectors = array_map(static fn (Tenant $t): string => $t->sector(), $activityTenants);
+            $missingSectors = array_values(array_filter(array_keys(\Sesam\Controllers\ActivityController::PRODUCTS), static fn (string $s): bool => !in_array($s, $ownedSectors, true)));
+            ?>
+            <article class="dash-card console-activities" id="activites" aria-labelledby="activities-title">
+                <div class="dash-card-head"><h2 id="activities-title">Activités du client</h2><span class="muted"><?= count($activityTenants) ?> sur ce compte</span></div>
+                <?php if ($activityTenants !== []): ?>
+                    <ul class="console-activity-list">
+                        <?php foreach ($activityTenants as $item): ?>
+                            <?php $product = \Sesam\Controllers\ActivityController::PRODUCTS[$item->sector()] ?? ['product' => $item->sectorLabel(), 'icon' => 'store', 'tone' => 'blue']; ?>
+                            <li data-tone="<?= Html::e($product['tone']) ?>"<?= $item->id() === $tenant->id() ? ' aria-current="true"' : '' ?>>
+                                <span class="console-activity-icon"><?php $name = $product['icon']; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?></span>
+                                <span class="console-activity-text">
+                                    <strong><?= Html::e($product['product']) ?></strong>
+                                    <small>/t/<?= Html::e($item->slug()) ?><?= $item->isActive() ? '' : ' · suspendu' ?></small>
+                                </span>
+                                <?php if ($item->id() === $tenant->id()): ?>
+                                    <span class="chip chip-muted">Cette fiche</span>
+                                <?php else: ?>
+                                    <a class="console-activity-open" href="<?= Html::url('/commerces/' . $item->id()) ?>">Voir</a>
+                                <?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+                <?php if (($canAddActivity ?? false) && $missingSectors !== [] && $activityTenants !== []): ?>
+                    <form class="console-activity-add" method="post" action="<?= Html::url('/commerces/' . $tenant->id() . '/activites') ?>">
+                        <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
+                        <label for="add-sector"><span>Ajouter une activité au même compte</span></label>
+                        <div class="console-activity-add-row">
+                            <select class="input" id="add-sector" name="sector" required>
+                                <?php foreach ($missingSectors as $sectorSlug): ?>
+                                    <option value="<?= Html::e($sectorSlug) ?>"><?= Html::e(\Sesam\Controllers\ActivityController::PRODUCTS[$sectorSlug]['product']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <select class="input" name="trial_days" aria-label="Démarrage">
+                                <option value="30">Essai 1 mois</option>
+                                <option value="15">Essai 15 jours</option>
+                                <option value="0">Sans essai</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" type="submit"><?php $name = 'plus'; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?> Ajouter l'activité</button>
+                        <p class="muted">Le client l'ouvre avec le même e-mail et le même mot de passe. À la connexion, il choisit son activité.</p>
+                    </form>
+                <?php elseif ($activityTenants === []): ?>
+                    <p class="muted">Aucun responsable : impossible d'ajouter une activité à ce commerce.</p>
+                <?php endif; ?>
+            </article>
+
         <?php if ($canSee): ?>
             <article class="dash-card console-sub" aria-labelledby="sub-title">
                 <div class="dash-card-head">
@@ -108,7 +161,7 @@ $money = static fn (int $value): string => number_format($value, 0, ',', ' ') . 
                                 <?php endif; ?>
                             </dd>
                         </div>
-                        <div><dt>Montant mensuel convenu</dt><dd><?= $amount === null ? 'Non renseigné' : Html::e(number_format($amount, 0, ',', ' ')) . ' FCFA' ?></dd></div>
+                        <div><dt>Montant mensuel convenu</dt><dd><?= $amount === null ? 'Non renseigné' : Html::e($xof($amount)) . ($currency !== 'XOF' ? ' <small class="muted">(équivalent)</small>' : '') ?></dd></div>
                     </dl>
                 <?php endif; ?>
 
@@ -193,8 +246,8 @@ $money = static fn (int $value): string => number_format($value, 0, ',', ' ') . 
                             <?php endif; ?>
                             <div class="console-pay-grid">
                                 <div class="field">
-                                    <label for="pay_amount"><span>Montant reçu (FCFA)</span></label>
-                                    <input class="input<?= isset($payErrors['amount']) ? ' is-invalid' : '' ?>" id="pay_amount" name="amount" inputmode="numeric" maxlength="12" required value="<?= $payValue('amount', $defaultAmount > 0 ? (string) $defaultAmount : '') ?>">
+                                    <label for="pay_amount"><span>Montant reçu (<?= Html::e(\Sesam\Core\Money\Currency::short($currency)) ?>)</span></label>
+                                    <input class="input<?= isset($payErrors['amount']) ? ' is-invalid' : '' ?>" id="pay_amount" name="amount" inputmode="numeric" maxlength="12" required value="<?= $payValue('amount', $defaultAmount > 0 ? \Sesam\Core\Money\Currency::inputValue($defaultAmount, $currency) : '') ?>">
                                 </div>
                                 <div class="field">
                                     <label for="pay_months"><span>Mois payés</span></label>
@@ -238,7 +291,7 @@ $money = static fn (int $value): string => number_format($value, 0, ',', ' ') . 
                                 <?php foreach ($payments as $payment): ?>
                                     <tr>
                                         <td><?= $date((string) $payment['paid_on']) ?></td>
-                                        <td><strong><?= Html::e($money((int) $payment['amount'])) ?></strong><?php if ($payment['reference'] !== ''): ?><br><small class="muted"><?= Html::e((string) $payment['reference']) ?></small><?php endif; ?></td>
+                                        <td><strong><?= Html::e(\Sesam\Core\Money\Currency::format((int) $payment['paid'], (string) $payment['currency'])) ?></strong><?php if ($payment['currency'] !== 'XOF'): ?><br><small class="muted">≈ <?= Html::e($xof((int) $payment['amount'])) ?></small><?php endif; ?><?php if ($payment['reference'] !== ''): ?><br><small class="muted"><?= Html::e((string) $payment['reference']) ?></small><?php endif; ?></td>
                                         <td><?= (int) $payment['months'] ?> mois</td>
                                         <td><?= Html::e((string) ($methods[$payment['method']] ?? $payment['method'])) ?></td>
                                         <td><?= $date((string) $payment['period_end']) ?></td>
@@ -274,6 +327,7 @@ $money = static fn (int $value): string => number_format($value, 0, ',', ' ') . 
                 <dl class="console-facts">
                     <div><dt>Comptes du commerce</dt><dd><?= $userCount ?></dd></div>
                     <?php if ($tenant->phone() !== ''): ?><div><dt>Téléphone</dt><dd><a href="<?= Html::e(\Sesam\Core\Boutique\WhatsApp::link(\Sesam\Core\Boutique\WhatsApp::normalize($tenant->phone()))) ?>" target="_blank" rel="noopener"><?= Html::e($tenant->phone()) ?> · WhatsApp</a></dd></div><?php endif; ?>
+                    <div><dt>Pays · devise</dt><dd><?= Html::e($tenant->countryName() !== '' ? $tenant->countryName() : '—') ?> · <?= Html::e(\Sesam\Core\Money\Currency::name($currency)) ?></dd></div>
                     <div><dt>Créé le</dt><dd><?= $date($tenant->createdAt()) ?></dd></div>
                     <div><dt>Lien public</dt><dd><a href="<?= $publicUrl ?>" target="_blank" rel="noopener" class="console-link"><?= $publicUrl ?></a></dd></div>
                 </dl>

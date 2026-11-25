@@ -117,6 +117,7 @@ $socials = array_filter([
 <?php endif; ?>
 
 <form class="shop-form" method="post" action="<?= Html::url($base . '/commander') ?>" data-shop="<?= Html::e($slug) ?>" novalidate>
+    <?php include dirname(__DIR__, 2) . '/partials/honeypot.php'; ?>
     <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
 
     <?php if ($products === []): ?>

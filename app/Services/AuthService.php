@@ -26,11 +26,16 @@ final class AuthService extends Service
     private const SESSION_USER = 'auth_user_id';
     public const SESSION_WELCOME = 'welcome_popup';
     private const SESSION_GOOGLE_PENDING = 'google_oauth_pending';
+    /** Activité ouverte par un compte qui en a plusieurs (Immo, Réservation, Boutique). */
+    private const SESSION_ACTIVE_TENANT = 'active_tenant_id';
+    /** Le compte a choisi son activité sur « Mes activités » depuis sa connexion. */
+    private const SESSION_ACTIVITY_CHOSEN = 'activity_chosen';
 
     private readonly UserRepository $users;
     private readonly PasswordResetRepository $resets;
     private readonly AuthAttemptRepository $attempts;
     private readonly TenantRepository $tenants;
+    private readonly \Sesam\Repositories\TenantAccessRepository $access;
     private ?\Sesam\Core\Mail\Mailer $mailer = null;
     private string $appUrl = '';
 
@@ -55,6 +60,7 @@ final class AuthService extends Service
         $this->resets = new PasswordResetRepository($pdo);
         $this->attempts = new AuthAttemptRepository($pdo);
         $this->tenants = new TenantRepository($pdo);
+        $this->access = new \Sesam\Repositories\TenantAccessRepository($pdo);
     }
 
     /**
@@ -104,6 +110,7 @@ final class AuthService extends Service
         $this->session->regenerate();
         $this->session->forget(Csrf::SESSION_KEY);
         $this->session->put(self::SESSION_USER, $user->id());
+        $this->resetActivity();
         // Popup de bienvenue à l'arrivée dans l'espace : découverte la première fois, « bon retour » ensuite.
         $this->session->put(self::SESSION_WELCOME, ['first' => $user->lastLoginAt() === null]);
         $this->users->touchLastLogin($user->id());
@@ -117,6 +124,7 @@ final class AuthService extends Service
         $this->session->regenerate();
         $this->session->forget(Csrf::SESSION_KEY);
         $this->session->put(self::SESSION_USER, $userId);
+        $this->resetActivity();
         $this->session->put(self::SESSION_WELCOME, ['first' => true]);
         $this->users->touchLastLogin($userId);
     }
@@ -219,6 +227,7 @@ final class AuthService extends Service
         $this->session->regenerate();
         $this->session->forget(Csrf::SESSION_KEY);
         $this->session->put(self::SESSION_USER, $user->id());
+        $this->resetActivity();
         $this->session->put(self::SESSION_WELCOME, ['first' => $user->lastLoginAt() === null]);
         $this->users->touchLastLogin($user->id());
     }
@@ -344,7 +353,117 @@ final class AuthService extends Service
             return null;
         }
 
-        return $user;
+        return $this->withActiveActivity($user);
+    }
+
+    /**
+     * Toutes les activités du compte connecté (activité principale en premier), y compris celles suspendues.
+     *
+     * @return list<\Sesam\Models\Tenant>
+     */
+    public function activities(User $user): array
+    {
+        if ($user->homeTenantId() === null) {
+            return [];
+        }
+        $tenants = [];
+        foreach ($this->access->tenantIdsFor($user->id(), $user->homeTenantId()) as $id) {
+            $tenant = $this->tenants->findById($id);
+            if ($tenant !== null) {
+                $tenants[] = $tenant;
+            }
+        }
+
+        return $tenants;
+    }
+
+    /**
+     * Business du même groupe que le compte n'a pas le droit d'ouvrir : affichés grisés sur « Mes activités ».
+     *
+     * @return list<\Sesam\Models\Tenant>
+     */
+    public function lockedActivities(User $user): array
+    {
+        $home = $user->homeTenantId();
+        if ($home === null) {
+            return [];
+        }
+        $mine = $this->access->tenantIdsFor($user->id(), $home);
+        $locked = [];
+        foreach ($this->access->groupTenantIds($home) as $id) {
+            if (!in_array($id, $mine, true)) {
+                $tenant = $this->tenants->findById($id);
+                if ($tenant !== null) {
+                    $locked[] = $tenant;
+                }
+            }
+        }
+
+        return $locked;
+    }
+
+    public function activityCount(User $user): int
+    {
+        return $user->homeTenantId() === null ? 0 : count($this->access->tenantIdsFor($user->id(), $user->homeTenantId()));
+    }
+
+    public function activityChosen(): bool
+    {
+        return $this->session->get(self::SESSION_ACTIVITY_CHOSEN) === true;
+    }
+
+    /**
+     * Ouvre une des activités du compte : toute l'application (menus, données, abonnement) suit ce choix.
+     */
+    public function switchActivity(User $user, int $tenantId): \Sesam\Models\Tenant
+    {
+        $home = $user->homeTenantId();
+        if ($home === null || !in_array($tenantId, $this->access->tenantIdsFor($user->id(), $home), true)) {
+            throw new HttpException(403, 'Cette activité n\'est pas rattachée à votre compte.');
+        }
+        $tenant = $this->tenants->findById($tenantId);
+        if ($tenant === null || !$tenant->isActive()) {
+            throw new HttpException(403, 'L\'accès à cette activité est suspendu. Contactez SESAM.');
+        }
+        if ($tenantId === $home) {
+            $this->session->forget(self::SESSION_ACTIVE_TENANT);
+        } else {
+            $this->session->put(self::SESSION_ACTIVE_TENANT, $tenantId);
+        }
+        $this->session->put(self::SESSION_ACTIVITY_CHOSEN, true);
+
+        return $tenant;
+    }
+
+    /** Retour à l'activité principale ; « Mes activités » s'affichera de nouveau. */
+    public function resetActivity(): void
+    {
+        $this->session->forget(self::SESSION_ACTIVE_TENANT);
+        $this->session->forget(self::SESSION_ACTIVITY_CHOSEN);
+    }
+
+    /**
+     * Le compte agit pour l'activité choisie : son tenant_id devient celui de cette activité
+     * (l'activité principale reste connue dans home_tenant_id).
+     */
+    private function withActiveActivity(User $user): User
+    {
+        $home = $user->tenantId();
+        if ($home === null) {
+            return $user;
+        }
+        $user = $user->with(['home_tenant_id' => $home]);
+        $active = $this->session->get(self::SESSION_ACTIVE_TENANT);
+        if (!is_int($active) || $active === $home) {
+            return $user;
+        }
+        if (!$this->access->has($user->id(), $active)) {
+            $this->session->forget(self::SESSION_ACTIVE_TENANT);
+
+            return $user;
+        }
+
+        return $user->with(['tenant_id' => $active]);
     }
 
     public function requireUser(): User
@@ -373,9 +492,15 @@ final class AuthService extends Service
         if ($tenantId === null) {
             return true;
         }
-        $tenant = $this->tenants->findById($tenantId);
+        // Un compte à plusieurs activités se connecte tant qu'au moins une d'elles est ouverte.
+        foreach ($this->access->tenantIdsFor($user->id(), $tenantId) as $id) {
+            $tenant = $this->tenants->findById($id);
+            if ($tenant !== null && $tenant->isActive()) {
+                return true;
+            }
+        }
 
-        return $tenant !== null && $tenant->isActive();
+        return false;
     }
 
     private function createResetToken(int $userId): string

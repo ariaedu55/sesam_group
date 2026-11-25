@@ -211,6 +211,7 @@ $cta = $trial ? 'Créer mon espace gratuitement' : 'Créer mon compte';
     $signupOld = $old;
     $signupMode = $googlePending !== null ? 'google' : (in_array($old['mode'] ?? '', ['phone', 'email'], true) ? (string) $old['mode'] : 'phone');
     $signupAutoOpen = $errors !== [] || $googlePending !== null;
+    $pricesByCurrency = is_array($offer['byCurrency'] ?? null) ? $offer['byCurrency'] : [];
     include dirname(__DIR__) . '/partials/commencer-popups.php';
     ?>
 </main>

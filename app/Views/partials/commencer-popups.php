@@ -47,12 +47,31 @@ $fieldError = static function (string $key) use ($signupErrors): string {
 $aria = static fn (string $key): string => isset($signupErrors[$key]) ? ' aria-invalid="true" aria-describedby="su-' . $key . '-error"' : '';
 $oldValue = static fn (string $key): string => Html::e(is_scalar($signupOld[$key] ?? null) ? (string) $signupOld[$key] : '');
 $oldSector = (string) ($signupOld['sector'] ?? '');
+$oldCountry = strtoupper((string) ($signupOld['country'] ?? \Sesam\Core\Money\Country::DEFAULT));
+$oldCountry = \Sesam\Core\Money\Country::exists($oldCountry) ? $oldCountry : \Sesam\Core\Money\Country::DEFAULT;
+$byCurrency = is_array($pricesByCurrency ?? null) ? $pricesByCurrency : [];
+$oldCurrency = \Sesam\Core\Money\Country::currency($oldCountry);
+/** Tarifs d'un outil dans chaque devise (le script de la page affiche ceux du pays choisi). */
+$pricesJson = static function (string $key) use ($byCurrency): string {
+    $out = [];
+    foreach (array_keys(\Sesam\Core\Money\Currency::ALL) as $currency) {
+        $out[$currency] = ['monthly' => (int) ($byCurrency[$currency][$key]['monthly'] ?? 0), 'setup' => (int) ($byCurrency[$currency][$key]['setup'] ?? 0)];
+    }
+
+    return (string) json_encode($out);
+};
+$localPrice = static function (string $key) use ($byCurrency, $oldCurrency): string {
+    $monthly = (int) ($byCurrency[$oldCurrency][$key]['monthly'] ?? 0);
+
+    return $monthly > 0 ? \Sesam\Core\Money\Currency::format($monthly, $oldCurrency) . ' / mois' : 'Tarif sur demande';
+};
 ?>
 <div class="wl wl-site cm-modal" data-cm-modal="signup" data-signup-mode="<?= Html::e($signupMode) ?>"<?= $signupAutoOpen ? ' data-cm-autoopen' : '' ?> hidden>
     <div class="wl-backdrop" data-cm-close></div>
     <section class="wl-card cm-guided" role="dialog" aria-modal="true" aria-labelledby="cm-signup-title">
         <?= $close ?>
         <form class="wl-body cm-guided-body cm-signup" method="post" action="<?= Html::url('/commencer') ?>" data-cm-signup-form novalidate>
+            <?php include dirname(__DIR__) . '/partials/honeypot.php'; ?>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
             <input type="hidden" name="mode" value="<?= Html::e($signupMode) ?>" data-signup-mode-input>
 
@@ -72,12 +91,28 @@ $oldSector = (string) ($signupOld['sector'] ?? '');
 
             <!-- Étape 1 : l'outil -->
             <div class="cm-g-step" data-g-step="sector">
+                <div class="cm-g-country">
+                    <label for="su-country">Votre pays</label>
+                    <select id="su-country" name="country" data-cm-country data-country-picker<?= $aria('country') ?>>
+                        <?php foreach (\Sesam\Core\Money\Country::grouped() as $groupCurrency => $countries): ?>
+                            <optgroup label="<?= Html::e(\Sesam\Core\Money\Currency::ALL[$groupCurrency]['region'] . ' · ' . \Sesam\Core\Money\Currency::short($groupCurrency)) ?>">
+                                <?php foreach ($countries as $code => $countryName): ?>
+                                    <option value="<?= Html::e($code) ?>" data-currency="<?= Html::e($groupCurrency) ?>"<?= $oldCountry === $code ? ' selected' : '' ?>><?= Html::e($countryName) ?></option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                        <?php endforeach; ?>
+                    </select>
+                    <small>Vos tarifs s'affichent dans la monnaie de votre pays.</small>
+                    <link rel="stylesheet" href="<?= Html::asset('assets/css/country-picker.css') ?>">
+                    <script src="<?= Html::asset('assets/js/country-picker.js') ?>" defer></script>
+                </div>
+                <?= $fieldError('country') ?>
                 <h3 class="cm-signup-q">Quel outil vous faut-il&nbsp;?</h3>
                 <div class="cm-g-services">
                     <?php foreach ($services as $key => [$label, $for]): ?>
                         <label class="cm-g-service">
-                            <input type="radio" name="sector" value="<?= Html::e($key) ?>"<?= $oldSector === $key ? ' checked' : '' ?> data-cm-label="<?= Html::e($label) ?>" data-cm-monthly="<?= $monthly($key) ?>" data-cm-setup="<?= $setup($key) ?>">
-                            <span><b><?= Html::e($label) ?></b><small><?= Html::e($for) ?> · <?= $trial ? '1 mois offert' : Html::e($priceLabel($key)) ?></small></span>
+                            <input type="radio" name="sector" value="<?= Html::e($key) ?>"<?= $oldSector === $key ? ' checked' : '' ?> data-cm-label="<?= Html::e($label) ?>" data-cm-monthly="<?= (int) ($byCurrency[$oldCurrency][$key]['monthly'] ?? 0) ?>" data-cm-setup="<?= (int) ($byCurrency[$oldCurrency][$key]['setup'] ?? 0) ?>" data-cm-prices="<?= Html::e($pricesJson($key)) ?>">
+                            <span><b><?= Html::e($label) ?></b><small><?= Html::e($for) ?> · <span data-cm-price><?= $trial ? '1 mois offert, puis ' . Html::e($localPrice($key)) : Html::e($localPrice($key)) ?></span></small></span>
                         </label>
                     <?php endforeach; ?>
                 </div>

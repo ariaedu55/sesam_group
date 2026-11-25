@@ -57,8 +57,26 @@ final class TenantMiddleware implements Middleware
             return $next($request);
         }
 
+        // Compte à plusieurs activités : la page « Mes activités » s'ouvre d'abord, l'activité choisie ensuite.
+        $activities = $this->auth->activityCount($user);
+        $this->context->setActivityCount($activities);
+        if ($this->isActivityHub($request->path())) {
+            $this->context->bind(null);
+
+            return $next($request);
+        }
+        if ($activities > 1 && !$this->auth->activityChosen() && $request->method() === 'GET' && $this->isAppArea($request->path())) {
+            return Response::redirect('/mes-activites');
+        }
+
         $tenant = $this->tenants->findById($tenantId);
         if ($tenant === null || !$tenant->isActive()) {
+            if ($activities > 1) {
+                // Cette activité est suspendue, les autres restent accessibles.
+                $this->auth->resetActivity();
+
+                return Response::redirect('/mes-activites');
+            }
             $this->auth->logout();
             $this->context->bind(null);
 
@@ -89,6 +107,16 @@ final class TenantMiddleware implements Middleware
         } catch (\Throwable) {
             // Un rappel en échec ne doit jamais empêcher d'utiliser l'application.
         }
+    }
+
+    private function isActivityHub(string $path): bool
+    {
+        return $path === '/mes-activites' || str_starts_with($path, '/mes-activites/');
+    }
+
+    private function isAppArea(string $path): bool
+    {
+        return preg_match('#^/(espace|clients|paiements|statistiques|parametres|utilisateurs|recherche|reservation|boutique|immo|loyer|abonnement|notifications|profil)(/|$)#', $path) === 1;
     }
 
     private function allowedWhenBlocked(string $path): bool

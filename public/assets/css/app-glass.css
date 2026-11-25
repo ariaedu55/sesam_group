@@ -1036,8 +1036,10 @@ body.is-app::after {
 
     .is-app .tenant-rail {
         position: sticky;
-        top: var(--sesam-space-3);
         inset: auto;
+        /* Après « inset » (qui remet top à auto) : le menu reste fixe pendant le défilement de la page. */
+        top: var(--sesam-space-3);
+        align-self: start;
         width: auto;
         height: calc(100vh - 2 * var(--sesam-space-3));
         min-height: 0;
@@ -1116,4 +1118,75 @@ body.is-app::after {
     .is-app .tenant-rail-logout-btn {
         font-size: 0.9rem;
     }
+}
+
+/* ---------- « Mes activités » : retour au choix d'activité (comptes à plusieurs activités) ---------- */
+
+.is-app .tenant-switch {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    min-height: 2.9rem;
+    margin: 0 0 var(--sesam-space-3);
+    padding: 0.45rem 0.6rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, var(--sesam-navy), var(--sesam-blue));
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 8px 20px rgba(3, 73, 184, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.is-app .tenant-switch:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(3, 73, 184, 0.32);
+}
+
+.is-app .tenant-switch:focus-visible {
+    outline: 3px solid var(--sesam-cyan);
+    outline-offset: 2px;
+}
+
+.is-app .tenant-switch .ui-icon {
+    flex: none;
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.is-app .tenant-switch strong,
+.is-app .tenant-switch small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.is-app .tenant-switch strong {
+    font-size: 0.92rem;
+}
+
+.is-app .tenant-switch small {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.74rem;
+}
+
+.is-app .tenant-switch > .tenant-rail-text:not(.tenant-switch-count) {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+}
+
+.is-app .tenant-switch-count {
+    display: grid;
+    place-items: center;
+    flex: none;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: var(--sesam-cyan);
+    color: var(--sesam-navy);
+    font-size: 0.75rem;
+    font-weight: 800;
 }

@@ -11,4 +11,6 @@
 /storage/tmp_*
 /.cursor/
 /.idea/
+/.claude/
+.DS_Store
 *.tgz

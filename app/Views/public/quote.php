@@ -52,6 +52,7 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
     </header>
     <section class="s-wrap quote" style="padding-top: 16px">
     <form class="quote-form" method="post" action="<?= Html::url('/devis') ?>" novalidate>
+        <?php include dirname(__DIR__) . '/partials/honeypot.php'; ?>
         <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
 
         <fieldset>

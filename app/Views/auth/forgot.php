@@ -20,6 +20,7 @@ $status = is_string($status ?? null) ? $status : '';
         <p class="alert" role="status"><?= Html::e($status) ?></p>
     <?php endif; ?>
     <form method="post" action="<?= Html::url('/mot-de-passe') ?>">
+        <?php include dirname(__DIR__) . '/partials/honeypot.php'; ?>
         <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
         <div class="field">
             <label for="email"><span>E-mail</span></label>

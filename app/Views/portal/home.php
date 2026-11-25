@@ -56,6 +56,7 @@ $err = static function (string $key) use ($errors): void {
         <p class="portal-empty">Aucune prestation n’est ouverte pour le moment.</p>
     <?php else: ?>
         <form class="portal-form" method="post" action="<?= Html::url('/t/' . $slug) ?>">
+            <?php include dirname(__DIR__) . '/partials/honeypot.php'; ?>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
             <fieldset class="portal-choose">
                 <legend>1. Choisissez</legend>
@@ -141,6 +142,7 @@ $err = static function (string $key) use ($errors): void {
             <?php endforeach; ?>
         </div>
         <form class="portal-form" method="post" action="<?= Html::url('/t/' . $slug) ?>">
+            <?php include dirname(__DIR__) . '/partials/honeypot.php'; ?>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
             <div class="field">
                 <label for="unit_label"><span>Bien ou unité qui vous intéresse</span></label>

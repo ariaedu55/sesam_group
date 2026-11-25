@@ -29,7 +29,7 @@ function seedSubscription(PDO $pdo, int $tenantId, string $sector): void
     if ((int) $check->fetchColumn() > 0) {
         return;
     }
-    $price = $pdo->prepare('SELECT monthly_amount FROM saas_prices WHERE sector = :sector');
+    $price = $pdo->prepare("SELECT monthly_amount FROM saas_prices WHERE sector = :sector AND currency = 'XOF'");
     $price->execute(['sector' => $sector]);
     $monthly = (int) ($price->fetchColumn() ?: 10000);
     $utc = new DateTimeZone('UTC');

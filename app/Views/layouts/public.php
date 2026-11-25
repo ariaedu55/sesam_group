@@ -30,6 +30,7 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
     <meta name="theme-color" content="#f4f2ec">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/site.css') ?>">
 <?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
+    <link rel="stylesheet" href="<?= Html::asset('assets/css/language.css') ?>">
 </head>
 <body class="site">
 <a class="sr-only" href="#contenu">Aller au contenu</a>
@@ -65,8 +66,9 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
             </ul>
         </nav>
         <div class="sh-end">
+            <?php $langSwitchClass = 'lang-switch--site'; include dirname(__DIR__) . '/partials/language-switch.php'; ?>
             <a class="sh-login" href="<?= Html::url('/connexion') ?>"<?= $current === 'connexion' ? ' aria-current="page"' : '' ?>>Connexion</a>
-            <a class="s-btn s-btn--plain sh-cta" href="<?= Html::url('/commencer') ?>"<?= $current === 'commencer' ? ' aria-current="page"' : '' ?>>Commencer</a>
+            <a class="s-btn s-btn--plain sh-cta" href="<?= Html::url('/commencer') ?>"<?= $current === 'commencer' ? ' aria-current="page"' : '' ?>><?= Html::en('Commencer', 'Get started') ?></a>
             <button class="sh-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav" aria-label="Menu">
                 <?php $name = 'menu'; include $icon; ?>
             </button>
@@ -133,5 +135,6 @@ $quickLinks = ['agence' => 'sh-q', 'boutique' => 'sh-q', 'reservation' => 'sh-q 
 <script src="<?= Html::asset('assets/js/site.js') ?>" defer></script>
 <?php require dirname(__DIR__) . '/partials/site-popup.php'; ?>
 <?php require dirname(__DIR__) . '/partials/jotform-agent.php'; ?>
+<?php include dirname(__DIR__) . '/partials/gtranslate.php'; ?>
 </body>
 </html>

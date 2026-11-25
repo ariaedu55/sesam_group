@@ -3677,3 +3677,20 @@ textarea.input {
         width: auto;
     }
 }
+
+/* Maquette boutique : vraies photos de produits à la place des aplats de couleur (même taille, même arrondi). */
+.mk-product > i {
+    overflow: hidden;
+}
+
+.mk-product > i:has(img),
+.hx-scene .mk-product > i:has(img) {
+    background: #f4f4f2;
+}
+
+.mk-product > i > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

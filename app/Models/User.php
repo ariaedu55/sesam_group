@@ -48,6 +48,19 @@ final class User extends Model
         return (int) $value;
     }
 
+    /**
+     * Activité principale du compte. Diffère de tenantId() quand le compte a ouvert une autre de ses activités.
+     */
+    public function homeTenantId(): ?int
+    {
+        $value = $this->get('home_tenant_id');
+        if ($value === null || $value === '') {
+            return $this->tenantId();
+        }
+
+        return (int) $value;
+    }
+
     public function passwordHash(): string
     {
         return (string) $this->get('password_hash', '');

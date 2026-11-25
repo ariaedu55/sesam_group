@@ -36,7 +36,7 @@ final class AuthMiddleware implements Middleware
 
     private function isProtected(string $path): bool
     {
-        foreach (['/espace', '/utilisateurs', '/commerces', '/revenus', '/tarifs', '/agence', '/parametres', '/notifications', '/profil', '/recherche', '/clients', '/paiements', '/statistiques', '/reservation', '/boutique', '/loyer', '/immo', '/abonnement', '/finance'] as $prefix) {
+        foreach (['/espace', '/utilisateurs', '/commerces', '/revenus', '/tarifs', '/agence', '/parametres', '/notifications', '/profil', '/recherche', '/clients', '/paiements', '/statistiques', '/reservation', '/boutique', '/loyer', '/immo', '/abonnement', '/finance', '/mes-activites'] as $prefix) {
             if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
                 return true;
             }

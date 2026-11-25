@@ -11,6 +11,15 @@ final class Html
         return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
     }
 
+    /**
+     * Texte avec sa traduction anglaise écrite à la main : affiché en français, remplacé par l'anglais quand le
+     * visiteur choisit l'anglais (language.js). Google Translate ne le touche pas (« notranslate »).
+     */
+    public static function en(string $fr, string $en, string $tag = 'span'): string
+    {
+        return '<' . $tag . ' class="notranslate" translate="no" data-en="' . self::e($en) . '">' . self::e($fr) . '</' . $tag . '>';
+    }
+
     public static function initials(string $name): string
     {
         $parts = preg_split('/\s+/u', trim($name)) ?: [];

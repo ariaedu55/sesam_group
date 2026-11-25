@@ -22,6 +22,8 @@ final class UserService extends Service
 
     private readonly UserRepository $users;
     private readonly RoleRepository $roles;
+    private readonly \Sesam\Repositories\TenantAccessRepository $access;
+    private readonly \Sesam\Repositories\TenantRepository $tenants;
 
     /**
      * @param array{host: string, port: string, name: string, user: string, password: string} $database
@@ -35,6 +37,81 @@ final class UserService extends Service
         $pdo = Connection::make($database);
         $this->users = new UserRepository($pdo);
         $this->roles = new RoleRepository($pdo);
+        $this->access = new \Sesam\Repositories\TenantAccessRepository($pdo);
+        $this->tenants = new \Sesam\Repositories\TenantRepository($pdo);
+    }
+
+    // ================================================================ Business d'un compte de l'équipe
+
+    /**
+     * Business que ce responsable peut attribuer : ceux qu'il ouvre lui-même. Vide s'il n'en a qu'un.
+     *
+     * @return list<\Sesam\Models\Tenant>
+     */
+    public function businessChoices(User $actor): array
+    {
+        if ($actor->homeTenantId() === null) {
+            return [];
+        }
+        $tenants = [];
+        foreach ($this->access->tenantIdsFor($actor->id(), $actor->homeTenantId()) as $id) {
+            $tenant = $this->tenants->findById($id);
+            if ($tenant !== null) {
+                $tenants[] = $tenant;
+            }
+        }
+
+        return count($tenants) > 1 ? $tenants : [];
+    }
+
+    /**
+     * Business ouverts par ce compte (principal en premier).
+     *
+     * @return list<int>
+     */
+    public function businessesOf(User $target): array
+    {
+        return $this->access->tenantIdsFor($target->id(), $target->tenantId());
+    }
+
+    /**
+     * Le responsable du business et le compte connecté lui-même gardent leurs accès : on ne les modifie pas ici.
+     */
+    public function businessesEditable(User $actor, ?User $target): bool
+    {
+        if ($this->businessChoices($actor) === [] || !$actor->can(Permission::USERS_UPDATE)) {
+            return false;
+        }
+
+        return $target === null || ($target->id() !== $actor->id() && !$target->hasRole(Role::TENANT_OWNER));
+    }
+
+    /**
+     * Business cochés, limités à ceux du responsable. Le premier devient le business principal du compte
+     * (le business ouvert en ce moment s'il est coché).
+     *
+     * @return array{home: int, all: list<int>}|null null : pas de choix possible (un seul business)
+     */
+    private function selectedBusinesses(User $actor, mixed $raw): ?array
+    {
+        $choices = array_map(static fn (\Sesam\Models\Tenant $t): int => $t->id(), $this->businessChoices($actor));
+        if ($choices === []) {
+            return null;
+        }
+        $picked = [];
+        foreach (is_array($raw) ? $raw : [] as $id) {
+            if (is_scalar($id) && ctype_digit((string) $id) && in_array((int) $id, $choices, true)) {
+                $picked[] = (int) $id;
+            }
+        }
+        $picked = array_values(array_unique($picked));
+        if ($picked === []) {
+            throw new ValidationException(['businesses' => 'Cochez au moins un business auquel ce compte a accès.']);
+        }
+        $current = $actor->tenantId();
+        $home = $current !== null && in_array($current, $picked, true) ? $current : $picked[0];
+
+        return ['home' => $home, 'all' => $picked];
     }
 
     /**
@@ -98,9 +175,10 @@ final class UserService extends Service
         if ($this->users->findByEmail($data['email']) !== null) {
             throw new ValidationException(['email' => 'Cet e-mail est déjà utilisé.']);
         }
+        $businesses = $this->selectedBusinesses($actor, $input['businesses'] ?? []);
 
         $id = $this->users->insert([
-            'tenant_id' => $actor->tenantId(),
+            'tenant_id' => $businesses['home'] ?? $actor->tenantId(),
             'full_name' => $data['full_name'],
             'email' => $data['email'],
             'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
@@ -108,6 +186,9 @@ final class UserService extends Service
         ]);
         if ($actor->can(Permission::USERS_ASSIGN_ROLES)) {
             $this->roles->replaceUserRoles($id, $this->roles->idsForSlugs($roles));
+        }
+        if ($businesses !== null) {
+            $this->access->replaceExtra($id, $businesses['home'], $businesses['all']);
         }
         if ($actor->tenantId() === null) {
             \Sesam\Services\Notifier::staff(
@@ -170,6 +251,20 @@ final class UserService extends Service
             $roles = $this->normalizedRoles($actor, $input['roles'] ?? [], $current);
             $this->guardLastSuperAdminRoles($current, $roles);
             $this->roles->replaceUserRoles($id, $this->roles->idsForSlugs($roles));
+        }
+
+        if (array_key_exists('businesses', $input) && $this->businessesEditable($actor, $current)) {
+            $businesses = $this->selectedBusinesses($actor, $input['businesses']);
+            if ($businesses !== null) {
+                // Les business hors du groupe de ce responsable (s'il y en a) restent inchangés.
+                $choices = array_map(static fn (\Sesam\Models\Tenant $t): int => $t->id(), $this->businessChoices($actor));
+                $outside = array_values(array_filter($this->businessesOf($current), static fn (int $t): bool => !in_array($t, $choices, true)));
+                $home = in_array((int) $current->tenantId(), $businesses['all'], true) ? (int) $current->tenantId() : $businesses['home'];
+                if ($home !== $current->tenantId()) {
+                    $this->users->setHomeTenant($id, $home);
+                }
+                $this->access->replaceExtra($id, $home, [...$businesses['all'], ...$outside]);
+            }
         }
     }
 
@@ -267,7 +362,7 @@ final class UserService extends Service
             return $target->tenantId() === null;
         }
 
-        return $target->tenantId() === $actorTenant;
+        return $target->tenantId() === $actorTenant || ($target->tenantId() !== null && $this->access->has($target->id(), $actorTenant));
     }
 
     private function deny(User $actor, string $reason): never

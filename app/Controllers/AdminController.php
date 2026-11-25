@@ -79,13 +79,16 @@ final class AdminController extends Controller
     public function savePrices(Request $request): Response
     {
         $actor = $this->auth->requirePermission(Permission::SUBSCRIPTIONS_MANAGE);
-        $input = [];
+        $input = ['usd_rate' => (string) $request->input('usd_rate', '')];
         foreach (['reservation', 'boutique', 'loyer'] as $sector) {
-            $input[$sector . '_monthly'] = (string) $request->input($sector . '_monthly', '0');
-            $input[$sector . '_setup'] = (string) $request->input($sector . '_setup', '0');
-            foreach ([3, 6, 12] as $months) {
-                $input[$sector . '_plan_' . $months . '_enabled'] = (string) $request->input($sector . '_plan_' . $months . '_enabled', '');
-                $input[$sector . '_plan_' . $months . '_discount'] = (string) $request->input($sector . '_plan_' . $months . '_discount', '0');
+            foreach (array_keys(\Sesam\Core\Money\Currency::ALL) as $currency) {
+                $prefix = $sector . '_' . $currency;
+                $input[$prefix . '_monthly'] = (string) $request->input($prefix . '_monthly', '0');
+                $input[$prefix . '_setup'] = (string) $request->input($prefix . '_setup', '0');
+                foreach ([3, 6, 12] as $months) {
+                    $input[$prefix . '_plan_' . $months . '_enabled'] = (string) $request->input($prefix . '_plan_' . $months . '_enabled', '');
+                    $input[$prefix . '_plan_' . $months . '_discount'] = (string) $request->input($prefix . '_plan_' . $months . '_discount', '0');
+                }
             }
         }
         try {
@@ -121,6 +124,7 @@ final class AdminController extends Controller
             'title' => 'Tarifs — Console SESAM',
             'current' => 'tarifs',
             'prices' => $this->admin->prices($actor),
+            'usdRate' => $this->admin->usdRate(),
             'trial' => $this->saas?->trialSetting() ?? ['enabled' => true, 'updated_at' => null, 'updated_by_name' => null],
             'old' => $old,
             'errors' => $errors,

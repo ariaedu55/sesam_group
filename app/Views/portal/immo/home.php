@@ -176,6 +176,7 @@ $err = static function (string $key) use ($errors): void {
 
         <aside class="im-aside" id="contact" aria-labelledby="contact-title">
             <form class="im-form" method="post" action="<?= Html::url($base) ?>">
+                <?php include dirname(__DIR__, 2) . '/partials/honeypot.php'; ?>
                 <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
                 <header class="im-form-head">
                     <h2 id="contact-title">Une visite ? Une question ?</h2>

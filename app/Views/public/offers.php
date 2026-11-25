@@ -27,7 +27,7 @@ $icon = dirname(__DIR__) . '/partials/ui-icon.php';
             <?php foreach ($offers as $index => $offer): ?>
                 <article class="offer<?= $index === 1 ? ' offer--hot' : '' ?>" data-reveal data-reveal-delay="<?= $index ?>">
                     <p class="s-kicker">Agence</p>
-                    <?php if ($index === 1): ?><span class="offer-badge">Le plus choisi</span><?php endif; ?>
+                    <?php if ($index === 1): ?><span class="offer-badge"><?= Html::en('Le plus choisi', 'Most popular') ?></span><?php endif; ?>
                     <h2 class="s-h3"><?= Html::e($offer['name']) ?></h2>
                     <p class="offer-price"><?= Html::e($offer['price']) ?></p>
                     <p><?= Html::e($offer['description']) ?></p>

@@ -70,6 +70,7 @@ foreach ($nav as $item) {
     <link rel="stylesheet" href="<?= Html::asset('assets/css/notifications.css') ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/mobile-app.css') ?>">
 <?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
+    <link rel="stylesheet" href="<?= Html::asset('assets/css/language.css') ?>">
 </head>
 <body class="is-app is-staff">
 <div class="app-shell tenant-shell">
@@ -115,6 +116,7 @@ foreach ($nav as $item) {
                 </button>
                 <p class="topbar-title"><?= Html::e($navTitle ?? $title ?? 'SESAM') ?></p>
                 <div class="tenant-chrome-tools">
+                    <?php $langSwitchClass = ''; include dirname(__DIR__) . '/partials/language-switch.php'; ?>
                     <a class="tenant-bell" href="<?= Html::url('/notifications') ?>" aria-label="Notifications<?= $notificationUnread > 0 ? ' (' . $notificationUnread . ' non lues)' : '' ?>">
                         <?php $name = 'bell'; include dirname(__DIR__) . '/partials/ui-icon.php'; ?>
                         <span class="tenant-bell-count" data-notification-count<?= $notificationUnread > 0 ? '' : ' hidden' ?>><?= $notificationUnread ?></span>
@@ -148,5 +150,6 @@ foreach ($nav as $item) {
 <script src="<?= Html::asset('assets/js/boutique-admin.js') ?>" defer></script>
 <?php require dirname(__DIR__) . '/partials/push.php'; ?>
 <?php require dirname(__DIR__) . '/partials/welcome.php'; ?>
+<?php include dirname(__DIR__) . '/partials/gtranslate.php'; ?>
 </body>
 </html>

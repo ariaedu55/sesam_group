@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use Sesam\Helpers\Html;
+
 ?>
 <div class="mk-panel" aria-hidden="true">
-    <p class="mk-panel-head">Réserver chez Horizon <span>Agenda</span></p>
-    <div class="mk-days"><span>Lun</span><span>Mar</span><span class="is-on">Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span></div>
+    <p class="mk-panel-head">Réserver chez Horizon <?= Html::en('Agenda', 'Schedule') ?></p>
+    <div class="mk-days"><?= Html::en('Lun', 'Mon') ?><?= Html::en('Mar', 'Tue') ?><span class="is-on notranslate" translate="no" data-en="Wed">Mer</span><?= Html::en('Jeu', 'Thu') ?><?= Html::en('Ven', 'Fri') ?><?= Html::en('Sam', 'Sat') ?></div>
     <div class="mk-slots">
         <span>09:00 <small>libre</small></span>
         <span class="is-taken">10:30 <small>pris</small></span>

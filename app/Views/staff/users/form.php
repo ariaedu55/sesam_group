@@ -55,6 +55,31 @@ $action = $edited === null ? Html::url('/utilisateurs') : Html::url('/utilisateu
         <?php else: ?>
             <input type="hidden" name="is_active" value="<?= $isActive ? '1' : '0' ?>">
         <?php endif; ?>
+        <?php
+        $businessChoices = is_array($businessChoices ?? null) ? $businessChoices : [];
+        $pickedBusinesses = array_map('intval', is_array($old['businesses'] ?? null) ? $old['businesses'] : []);
+        ?>
+        <?php if ($businessChoices !== []): ?>
+            <link rel="stylesheet" href="<?= Html::asset('assets/css/team-access.css') ?>">
+            <fieldset class="field biz-access">
+                <legend>Business accessibles</legend>
+                <p class="muted">Cochez les business que ce compte peut ouvrir. Les autres lui apparaîtront grisés, sans accès.</p>
+                <div class="biz-choices">
+                    <?php foreach ($businessChoices as $business): ?>
+                        <?php $product = \Sesam\Controllers\ActivityController::PRODUCTS[$business->sector()] ?? ['product' => 'Sesam ' . $business->sectorLabel(), 'icon' => 'store', 'tone' => 'blue']; ?>
+                        <label class="biz-choice" data-tone="<?= Html::e($product['tone']) ?>">
+                            <input type="checkbox" name="businesses[]" value="<?= $business->id() ?>"<?= in_array($business->id(), $pickedBusinesses, true) ? ' checked' : '' ?>>
+                            <span class="biz-choice-icon"><?php $name = $product['icon']; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?></span>
+                            <span class="biz-choice-text"><strong><?= Html::e($product['product']) ?></strong><small><?= Html::e($business->displayName()) ?></small></span>
+                            <span class="biz-choice-check" aria-hidden="true"><?php $name = 'check'; include dirname(__DIR__, 2) . '/partials/ui-icon.php'; ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (isset($errors['businesses'])): ?><p class="field-error" role="alert"><?= Html::e($errors['businesses']) ?></p><?php endif; ?>
+            </fieldset>
+        <?php elseif (!empty($businessLocked)): ?>
+            <p class="muted">Ce compte est le responsable ou votre propre compte : il garde l'accès à tous ses business.</p>
+        <?php endif; ?>
         <?php if ($canAssignRoles): ?>
             <fieldset class="field">
                 <legend>Rôles</legend>

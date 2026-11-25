@@ -7,6 +7,7 @@ namespace Sesam\Services\Admin;
 use Sesam\Core\Auth\Permission;
 use Sesam\Core\Database\Connection;
 use Sesam\Core\HttpException;
+use Sesam\Core\Money\Currency;
 use Sesam\Core\Tenant\Sector;
 use Sesam\Core\Validation\ValidationException;
 use Sesam\Models\Tenant;
@@ -191,13 +192,18 @@ final class AdminService extends Service
     {
         $canSee = $actor->can(Permission::SUBSCRIPTIONS_VIEW);
         $prices = $this->admin->prices();
+        $currency = $tenant->currency();
+        // Montant proposé dans la devise du commerce : son tarif, ou (en FCFA) le montant convenu.
+        $listPrice = (int) ($prices[$tenant->sector()][$currency]['monthly_amount'] ?? 0);
+        $default = $currency === Currency::XOF ? ($subscription?->monthlyAmount() ?? $listPrice) : $listPrice;
 
         return [
             'payments' => $canSee ? $this->admin->tenantPayments($tenant->id()) : [],
-            'paidTotal' => $canSee ? $this->admin->tenantPaidTotal($tenant->id()) : 0,
+            'paidTotal' => $canSee ? $this->admin->tenantPaidTotal($tenant->id(), $currency) : 0,
             'notes' => $this->admin->tenantNotes($tenant->id()),
             'usage' => $this->admin->usage($tenant->id(), $tenant->sector(), $this->addDays(gmdate('Y-m-d'), -30) . ' 00:00:00'),
-            'defaultAmount' => $subscription?->monthlyAmount() ?? ($prices[$tenant->sector()]['monthly_amount'] ?? 0),
+            'defaultAmount' => $default,
+            'currency' => $currency,
         ];
     }
 
@@ -214,14 +220,17 @@ final class AdminService extends Service
             throw new HttpException(404, 'Commerce introuvable.');
         }
         $errors = [];
-        $amount = (int) preg_replace('/\D+/', '', (string) ($input['amount'] ?? ''));
+        // Montant saisi dans la devise du commerce ; les revenus de la console le gardent en équivalent FCFA.
+        $currency = $tenant->currency();
+        $amount = (int) Currency::parse((string) ($input['amount'] ?? ''), $currency);
+        $amountXof = Currency::toXof($amount, $currency, $this->usdRate());
         $months = (int) ($input['months'] ?? 1);
         $paidOn = trim((string) ($input['paid_on'] ?? ''));
         $method = (string) ($input['method'] ?? '');
         $reference = mb_substr(trim((string) ($input['reference'] ?? '')), 0, 80);
         $note = trim((string) ($input['note'] ?? ''));
-        if ($amount < 1 || $amount > 100_000_000) {
-            $errors['amount'] = 'Indiquez le montant encaissé.';
+        if ($amount < 1 || $amountXof > 100_000_000) {
+            $errors['amount'] = 'Indiquez le montant encaissé (en ' . Currency::short($currency) . ').';
         }
         if ($months < 1 || $months > 12) {
             $errors['months'] = 'Entre 1 et 12 mois.';
@@ -251,13 +260,15 @@ final class AdminService extends Service
                 $start = $paidOn < $today && $state === 'none' ? $paidOn : $today;
                 $end = $this->addMonths($start, $months);
             }
-            $monthly = $current?->monthlyAmount() ?? intdiv($amount, $months);
+            $monthly = $current?->monthlyAmount() ?? intdiv($amountXof, $months);
             $this->subscriptions->save($tenantId, TenantSubscription::ACTIVE, $monthly, $start, $end);
             $this->tenants->updateStatus($tenantId, 'active');
-            $label = number_format($amount, 0, ',', ' ') . ' FCFA par ' . self::METHODS[$method] . ($note !== '' ? ' — ' . $note : '');
+            $label = Currency::format($amount, $currency) . ' par ' . self::METHODS[$method] . ($note !== '' ? ' — ' . $note : '');
             $this->subscriptions->addEvent($tenantId, $state === 'active' || $state === 'overdue' ? 'renew' : 'activate', $current?->status(), TenantSubscription::ACTIVE, $end, mb_substr('Paiement ' . $label, 0, 180), $actor->id());
             $this->admin->insertPayment($tenantId, [
-                'amount' => $amount,
+                'amount' => $amountXof,
+                'currency' => $currency,
+                'amount_paid' => $amount,
                 'months' => $months,
                 'paid_on' => $paidOn,
                 'method' => $method,
@@ -275,7 +286,7 @@ final class AdminService extends Service
         \Sesam\Services\Notifier::staff(
             'sesam.payment',
             'Paiement encaissé : ' . $tenant->displayName(),
-            number_format($amount, 0, ',', ' ') . ' FCFA enregistrés par ' . $actor->fullName() . ' · actif jusqu\'au ' . gmdate('d/m/Y', (int) strtotime($end . ' UTC')),
+            Currency::format($amount, $currency) . ' enregistrés par ' . $actor->fullName() . ' · actif jusqu\'au ' . gmdate('d/m/Y', (int) strtotime($end . ' UTC')),
             '/commerces/' . $tenantId,
             'success',
             null,
@@ -285,7 +296,7 @@ final class AdminService extends Service
             $tenantId,
             'subscription',
             'Paiement d\'abonnement reçu ✓',
-            number_format($amount, 0, ',', ' ') . ' FCFA enregistrés par SESAM. Votre espace est actif jusqu\'au ' . gmdate('d/m/Y', (int) strtotime($end . ' UTC')) . '.',
+            Currency::format($amount, $currency) . ' enregistrés par SESAM. Votre espace est actif jusqu\'au ' . gmdate('d/m/Y', (int) strtotime($end . ' UTC')) . '.',
             '/abonnement',
             'success',
         );
@@ -307,18 +318,33 @@ final class AdminService extends Service
     }
 
     /**
-     * @return array<string, array{label: string, monthly_amount: int, setup_fee: int, plans: array<int, array{enabled: bool, discount: int}>}>
+     * Tarifs de chaque module, dans chaque devise (FCFA, dollar, euro).
+     *
+     * @return array<string, array{label: string, currencies: array<string, array{monthly_amount: int, setup_fee: int, plans: array<int, array{enabled: bool, discount: int}>}>}>
      */
     public function prices(User $actor): array
     {
         $this->assertCan($actor, Permission::TENANTS_VIEW);
         $stored = $this->admin->prices();
+        $empty = ['monthly_amount' => 0, 'setup_fee' => 0, 'plans' => [3 => ['enabled' => true, 'discount' => 0], 6 => ['enabled' => true, 'discount' => 0], 12 => ['enabled' => true, 'discount' => 0]]];
         $prices = [];
         foreach (Sector::LABELS as $sector => $label) {
-            $prices[$sector] = ['label' => $label] + ($stored[$sector] ?? ['monthly_amount' => 0, 'setup_fee' => 0, 'plans' => [3 => ['enabled' => true, 'discount' => 0], 6 => ['enabled' => true, 'discount' => 0], 12 => ['enabled' => true, 'discount' => 0]]]);
+            $currencies = [];
+            foreach (array_keys(Currency::ALL) as $currency) {
+                $currencies[$currency] = $stored[$sector][$currency] ?? $empty;
+            }
+            $prices[$sector] = ['label' => $label, 'currencies' => $currencies];
         }
 
         return $prices;
+    }
+
+    /** Taux du dollar en FCFA, utilisé pour ramener les paiements en dollars aux revenus en FCFA. */
+    public function usdRate(): float
+    {
+        $rate = (float) str_replace(',', '.', (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->get('rate_usd_xof', (string) Currency::DEFAULT_USD_TO_XOF));
+
+        return $rate > 0 ? $rate : Currency::DEFAULT_USD_TO_XOF;
     }
 
     /**
@@ -329,28 +355,46 @@ final class AdminService extends Service
         $this->assertCan($actor, Permission::SUBSCRIPTIONS_MANAGE);
         $errors = [];
         $clean = [];
+        $rateRaw = trim(str_replace([' ', ','], ['', '.'], (string) ($input['usd_rate'] ?? '')));
+        $usdRate = $rateRaw === '' ? $this->usdRate() : (float) $rateRaw;
+        if ($rateRaw !== '' && (preg_match('/^\d{1,5}(\.\d{1,3})?$/', $rateRaw) !== 1 || $usdRate < 1)) {
+            $errors['usd_rate'] = 'Taux du dollar : un nombre de FCFA pour 1 $, par exemple 600.';
+        }
         foreach (array_keys(Sector::LABELS) as $sector) {
-            $monthly = (int) preg_replace('/\D+/', '', (string) ($input[$sector . '_monthly'] ?? '0'));
-            $setup = (int) preg_replace('/\D+/', '', (string) ($input[$sector . '_setup'] ?? '0'));
-            if ($monthly > 10_000_000 || $setup > 100_000_000) {
-                $errors[$sector . '_monthly'] = 'Montant trop élevé.';
-            }
-            $plans = [];
-            foreach ([3, 6, 12] as $months) {
-                $raw = trim(str_replace(['%', ' '], '', (string) ($input[$sector . '_plan_' . $months . '_discount'] ?? '0')));
-                $raw = $raw === '' ? '0' : $raw;
-                if (preg_match('/^\d{1,2}$/', $raw) !== 1 || (int) $raw > 90) {
-                    $errors[$sector . '_plan_' . $months . '_discount'] = 'Réduction ' . $months . ' mois (' . Sector::LABELS[$sector] . ') : un nombre entier entre 0 et 90 %.';
+            foreach (array_keys(Currency::ALL) as $currency) {
+                $prefix = $sector . '_' . $currency;
+                $where = ' (' . Sector::LABELS[$sector] . ', ' . Currency::short($currency) . ')';
+                $monthly = Currency::parse((string) ($input[$prefix . '_monthly'] ?? '0'), $currency);
+                $setup = Currency::parse((string) ($input[$prefix . '_setup'] ?? '0'), $currency);
+                if ($monthly === null) {
+                    $errors[$prefix . '_monthly'] = 'Mensualité' . $where . ' : montant invalide.';
                 }
-                $plans[$months] = ['enabled' => !empty($input[$sector . '_plan_' . $months . '_enabled']), 'discount' => min(90, (int) $raw)];
+                if ($setup === null) {
+                    $errors[$prefix . '_setup'] = 'Frais de mise en place' . $where . ' : montant invalide.';
+                }
+                if (Currency::toXof((int) $monthly, $currency, $usdRate) > 10_000_000 || Currency::toXof((int) $setup, $currency, $usdRate) > 100_000_000) {
+                    $errors[$prefix . '_monthly'] = 'Montant trop élevé' . $where . '.';
+                }
+                $plans = [];
+                foreach ([3, 6, 12] as $months) {
+                    $raw = trim(str_replace(['%', ' '], '', (string) ($input[$prefix . '_plan_' . $months . '_discount'] ?? '0')));
+                    $raw = $raw === '' ? '0' : $raw;
+                    if (preg_match('/^\d{1,2}$/', $raw) !== 1 || (int) $raw > 90) {
+                        $errors[$prefix . '_plan_' . $months . '_discount'] = 'Réduction ' . $months . ' mois' . $where . ' : un nombre entier entre 0 et 90 %.';
+                    }
+                    $plans[$months] = ['enabled' => !empty($input[$prefix . '_plan_' . $months . '_enabled']), 'discount' => min(90, (int) $raw)];
+                }
+                $clean[] = [$sector, $currency, (int) $monthly, (int) $setup, $plans];
             }
-            $clean[$sector] = [$monthly, $setup, $plans];
         }
         if ($errors !== []) {
             throw new ValidationException($errors);
         }
-        foreach ($clean as $sector => [$monthly, $setup, $plans]) {
-            $this->admin->savePrice($sector, $monthly, $setup, $plans);
+        if ($rateRaw !== '') {
+            (new \Sesam\Repositories\PlatformSettingsRepository($this->pdo))->set('rate_usd_xof', (string) $usdRate, $actor->id());
+        }
+        foreach ($clean as [$sector, $currency, $monthly, $setup, $plans]) {
+            $this->admin->savePrice($sector, $currency, $monthly, $setup, $plans, Currency::toXof($monthly, $currency, $usdRate));
         }
     }
 

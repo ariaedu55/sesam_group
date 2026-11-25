@@ -162,7 +162,7 @@ $date = static fn (?string $value): string => $value === null || $value === '' ?
                                 <span class="console-avatar" aria-hidden="true"><?= Html::e($initials) ?></span>
                                 <span class="console-row-main">
                                     <strong><?= Html::e($tenant->displayName()) ?></strong>
-                                    <span class="muted"><?= Html::e($tenant->sectorLabel()) ?> · /t/<?= Html::e($tenant->slug()) ?></span>
+                                    <span class="muted"><?= Html::e($tenant->sectorLabel()) ?> · /t/<?= Html::e($tenant->slug()) ?> · <?= Html::e($tenant->countryName()) ?><?php if ($tenant->currency() !== 'XOF'): ?> <span class="chip chip-muted"><?= Html::e(\Sesam\Core\Money\Currency::short($tenant->currency())) ?></span><?php endif; ?></span>
                                     <?php if (is_string($owner) && $owner !== ''): ?>
                                         <span class="muted console-row-owner"><?= Html::e($owner) ?></span>
                                     <?php endif; ?>

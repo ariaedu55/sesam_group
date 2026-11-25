@@ -468,3 +468,431 @@ a.console-month:hover .console-month-stack,
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
+
+/* ---------- Comptes à plusieurs activités (Immo, Réservation, Boutique) ---------- */
+
+.activity-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+}
+
+.activity-choice {
+    --tone: var(--sesam-blue);
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.9rem 1rem;
+    border: 1.5px solid var(--sesam-line);
+    border-radius: var(--sesam-radius-lg);
+    background: var(--sesam-surface);
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.activity-choice[data-tone="emerald"],
+.console-activity-list li[data-tone="emerald"] { --tone: var(--sesam-emerald); }
+.activity-choice[data-tone="electric"],
+.console-activity-list li[data-tone="electric"] { --tone: var(--sesam-electric); }
+.activity-choice[data-tone="amber"],
+.console-activity-list li[data-tone="amber"] { --tone: var(--sesam-amber); }
+
+.activity-choice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.activity-choice-icon,
+.console-activity-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.8rem;
+    background: color-mix(in srgb, var(--tone) 14%, #fff);
+    color: var(--tone);
+}
+
+.activity-choice-icon .ui-icon,
+.console-activity-icon .ui-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.activity-choice-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.activity-choice-text small {
+    color: var(--sesam-muted);
+    line-height: 1.35;
+}
+
+.activity-choice-check {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.4rem;
+    height: 1.4rem;
+    border: 1.5px solid var(--sesam-line);
+    border-radius: 0.45rem;
+    color: transparent;
+}
+
+.activity-choice-check .ui-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    opacity: 0;
+}
+
+.activity-choice:has(input:checked) .activity-choice-check .ui-icon {
+    opacity: 1;
+}
+
+.activity-choice:has(input:checked) {
+    border-color: var(--tone);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.activity-choice:has(input:checked) .activity-choice-check {
+    border-color: var(--tone);
+    background: var(--tone);
+    color: #fff;
+}
+
+.activity-choice:has(input:focus-visible) {
+    outline: 3px solid var(--sesam-cyan);
+    outline-offset: 2px;
+}
+
+.console-activity-list {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.console-activity-list li {
+    --tone: var(--sesam-blue);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--sesam-line);
+    border-radius: var(--sesam-radius-md);
+}
+
+.console-activity-list li[aria-current="true"] {
+    border-color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 6%, #fff);
+}
+
+.console-activity-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.console-activity-text small {
+    overflow: hidden;
+    color: var(--sesam-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.console-activity-open {
+    color: var(--sesam-blue);
+    font-weight: 700;
+}
+
+.console-activity-add {
+    display: grid;
+    gap: 0.6rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--sesam-line);
+}
+
+.console-activity-add label {
+    font-weight: 700;
+}
+
+.console-activity-add-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+}
+
+.console-activity-add .btn .ui-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* ---------- Page Tarifs : un service par carte repliée, une devise par onglet ---------- */
+
+.px .px-fold {
+    --tone: var(--sesam-blue);
+    padding: 0;
+    overflow: hidden;
+    margin-bottom: 0.9rem;
+}
+
+.px .px-sector[data-tone="emerald"] { --tone: var(--sesam-emerald); }
+.px .px-sector[data-tone="electric"] { --tone: var(--sesam-electric); }
+.px .px-sector[data-tone="amber"] { --tone: var(--sesam-amber); }
+
+.px .px-fold-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem 1.15rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.px .px-fold-head::-webkit-details-marker {
+    display: none;
+}
+
+.px .px-fold-head:hover {
+    background: rgba(3, 73, 184, 0.04);
+}
+
+.px .px-fold-head:focus-visible {
+    outline: 3px solid var(--sesam-cyan);
+    outline-offset: -3px;
+}
+
+.px .px-fold-icon,
+.px .px-sector-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--tone) 13%, #fff);
+    color: var(--tone);
+    font-size: 1.2rem;
+}
+
+.px .px-sector-icon .ui-icon {
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.px .px-fold-title {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.px .px-fold-title strong {
+    font-size: 1.05rem;
+}
+
+.px .px-fold-title small {
+    color: var(--sesam-muted);
+}
+
+.px .px-summary-prices {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+
+.px .px-summary-price {
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: #eef3fb;
+    color: var(--sesam-navy);
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.px .px-summary-price.is-empty {
+    background: #fff4e5;
+    color: var(--sesam-warning);
+    font-weight: 600;
+}
+
+.px .px-chevron {
+    flex: none;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-right: 2px solid var(--sesam-muted);
+    border-bottom: 2px solid var(--sesam-muted);
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+.px .px-fold[open] > .px-fold-head .px-chevron {
+    transform: rotate(225deg) translateY(-2px);
+}
+
+.px .px-fold[open] > .px-fold-head {
+    border-bottom: 1px solid var(--sesam-line);
+}
+
+.px .px-fold-body {
+    padding: 1.1rem 1.15rem 1.25rem;
+}
+
+.px .px-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.px .px-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.8rem;
+    border: 1.5px solid var(--sesam-line);
+    border-radius: var(--sesam-radius-md);
+    background: #fff;
+    color: var(--sesam-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.px .px-tab span:not(.px-tab-symbol):not(.px-tab-alert) {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.px .px-tab small {
+    overflow: hidden;
+    color: var(--sesam-muted);
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.px .px-tab-symbol {
+    display: grid;
+    place-items: center;
+    flex: none;
+    min-width: 2.2rem;
+    height: 2.2rem;
+    padding: 0 0.3rem;
+    border-radius: 0.7rem;
+    background: #eef3fb;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.px .px-tab[aria-selected="true"] {
+    border-color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 7%, #fff);
+}
+
+.px .px-tab[aria-selected="true"] .px-tab-symbol {
+    background: var(--tone);
+    color: #fff;
+}
+
+.px .px-tab:focus-visible {
+    outline: 3px solid var(--sesam-cyan);
+    outline-offset: 2px;
+}
+
+.px .px-tab-alert {
+    position: absolute;
+    top: -0.4rem;
+    right: -0.4rem;
+    display: grid;
+    place-items: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    background: var(--sesam-danger);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.px .px-panel-countries {
+    margin: 0 0 0.9rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--sesam-radius-sm);
+    background: #f4f7fc;
+    color: var(--sesam-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.px .px-panel-countries strong {
+    color: var(--sesam-text);
+}
+
+@media (max-width: 720px) {
+    .px .px-fold-head {
+        flex-wrap: wrap;
+    }
+
+    .px .px-summary-prices {
+        order: 3;
+        justify-content: flex-start;
+        width: 100%;
+        padding-left: 3.5rem;
+    }
+
+    .px .px-tabs {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Formulaire commerce : tarif appliqué selon le pays et les activités cochées. */
+.price-preview {
+    margin-top: 0.6rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--sesam-blue) 25%, transparent);
+    border-radius: var(--sesam-radius-md);
+    background: #f2f7ff;
+}
+
+.price-preview-title {
+    margin: 0 0 0.4rem;
+    color: var(--sesam-blue);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.price-preview ul {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.price-preview li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.price-preview strong {
+    color: var(--sesam-navy);
+}

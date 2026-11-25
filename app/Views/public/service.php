@@ -101,7 +101,7 @@ $pointIcons = ['check', 'spark', 'users', 'chat'];
                 <div class="offers">
                     <?php foreach ($offers as $index => $offer): ?>
                         <article class="offer<?= $index === 1 ? ' offer--hot' : '' ?>" data-reveal data-reveal-delay="<?= $index ?>">
-                            <?php if ($index === 1): ?><span class="offer-badge">Le plus choisi</span><?php endif; ?>
+                            <?php if ($index === 1): ?><span class="offer-badge"><?= Html::en('Le plus choisi', 'Most popular') ?></span><?php endif; ?>
                             <h3><?= Html::e($offer['name']) ?></h3>
                             <p class="offer-price"><?= Html::e($offer['price']) ?></p>
                             <p><?= Html::e($offer['description']) ?></p>

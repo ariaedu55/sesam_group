@@ -132,6 +132,7 @@ $anchor = static fn (string $text): string => 'cat-' . substr(md5($text), 0, 8);
         <div class="sl-empty"><p>Les prestations arrivent bientôt.</p></div>
     <?php else: ?>
         <form class="sl-book" id="reserver" method="post" action="<?= Html::url($base) ?>" data-salon="<?= Html::url($base . '/creneaux') ?>">
+            <?php include dirname(__DIR__, 2) . '/partials/honeypot.php'; ?>
             <input type="hidden" name="_csrf" value="<?= Html::e($csrf ?? '') ?>">
             <?php if ($canBook): ?>
                 <div class="sl-book-head">

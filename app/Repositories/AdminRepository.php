@@ -114,7 +114,7 @@ final class AdminRepository extends Repository
     {
         $statement = $this->pdo->prepare(
             "SELECT t.id, COALESCE(ts.display_name, t.name) AS name, t.sector, s.period_end, COALESCE(s.monthly_amount_minor, 0) AS amount,
-                    (SELECT u.email FROM users u WHERE u.tenant_id = t.id AND u.is_active = 1 ORDER BY u.id ASC LIMIT 1) AS email
+                    (SELECT u.email FROM users u WHERE (u.tenant_id = t.id OR u.id IN (SELECT a.user_id FROM user_tenant_access a WHERE a.tenant_id = t.id)) AND u.is_active = 1 ORDER BY u.id ASC LIMIT 1) AS email
              FROM tenant_subscriptions s
              INNER JOIN tenants t ON t.id = s.tenant_id
              LEFT JOIN tenant_settings ts ON ts.tenant_id = t.id
@@ -240,9 +240,9 @@ final class AdminRepository extends Repository
     public function insertPayment(int $tenantId, array $data): void
     {
         $this->pdo->prepare(
-            'INSERT INTO tenant_subscription_payments (tenant_id, amount, months, paid_on, method, reference, period_end, note, actor_user_id, created_at)
-             VALUES (:tenant_id, :amount, :months, :paid_on, :method, :reference, :period_end, :note, :actor_user_id, :created_at)'
-        )->execute($data + ['tenant_id' => $tenantId, 'created_at' => gmdate('Y-m-d H:i:s')]);
+            'INSERT INTO tenant_subscription_payments (tenant_id, amount, currency, amount_paid, months, paid_on, method, reference, period_end, note, actor_user_id, created_at)
+             VALUES (:tenant_id, :amount, :currency, :amount_paid, :months, :paid_on, :method, :reference, :period_end, :note, :actor_user_id, :created_at)'
+        )->execute($data + ['currency' => 'XOF', 'amount_paid' => null, 'tenant_id' => $tenantId, 'created_at' => gmdate('Y-m-d H:i:s')]);
     }
 
     /**
@@ -251,7 +251,7 @@ final class AdminRepository extends Repository
     public function tenantPayments(int $tenantId): array
     {
         $statement = $this->pdo->prepare(
-            'SELECT p.amount, p.months, p.paid_on, p.method, p.reference, COALESCE(p.period_end, \'\') AS period_end, p.note,
+            'SELECT p.amount, p.currency, p.amount_paid, p.months, p.paid_on, p.method, p.reference, COALESCE(p.period_end, \'\') AS period_end, p.note,
                     COALESCE(u.full_name, \'\') AS actor
              FROM tenant_subscription_payments p LEFT JOIN users u ON u.id = p.actor_user_id
              WHERE p.tenant_id = :tenant_id ORDER BY p.paid_on DESC, p.id DESC LIMIT 36'
@@ -260,6 +260,9 @@ final class AdminRepository extends Repository
 
         return array_map(static fn (array $r): array => [
             'amount' => (int) $r['amount'],
+            'currency' => \Sesam\Core\Money\Currency::normalize((string) $r['currency']),
+            // Montant réellement payé, dans la devise du commerce (« amount » est l'équivalent FCFA).
+            'paid' => $r['amount_paid'] !== null ? (int) $r['amount_paid'] : (int) $r['amount'],
             'months' => (int) $r['months'],
             'paid_on' => (string) $r['paid_on'],
             'method' => (string) $r['method'],
@@ -270,10 +273,14 @@ final class AdminRepository extends Repository
         ], $statement->fetchAll());
     }
 
-    public function tenantPaidTotal(int $tenantId): int
+    /** Total payé par le commerce, dans sa devise. */
+    public function tenantPaidTotal(int $tenantId, string $currency = 'XOF'): int
     {
-        $statement = $this->pdo->prepare('SELECT COALESCE(SUM(amount), 0) FROM tenant_subscription_payments WHERE tenant_id = :tenant_id');
-        $statement->execute(['tenant_id' => $tenantId]);
+        $statement = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(CASE WHEN currency = :currency THEN COALESCE(amount_paid, amount) ELSE 0 END), 0)
+             FROM tenant_subscription_payments WHERE tenant_id = :tenant_id"
+        );
+        $statement->execute(['tenant_id' => $tenantId, 'currency' => $currency]);
 
         return (int) $statement->fetchColumn();
     }
@@ -321,8 +328,8 @@ final class AdminRepository extends Repository
             'loyer' => ['SELECT COUNT(*) FROM loyer_rent_dues WHERE tenant_id = :t AND due_date >= :s', 'échéances'],
             default => ['SELECT COUNT(*) FROM reservation_appointments WHERE tenant_id = :t AND created_at >= :s', 'rendez-vous'],
         };
-        $login = $this->pdo->prepare('SELECT MAX(last_login_at) FROM users WHERE tenant_id = :t');
-        $login->execute(['t' => $tenantId]);
+        $login = $this->pdo->prepare('SELECT MAX(last_login_at) FROM users WHERE tenant_id = :t OR id IN (SELECT user_id FROM user_tenant_access WHERE tenant_id = :ta)');
+        $login->execute(['t' => $tenantId, 'ta' => $tenantId]);
 
         return [
             'clients' => $value('SELECT COUNT(*) FROM clients WHERE tenant_id = :t', ['t' => $tenantId]),
@@ -337,7 +344,7 @@ final class AdminRepository extends Repository
     /**
      * Tarifs de chaque module : mensualité, frais de mise en place et formules 3 / 6 / 12 mois (proposée ou non, % de réduction).
      *
-     * @return array<string, array{monthly_amount: int, setup_fee: int, plans: array<int, array{enabled: bool, discount: int}>}>
+     * @return array<string, array<string, array{monthly_amount: int, setup_fee: int, plans: array<int, array{enabled: bool, discount: int}>}>> module => devise => tarif
      */
     public function prices(): array
     {
@@ -351,7 +358,7 @@ final class AdminRepository extends Repository
                     'discount' => (int) ($row['plan_' . $months . '_discount'] ?? 0),
                 ];
             }
-            $prices[(string) $row['sector']] = ['monthly_amount' => (int) $row['monthly_amount'], 'setup_fee' => (int) $row['setup_fee'], 'plans' => $plans];
+            $prices[(string) $row['sector']][\Sesam\Core\Money\Currency::normalize((string) ($row['currency'] ?? ''))] = ['monthly_amount' => (int) $row['monthly_amount'], 'setup_fee' => (int) $row['setup_fee'], 'plans' => $plans];
         }
 
         return $prices;
@@ -360,27 +367,28 @@ final class AdminRepository extends Repository
     /**
      * @param array<int, array{enabled: bool, discount: int}> $plans
      */
-    public function savePrice(string $sector, int $monthly, int $setup, array $plans = []): void
+    public function savePrice(string $sector, string $currency, int $monthly, int $setup, array $plans = [], ?int $monthlyXof = null): void
     {
-        $params = ['sector' => $sector, 'monthly' => $monthly, 'setup' => $setup, 'updated_at' => gmdate('Y-m-d H:i:s')];
+        $params = ['sector' => $sector, 'currency' => $currency, 'monthly' => $monthly, 'setup' => $setup, 'updated_at' => gmdate('Y-m-d H:i:s')];
         foreach ([3, 6, 12] as $months) {
             $params['e' . $months] = !empty($plans[$months]['enabled'] ?? true) ? 1 : 0;
             $params['d' . $months] = (int) ($plans[$months]['discount'] ?? 0);
         }
         $this->pdo->prepare(
-            'INSERT INTO saas_prices (sector, monthly_amount, setup_fee, plan_3_enabled, plan_3_discount, plan_6_enabled, plan_6_discount, plan_12_enabled, plan_12_discount, updated_at)
-             VALUES (:sector, :monthly, :setup, :e3, :d3, :e6, :d6, :e12, :d12, :updated_at)
+            'INSERT INTO saas_prices (sector, currency, monthly_amount, setup_fee, plan_3_enabled, plan_3_discount, plan_6_enabled, plan_6_discount, plan_12_enabled, plan_12_discount, updated_at)
+             VALUES (:sector, :currency, :monthly, :setup, :e3, :d3, :e6, :d6, :e12, :d12, :updated_at)
              ON DUPLICATE KEY UPDATE monthly_amount = VALUES(monthly_amount), setup_fee = VALUES(setup_fee),
                 plan_3_enabled = VALUES(plan_3_enabled), plan_3_discount = VALUES(plan_3_discount),
                 plan_6_enabled = VALUES(plan_6_enabled), plan_6_discount = VALUES(plan_6_discount),
                 plan_12_enabled = VALUES(plan_12_enabled), plan_12_discount = VALUES(plan_12_discount),
                 updated_at = VALUES(updated_at)'
         )->execute($params);
-        // Les commerces qui n'ont encore rien payé (essai, activation en attente) suivent le nouveau tarif.
+        // Les commerces de cette devise qui n'ont encore rien payé (essai, activation en attente) suivent le nouveau tarif
+        // (montant mémorisé en équivalent FCFA pour les tableaux de bord).
         $this->pdo->prepare(
             "UPDATE tenant_subscriptions s JOIN tenants t ON t.id = s.tenant_id
-             SET s.monthly_amount_minor = ? WHERE t.sector = ? AND s.status IN ('trial', 'pending')"
-        )->execute([$monthly, $sector]);
+             SET s.monthly_amount_minor = ? WHERE t.sector = ? AND t.currency = ? AND s.status IN ('trial', 'pending')"
+        )->execute([$monthlyXof ?? $monthly, $sector, $currency]);
     }
 
     /**

@@ -14,6 +14,7 @@ use Sesam\Helpers\Html;
     <link rel="stylesheet" href="<?= Html::asset('assets/css/sesam.css') ?>">
     <link rel="stylesheet" href="<?= Html::asset('assets/css/app-glass.css') ?>">
 <?php include dirname(__DIR__) . '/partials/phone-input-assets.php'; ?>
+    <link rel="stylesheet" href="<?= Html::asset('assets/css/language.css') ?>">
 </head>
 <body class="auth-body">
 <div class="auth-page">
@@ -35,9 +36,10 @@ use Sesam\Helpers\Html;
     </aside>
     <main class="auth-main">
         <div class="auth-main-inner">
-            <p class="auth-back auth-back--top">
+            <div class="auth-back auth-back--top">
                 <a href="<?= Html::url('/') ?>">← Retour au site</a>
-            </p>
+                <?php $langSwitchClass = 'lang-switch--auth'; include dirname(__DIR__) . '/partials/language-switch.php'; ?>
+            </div>
             <div class="auth-sheet">
 <?php // $content est le HTML déjà produit par une vue du projet. Chaque vue échappe ses propres données. ?>
                 <?= $content ?>
@@ -47,5 +49,6 @@ use Sesam\Helpers\Html;
 </div>
 <script src="<?= Html::asset('assets/js/auth.js') ?>" defer></script>
 <?php require dirname(__DIR__) . '/partials/jotform-agent.php'; ?>
+<?php include dirname(__DIR__) . '/partials/gtranslate.php'; ?>
 </body>
 </html>

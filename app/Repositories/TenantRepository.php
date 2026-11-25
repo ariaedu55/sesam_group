@@ -11,7 +11,7 @@ final class TenantRepository extends Repository
     public function findById(int $id): ?Tenant
     {
         $statement = $this->pdo->prepare(
-            'SELECT t.id, t.slug, t.name, t.sector, t.status, t.phone, t.signup_source, t.created_at, t.updated_at, s.display_name
+            'SELECT t.id, t.slug, t.name, t.sector, t.status, t.phone, t.country, t.currency, t.signup_source, t.created_at, t.updated_at, s.display_name
              FROM tenants t
              LEFT JOIN tenant_settings s ON s.tenant_id = t.id
              WHERE t.id = :id
@@ -26,7 +26,7 @@ final class TenantRepository extends Repository
     public function findBySlug(string $slug): ?Tenant
     {
         $statement = $this->pdo->prepare(
-            'SELECT t.id, t.slug, t.name, t.sector, t.status, t.phone, t.signup_source, t.created_at, t.updated_at, s.display_name
+            'SELECT t.id, t.slug, t.name, t.sector, t.status, t.phone, t.country, t.currency, t.signup_source, t.created_at, t.updated_at, s.display_name
              FROM tenants t
              LEFT JOIN tenant_settings s ON s.tenant_id = t.id
              WHERE t.slug = :slug
@@ -44,7 +44,7 @@ final class TenantRepository extends Repository
     public function all(): array
     {
         $statement = $this->pdo->query(
-            'SELECT t.id, t.slug, t.name, t.sector, t.status, t.phone, t.signup_source, t.created_at, t.updated_at, s.display_name
+            'SELECT t.id, t.slug, t.name, t.sector, t.status, t.phone, t.country, t.currency, t.signup_source, t.created_at, t.updated_at, s.display_name
              FROM tenants t
              LEFT JOIN tenant_settings s ON s.tenant_id = t.id
              ORDER BY t.name ASC, t.id ASC'
@@ -172,6 +172,14 @@ final class TenantRepository extends Repository
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+    }
+
+    /** Pays du commerce ; la devise de l'abonnement en découle (FCFA, dollar ou euro). */
+    public function updateCountry(int $id, string $country): void
+    {
+        $country = strtoupper($country);
+        $this->pdo->prepare('UPDATE tenants SET country = ?, currency = ?, updated_at = ? WHERE id = ?')
+            ->execute([$country, \Sesam\Core\Money\Country::currency($country), gmdate('Y-m-d H:i:s'), $id]);
     }
 
     public function updateStatus(int $id, string $status): void
