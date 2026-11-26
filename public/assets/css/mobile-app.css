@@ -308,3 +308,87 @@
         font-size: 0.9rem;
     }
 }
+
+/*
+ * Téléphone : moins de texte. Les phrases d'explication (sous-titres de page, descriptions de tuiles,
+ * encadrés d'introduction) sont masquées ; les chiffres, statuts, consignes et actions restent.
+ * Ordinateur et tablette ne changent pas.
+ */
+@media (max-width: 640px) {
+    /* Phrase sous le titre de chaque page */
+    body.is-app .btq-head > div > p.muted,
+    body.is-app .sb-head > p.muted,
+    body.is-app .record-hero-copy > p.record-subtitle,
+    body.is-app .rd-hero-summary {
+        display: none;
+    }
+
+    /* Descriptions sous les tuiles d'action et les indicateurs */
+    body.is-app .btq-tile > small,
+    body.is-app .rd-tile > span > small,
+    body.is-app .rd-kpi > small,
+    body.is-app .btq-kpi > span.muted,
+    body.is-app .rd-card-head p {
+        display: none;
+    }
+
+    /* Encadrés d'explication : on garde le titre et les boutons */
+    body.is-app .btq-share > div > p,
+    body.is-app .rd-share > p,
+    body.is-app .rd-empty > p,
+    body.is-app .rd-next-card.is-empty > small {
+        display: none;
+    }
+
+    /* Produits : deux par ligne, photo carrée, au lieu d'une grande photo par ligne */
+    body.is-app .btq-products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    body.is-app .btq-product {
+        border-radius: 14px;
+    }
+
+    body.is-app .btq-product-media {
+        aspect-ratio: 1;
+    }
+
+    body.is-app .btq-product-media .btq-status {
+        top: 6px;
+        left: 6px;
+        padding: 2px 7px;
+        font-size: 0.68rem;
+    }
+
+    body.is-app .btq-product-body {
+        gap: 2px;
+        padding: 8px 10px 4px;
+    }
+
+    body.is-app .btq-product-body h3,
+    body.is-app .btq-product-body h2 {
+        overflow: hidden;
+        font-size: 0.92rem;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    body.is-app .btq-product-body .muted {
+        font-size: 0.75rem;
+    }
+
+    body.is-app .btq-product-foot {
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 6px 8px 10px;
+    }
+
+    body.is-app .btq-product-foot .btn-sm {
+        flex: 1 1 auto;
+        min-height: 30px;
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+}

@@ -742,3 +742,12 @@ button:focus-visible {
         transition: none;
     }
 }
+
+/* Téléphone : moins de texte d'explication. Les biens, loyers et coordonnées restent. */
+@media (max-width: 640px) {
+    .im-hero-inner > .im-lead,
+    .im-section-head > p,
+    .im-form-head > p {
+        display: none;
+    }
+}

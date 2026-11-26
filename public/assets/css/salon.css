@@ -1806,3 +1806,10 @@ button:focus-visible {
         font-size: 0.72rem;
     }
 }
+
+/* Téléphone : moins de texte d'explication. Les textes écrits par le salon (accroche, règles) restent. */
+@media (max-width: 640px) {
+    .sl-step-hint {
+        display: none;
+    }
+}

@@ -1392,3 +1392,19 @@ button:focus-visible {
         font-size: 0.68rem;
     }
 }
+
+/* Téléphone : moins de texte d'explication. Les textes écrits par la boutique (accroche, descriptions) restent. */
+@media (max-width: 640px) {
+    .shop-section-head > p {
+        display: none;
+    }
+
+    /* Avantages : seul le titre reste, sauf la livraison (infos de la boutique : délai, prix). */
+    .shop-perks li:not(:last-child) > span {
+        font-size: 0;
+    }
+
+    .shop-perks li:not(:last-child) > span > b {
+        font-size: 0.98rem;
+    }
+}
